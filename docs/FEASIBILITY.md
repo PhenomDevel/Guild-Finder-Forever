@@ -14,9 +14,25 @@ report: paste `/gff probe log 50` output or that table from each account.
 
 1. `tools/fetch-libs.sh`, then link `GuildFinderForever/` into the AddOns
    folder (see [`DEVELOPMENT.md`](DEVELOPMENT.md)). Restart the client.
-2. At least two accounts **A** and **B** with the addon, ideally a third
-   character **C** for the reach matrix (other realm / faction / ruleset).
-3. Optional: `/gff probe clear` on every account for a clean log.
+2. Optional: `/gff probe clear` for a clean log.
+
+### Single account (default)
+
+The server echoes `CHANNEL` addon messages back to the sender. With loopback
+on (default, `/gff probe loopback on|off`, shown in `/gff probe status`) the
+probe handles its own messages like those of another player: it answers its
+own pings, counts its own bursts, checks its own large messages and so on.
+So **A** and **B** below are the same character, and every test except the
+reach matrix (3) and the marked steps in 7–9 runs on one account.
+
+If the first ping logs `Own ping #1 did not come back …`, the server does not
+echo and a second player is needed for tests 2, 4, 5 and 7.
+
+### Two players
+
+Loopback stays on (both see their own messages too) or `/gff probe loopback
+off` for a cleaner log. Needed only for the reach matrix and the steps marked
+*second player*; any other player running the addon will do.
 
 ## Tests
 
@@ -34,14 +50,14 @@ report: paste `/gff probe log 50` output or that table from each account.
 ### 2. Message A → B
 
 - A: `/gff probe ping` → `Ping #1 sent: Success`.
+- A: `Own ping #1 came back (echo).` – the server echoes own messages.
 - B: `Ping from A (realm …, faction, level, guild), 0 s on the way.`
 - A, within ~3 s: `Answer from B …`.
-- Note whether A logs `Own ping #1 came back (echo)` (tells us whether the
-  sender receives its own channel messages).
+- Single account: all four lines appear on the same character.
 
-### 3. Reach
+### 3. Reach (second player)
 
-Run test 2 for each pair and fill in the table (✓ = ping arrived):
+Cannot be tested alone. Run test 2 for each pair and fill in the table (✓ = ping arrived):
 
 | A ↔ B | Ping A → B | Ping B → A |
 |-------|------------|------------|
@@ -90,8 +106,10 @@ exact list of Forever rulesets is still open for the filter.
   code (please note its name), queue messages are `held for now`.
 - After the fight: `Chat messaging lockdown ended.`, `Held messages sent.`;
   B logs `Queue message from A (#n), … s after it was created.`
-- Meanwhile B (outside the instance) sends `/gff probe ping`: does A receive
-  it during the lockdown?
+- Single account: the queue messages come back as `Queue message from <you>
+  …` after the fight, which proves hold and resend.
+- *Second player:* meanwhile B (outside the instance) sends
+  `/gff probe ping`: does A receive it during the lockdown?
 - Watch for Lua errors during the fight (e.g. from AceComm handling
   messages with secret values).
 - Note whether the lockdown also starts outside boss fights (dungeon trash,
@@ -99,8 +117,9 @@ exact list of Forever rulesets is still open for the filter.
 
 ### 8. /who for the guild check (phase 4)
 
-- A: `/gff probe who <B's name>`, for B on the same realm, on another realm
-  (`Name-Realm`) and of the other faction.
+- `/gff probe who <own name>` first (shows whether the guild is included),
+  then any player you see: same realm, another realm (`Name-Realm`) and the
+  other faction. These don't need to run the addon.
 - Note whether a result arrives (log or chat), whether it contains the guild
   and whether the Who window pops up.
 
@@ -109,11 +128,13 @@ exact list of Forever rulesets is still open for the filter.
 The first character in a custom channel usually becomes its owner and may be
 able to kick, ban or set a password – a risk for a shared channel.
 
-- `/gff probe show` on A and B; channel notices end up in the log.
-- Check who is owner and whether the owner can kick the other one
-  (`/ckick GuildFinderForever <name>`) or set a password
-  (`/password GuildFinderForever test`). Then `/gff probe join` on the kicked
-  account, and `/password GuildFinderForever` (empty) to remove it.
+- `/gff probe show`; channel notices end up in the log.
+- Check whether you became owner and whether you can set a password
+  (`/password GuildFinderForever test`), then remove it with
+  `/password GuildFinderForever` (empty).
+- *Second player:* whether the owner can kick the other one
+  (`/ckick GuildFinderForever <name>`); then `/gff probe join` on the kicked
+  account.
 
 ## Fallback if `CHANNEL` addon messages don't work
 

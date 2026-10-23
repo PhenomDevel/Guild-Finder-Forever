@@ -5,7 +5,9 @@ local _, ns = ...
 -- AceComm messaging, reach, throttling, saved data and the lockdown in-game.
 -- Raw tests call SendAddonMessage directly to see the bare result codes;
 -- everything else goes through ns.Comm like the real addon will.
--- Test guide: docs/FEASIBILITY.md.
+-- With loopback on (default), own messages are handled like those of another
+-- player, so every test that only needs a sender and a receiver runs on a
+-- single account. Test guide: docs/FEASIBILITY.md.
 
 local Probe = {}
 ns.Probe = Probe
@@ -21,9 +23,11 @@ local BURST_QUIET = 5
 local MAX_REPLY_DELAY = 3
 local WHO_TIMEOUT = 10
 local MAX_MESSAGE = 255
+local ECHO_TIMEOUT = 5
 
 ns.dbDefaults.probe = {
 	loginCount = 0,
+	loopback = true,
 	log = {},
 	filler = {},
 }
@@ -154,12 +158,16 @@ prefixResult = type(prefixResult) == "number" and ReverseLookup(Enum.RegisterAdd
 
 local rawHandlers = {}
 local bursts = {}
+local awaitingEcho = {}
 
 -- PING id sentTime realm faction level guild
 function rawHandlers.PING(sender, isSelf, id, sentTime, realm, faction, level, guild)
-	if isSelf then
+	if IsSelf(sender) then
+		awaitingEcho[tostring(id)] = nil
 		Log(L.PROBE_ECHO, id)
-		return
+		if isSelf then
+			return
+		end
 	end
 	local delay = GetServerTime() - (tonumber(sentTime) or 0)
 	Log(L.PROBE_PING_RECEIVED, sender, realm, faction, level, guild, delay)
@@ -239,7 +247,8 @@ ns:RegisterEvent("CHAT_MSG_ADDON", function(_, prefix, text, channel, sender)
 	local fields = { strsplit(SEP, text) }
 	local handler = rawHandlers[fields[1]]
 	if handler then
-		handler(sender, IsSelf(sender), unpack(fields, 2))
+		-- isSelf: own message to be ignored (false for own ones in loopback).
+		handler(sender, IsSelf(sender) and not ns.Comm.loopback, unpack(fields, 2))
 	end
 end)
 
@@ -318,6 +327,7 @@ AddCommand("status", "status", L.PROBE_HELP_STATUS, function()
 	StatusLine(L.PROBE_STATUS_CHANNEL, number and ("%s #%d, %s"):format(ns.Channel.NAME, number, ns.Channel.hidden and L.PROBE_HIDDEN or L.PROBE_VISIBLE) or L.PROBE_NOT_JOINED)
 	StatusLine(L.PROBE_STATUS_LOCKDOWN, "%s (%s: %s, %s: %s)", YesNo(ns.Comm.InLockdown()), "API", YesNo(C_ChatInfo.InChatMessagingLockdown), L.PROBE_ENCOUNTER, YesNo(IsEncounterInProgress and IsEncounterInProgress()))
 	StatusLine(L.PROBE_STATUS_QUEUE, ns.Comm.GetQueueLength())
+	StatusLine(L.PROBE_STATUS_LOOPBACK, YesNo(ns.Comm.loopback))
 	StatusLine("API", "prefix %s, chat frame %s, chat filter %s, SendWho %s", tostring(prefixResult), ns.Channel.GetChatFrameApi(), YesNo(ns.Channel.hasChatFilter), YesNo(C_FriendList and C_FriendList.SendWho))
 	StatusLine(L.PROBE_STATUS_SAVED, L.PROBE_SAVED_SUMMARY, db.loginCount, charDb.loginCount, #db.filler, #db.log)
 end)
@@ -326,6 +336,16 @@ AddCommand("ping", "ping", L.PROBE_HELP_PING, function()
 	local id = NextId()
 	local result = SendRaw("PING", id, GetServerTime(), GetRealm(), GetFaction(), UnitLevel("player"), GetGuild())
 	Log(L.PROBE_PING_SENT, id, result, LockdownSuffix())
+	if result == "Success" then
+		local key = tostring(id)
+		awaitingEcho[key] = true
+		C_Timer.After(ECHO_TIMEOUT, function()
+			if awaitingEcho[key] then
+				awaitingEcho[key] = nil
+				Log(L.PROBE_NO_ECHO, id, ECHO_TIMEOUT)
+			end
+		end)
+	end
 end)
 
 AddCommand("burst", "burst [count] [bytes]", L.PROBE_HELP_BURST, function(args)
@@ -407,6 +427,20 @@ AddCommand("who", "who <name>", L.PROBE_HELP_WHO, function(name)
 	whoSent = GetTime()
 	local ok, err = pcall(C_FriendList.SendWho, ('n-"%s"'):format(name))
 	Log(L.PROBE_WHO_SENT, name, ok and "ok" or tostring(err))
+end)
+
+AddCommand("loopback", "loopback [on|off]", L.PROBE_HELP_LOOPBACK, function(args)
+	local enabled
+	if args == "on" then
+		enabled = true
+	elseif args == "off" then
+		enabled = false
+	else
+		enabled = not ns.Comm.loopback
+	end
+	db.loopback = enabled
+	ns.Comm.loopback = enabled
+	Log(enabled and L.PROBE_LOOPBACK_ON or L.PROBE_LOOPBACK_OFF)
 end)
 
 AddCommand("join", "join", L.PROBE_HELP_JOIN, function()
@@ -540,6 +574,7 @@ end)
 ns:RegisterEvent("PLAYER_LOGIN", function()
 	db = ns.db.probe
 	charDb = ns.charDb.probe
+	ns.Comm.loopback = db.loopback
 	db.loginCount = db.loginCount + 1
 	charDb.loginCount = charDb.loginCount + 1
 	local lastLogout = db.lastLogout and date("%Y-%m-%d %H:%M:%S", db.lastLogout) or L.PROBE_NEVER

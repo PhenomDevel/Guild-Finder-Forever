@@ -15,6 +15,9 @@ LibStub("AceComm-3.0"):Embed(Comm)
 Comm.PREFIX = "GFF"
 -- Received messages above this (encoded) size are dropped unread.
 Comm.MAX_MESSAGE_SIZE = 32 * 1024
+-- Deliver own messages to the handlers too. The server echoes CHANNEL
+-- messages back to the sender, so this allows testing with a single account.
+Comm.loopback = false
 
 local MAX_QUEUE = 100
 local FLUSH_INTERVAL = 1
@@ -76,7 +79,8 @@ function Comm.Send(text, prio, callback)
 	return #data, true
 end
 
--- handler(text, sender) receives every valid message of other players.
+-- handler(text, sender) receives every valid message of other players
+-- (and own ones while Comm.loopback is set).
 function Comm.RegisterHandler(handler)
 	handlers[#handlers + 1] = handler
 end
@@ -92,7 +96,7 @@ function Comm:OnCommReceived(_, data, distribution, sender)
 	if issecretvalue and (issecretvalue(data) or issecretvalue(sender)) then
 		return
 	end
-	if type(data) ~= "string" or type(sender) ~= "string" or #data > Comm.MAX_MESSAGE_SIZE or IsSelf(sender) then
+	if type(data) ~= "string" or type(sender) ~= "string" or #data > Comm.MAX_MESSAGE_SIZE or (IsSelf(sender) and not Comm.loopback) then
 		return
 	end
 	local decoded = LibDeflate:DecodeForWoWAddonChannel(data)
