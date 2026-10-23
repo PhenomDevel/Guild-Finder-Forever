@@ -1,0 +1,30 @@
+## Interface: 16001
+## Title: Guild Finder |cffe6b43aForever|r
+## Notes: In-game marketplace for guilds and players looking for a guild.
+## Notes-deDE: Marktplatz im Spiel für Gilden und Spieler auf Gildensuche.
+## Author: PhenomDevel
+## Version: @project-version@
+## Category: Social
+## Category-deDE: Soziales
+## SavedVariables: GuildFinderForeverDB
+## SavedVariablesPerCharacter: GuildFinderForeverCharDB
+
+# Libraries (.pkgmeta externals; tools/fetch-libs.sh for local dev)
+Libs\LibStub\LibStub.lua
+Libs\CallbackHandler-1.0\CallbackHandler-1.0.xml
+Libs\AceComm-3.0\AceComm-3.0.xml
+Libs\LibDeflate\LibDeflate.lua
+
+# Locales (enUS must be loaded first, it defines the fallback table)
+Locales\enUS.lua
+Locales\deDE.lua
+
+# Core
+Core\Init.lua
+Core\Database.lua
+Core\SlashCommands.lua
+Core\Channel.lua
+Core\Comm.lua
+
+# Phase 1 feasibility test
+Probe\Probe.lua

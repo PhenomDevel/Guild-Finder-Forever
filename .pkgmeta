@@ -1,0 +1,27 @@
+# BigWigs packager config, see .github/workflows/release.yml.
+package-as: GuildFinderForever
+
+enable-nolib-creation: no
+
+# Libraries are not committed; local dev uses tools/fetch-libs.sh.
+externals:
+  GuildFinderForever/Libs/LibStub: https://repos.curseforge.com/wow/libstub/trunk
+  GuildFinderForever/Libs/CallbackHandler-1.0: https://repos.curseforge.com/wow/callbackhandler/trunk/CallbackHandler-1.0
+  GuildFinderForever/Libs/AceComm-3.0: https://repos.curseforge.com/wow/ace3/trunk/AceComm-3.0
+  GuildFinderForever/Libs/LibDeflate:
+    url: https://github.com/SafeteeWoW/LibDeflate
+    tag: 1.0.2-release
+
+# The addon lives in a subfolder; move it to the zip root.
+move-folders:
+  GuildFinderForever/GuildFinderForever: GuildFinderForever
+
+ignore:
+  - README.md
+  - CLAUDE.md
+  - docs
+  - tools
+
+manual-changelog:
+  filename: CHANGELOG.md
+  markup-type: markdown

@@ -1,0 +1,74 @@
+name: Release
+
+# Packages the addon and uploads it to CurseForge, Wago and GitHub releases.
+# Start it from Actions → Release → Run workflow with a version (v0.1.0, or
+# v0.1.0-beta1 / -alpha1 for test releases); it tags the current main.
+# Pushing a v* tag manually works as well.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version tag, e.g. v0.1.0 or v0.1.0-beta1"
+        required: true
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # The packager needs the tag history for the version and changelog.
+          fetch-depth: 0
+
+      - name: Check version
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          if [[ "$GITHUB_REF" != "refs/heads/main" ]]; then
+            echo "::error::Releases are only created from main"; exit 1
+          fi
+          if [[ ! "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-(alpha|beta)[0-9]+)?$ ]]; then
+            echo "::error::Invalid version '$VERSION'"; exit 1
+          fi
+          if git rev-parse -q --verify "refs/tags/$VERSION" >/dev/null; then
+            echo "::error::Tag $VERSION already exists"; exit 1
+          fi
+          if ! grep -qE "^## $VERSION( |$)" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md has no section '## $VERSION'"; exit 1
+          fi
+
+      # luacheck for the lint step, subversion for the CurseForge externals.
+      - name: Install tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lua5.1 luarocks subversion
+          sudo luarocks install luacheck
+
+      - name: Lint
+        run: luacheck .
+
+      # Tags pushed with GITHUB_TOKEN don't trigger workflows, so this doesn't
+      # start a second run via the tag trigger.
+      - name: Create tag
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          git tag "$VERSION"
+          git push origin "refs/tags/$VERSION"
+
+      # Uploads are skipped for a site without project ID in the .toc
+      # (X-Curse-Project-ID, X-Wago-ID) or without its secret.
+      - name: Package and release
+        uses: BigWigsMods/packager@v2
+        env:
+          CF_API_KEY: ${{ secrets.CF_API_KEY }}
+          WAGO_API_TOKEN: ${{ secrets.WAGO_API_TOKEN }}
+          GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}

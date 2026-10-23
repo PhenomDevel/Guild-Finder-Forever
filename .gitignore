@@ -1,0 +1,9 @@
+.release/
+*.zip
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Libraries come from .pkgmeta externals (tools/fetch-libs.sh for local dev).
+GuildFinderForever/Libs/
