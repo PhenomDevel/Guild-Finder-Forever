@@ -23,3 +23,8 @@ Locales\deDE.lua
 Core\Init.lua
 Core\Database.lua
 Core\SlashCommands.lua
+Core\Channel.lua
+Core\Comm.lua
+
+# Phase 1 feasibility test
+Probe\Probe.lua
