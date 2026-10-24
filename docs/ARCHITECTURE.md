@@ -21,7 +21,8 @@ running the addon and are cached locally.
 Ads are flat tables with short keys, identical in the saved data and on the
 wire: `i` id, `k` kind (`P` player / `G` guild), `v` version (server time of
 the last change), `o` owner (`Name-Realm` of whoever posted this version),
-`f` faction, `l` language, `g` goals mask, `t` play times mask (7 days × 3
+`f` faction, `l` language (two-letter ISO 639-1 code; unknown codes are
+kept and shown as the code, so new languages need no protocol change), `g` goals mask, `t` play times mask (7 days × 3
 slots), `x` text (≤ 200 characters, `|` and control characters stripped),
 `m` game mode as reported by `C_GameRules.GetActiveGameMode()`.
 

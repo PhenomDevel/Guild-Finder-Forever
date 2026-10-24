@@ -99,7 +99,7 @@ end
 
 function Filters.LanguageName(key)
 	local lang = C.LANGUAGE_BY_KEY[key]
-	return lang and lang.label or "?"
+	return lang and lang.label or (key and key:upper()) or "?"
 end
 
 local function HiddenCount()

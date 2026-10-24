@@ -222,7 +222,8 @@ function Ads.Sanitize(raw)
 	end
 
 	ad.f = (raw.f == "A" or raw.f == "H") and raw.f or nil
-	ad.l = type(raw.l) == "string" and C.LANGUAGE_BY_KEY[raw.l] and raw.l or nil
+	-- Any two-letter key, so ads in languages added later still pass.
+	ad.l = type(raw.l) == "string" and raw.l:match("^%l%l$") or nil
 	ad.g = Int(raw.g, 0, C.ALL_GOALS) or 0
 	ad.t = Int(raw.t, 0, C.ALL_TIMES) or 0
 	ad.x = Ads.CleanText(raw.x)

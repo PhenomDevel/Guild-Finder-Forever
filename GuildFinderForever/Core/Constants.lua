@@ -46,6 +46,28 @@ C.LANGUAGES = {
 	{ key = "pt", label = L.LANG_PT },
 	{ key = "ru", label = L.LANG_RU },
 }
+-- Further EU languages without a client locale, after the ones above,
+-- sorted by their localized name.
+local MORE_LANGUAGES = {
+	{ key = "nl", label = L.LANG_NL },
+	{ key = "pl", label = L.LANG_PL },
+	{ key = "sv", label = L.LANG_SV },
+	{ key = "da", label = L.LANG_DA },
+	{ key = "no", label = L.LANG_NO },
+	{ key = "fi", label = L.LANG_FI },
+	{ key = "cs", label = L.LANG_CS },
+	{ key = "hu", label = L.LANG_HU },
+	{ key = "ro", label = L.LANG_RO },
+	{ key = "el", label = L.LANG_EL },
+	{ key = "tr", label = L.LANG_TR },
+	{ key = "uk", label = L.LANG_UK },
+}
+table.sort(MORE_LANGUAGES, function(a, b)
+	return a.label < b.label
+end)
+for _, lang in ipairs(MORE_LANGUAGES) do
+	C.LANGUAGES[#C.LANGUAGES + 1] = lang
+end
 C.LANGUAGE_BY_KEY = {}
 for _, lang in ipairs(C.LANGUAGES) do
 	C.LANGUAGE_BY_KEY[lang.key] = lang
