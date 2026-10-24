@@ -20,13 +20,18 @@ and cached locally – no website, no external tool.
 
 Open the window with `/gff`, the minimap button or the addon compartment.
 
-- **Find guilds / Find players:** filter by faction or class, roles, level,
-  language, goals, play times ("like my ad") and ruleset; results are sorted
-  by how well they match your own ad. *Contact* opens a whisper and checks
-  the poster via `/who`; *Hide* and *Block* remove ads from your results.
-- **My ad:** publish a player ad for the current character, or – as a guild
-  member with invite rights – the ad of your guild. Ads are renewed on login
-  and expire after 14 days without one.
+- **Find guilds:** guild ads as cards, sorted by how well they match your
+  own ad. Narrow them with the search box and filter chips (faction,
+  language, goals, "my times", ruleset). A click opens the details with the
+  guild's play times next to yours; *Whisper* opens a whisper and checks the
+  poster via `/who`, *Hide* and *Block guild* remove the ad from your results.
+- **Find players:** list of player ads with role, level and class filters;
+  a click expands the row with the text and the same actions.
+- **My ad:** a player ad for the current character, or – as a guild member
+  with invite rights – the ad of your guild, in four short steps with a live
+  preview. Ads are renewed on login and expire after 14 days without one.
+
+On first start a short intro explains the addon.
 
 | Command | |
 |---------|-|

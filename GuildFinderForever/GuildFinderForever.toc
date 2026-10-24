@@ -40,8 +40,11 @@ Core\Verify.lua
 
 # UI
 UI\Widgets.lua
+UI\Filters.lua
 UI\MainFrame.lua
-UI\SearchTab.lua
+UI\GuildsTab.lua
+UI\GuildDialog.lua
+UI\PlayersTab.lua
 UI\MyAdTab.lua
 UI\MinimapButton.lua
 UI\Settings.lua

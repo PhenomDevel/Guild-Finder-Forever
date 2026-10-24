@@ -89,16 +89,29 @@ below catches mismatching guild/class claims.
 
 ## UI (`UI/`)
 
-Own window (`PortraitFrameTemplate`, no AceGUI), slash command `/gff`,
-minimap button, addon compartment entry and a settings page. Tabs:
+Own window (`PortraitFrameTemplate`, no AceGUI) built from the game's
+templates (`SearchBoxTemplate`, `WowStyle1DropdownTemplate` + `MenuUtil`,
+`WowScrollBoxList`, `PanelTabButtonTemplate`) so it looks built in. Slash
+command `/gff`, minimap button, addon compartment entry and a settings page.
+Layout follows the v2 sketches. Files:
 
-- **Find guilds / Find players:** filters (search text, faction or class,
-  roles, level, language, goals, "like my ad" play times, same ruleset),
-  result list sorted by match score, detail view with play time grid and
-  Contact / Hide / Block. Filters are saved per account.
-- **My ad:** player ad of the character, or – with invite rights – the
-  guild ad; roles, goals, language, play time grid, short text, status,
-  publish and withdraw.
+- `Widgets.lua`: chips, tags, role/class icons, guild emblem (icon and
+  colour picked from a hash of the name – guilds share no tabard data), week
+  strip, match bar, time grid, step circles.
+- `Filters.lua`: saved filter state per tab, the chip bar of active filters
+  with the "+ Filter" menu, sort menu, chat notices for new matching ads and
+  `/who` results.
+- `GuildsTab.lua`: banner with the own ad status, search + chips + sort, two
+  column card grid; first-run screen until "Create my ad" / "Just look
+  around".
+- `GuildDialog.lua`: details over the dimmed window – text, goals, wanted
+  roles, time grid with the own times highlighted, Whisper / Hide / Block.
+- `PlayersTab.lua`: toolbar (role toggles, level range, class, chips,
+  search), dense list; the selected row expands inline with the actions.
+- `MyAdTab.lua`: player or guild ad as four numbered steps (roles, goals +
+  language, time grid with presets, text), live preview of how the other
+  side sees the ad with the number of matching ads in the cache, publish /
+  discard / withdraw.
 
 The match score (0–100) weighs shared goals (3), shared play times (3),
 roles (2) and language (1) against the searcher's own ad, overridden by the

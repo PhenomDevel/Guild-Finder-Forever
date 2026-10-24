@@ -34,9 +34,20 @@ end
 local function ShowTooltip(owner)
 	GameTooltip:SetOwner(owner, "ANCHOR_LEFT")
 	GameTooltip:SetText(ns.title, 1, 1, 1)
-	local live = ns.Store.Count()
-	GameTooltip:AddLine(L.STATUS_CACHED:format(live), nil, nil, nil, true)
-	GameTooltip:AddLine(L.MINIMAP_TIP, 0.66, 0.63, 0.56, true)
+	local newMatches = ns.Filters.newMatches
+	if newMatches > 0 then
+		GameTooltip:AddLine(L.MINIMAP_NEW:format(newMatches), 1, 0.82, 0)
+	end
+	local ad = ns.MyAds.GetPlayerAd()
+	if ad then
+		GameTooltip:AddLine(L.MINIMAP_AD_ACTIVE:format(ns.Widgets.Duration(ns.Ads.ExpiresIn(ad))), 1, 1, 1)
+	else
+		GameTooltip:AddLine(L.MINIMAP_AD_NONE, 0.62, 0.62, 0.62)
+	end
+	GameTooltip:AddLine(L.STATUS_CACHED:format(ns.Store.Count()), 0.62, 0.62, 0.62)
+	GameTooltip:AddLine(" ")
+	GameTooltip:AddLine(L.MINIMAP_LEFT, 0.12, 1, 0)
+	GameTooltip:AddLine(L.MINIMAP_RIGHT, 0.12, 1, 0)
 	GameTooltip:Show()
 end
 

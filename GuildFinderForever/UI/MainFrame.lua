@@ -13,7 +13,7 @@ local Store = ns.Store
 local Sync = ns.Sync
 
 local FRAME_NAME = "GuildFinderForeverFrame"
-local WIDTH, HEIGHT = 840, 560
+local WIDTH, HEIGHT = 900, 580
 local PORTRAIT = "Interface\\Icons\\INV_Shirt_GuildTabard_01"
 -- Delay that bundles bursts of ad changes into one refresh.
 local REFRESH_DELAY = 0.5
@@ -69,7 +69,7 @@ function UI.UpdateStatus()
 	local live = Store.Count()
 	parts[#parts + 1] = L.STATUS_CACHED:format(live)
 	if status.matchText then
-		parts[#parts + 1] = status.matchText
+		parts[#parts + 1] = "|cffffffff" .. status.matchText .. "|r"
 	end
 	if ns.Comm.InLockdown() then
 		parts[#parts + 1] = "|cffffd100" .. L.STATUS_LOCKDOWN .. "|r"
@@ -105,6 +105,10 @@ local function SelectTab(index)
 		status.matchText = tabDefs[index].object:GetStatusText()
 	end
 	UI.UpdateStatus()
+end
+
+function UI.GetFrame()
+	return frame
 end
 
 function UI.GetCurrentTab()
@@ -159,8 +163,9 @@ local function Create()
 	frame.Tabs = {}
 	for i, def in ipairs(tabDefs) do
 		local content = CreateFrame("Frame", nil, frame)
-		content:SetPoint("TOPLEFT", 10, -30)
-		content:SetPoint("BOTTOMRIGHT", -10, 28)
+		-- Left gutter keeps the portrait clear.
+		content:SetPoint("TOPLEFT", 58, -30)
+		content:SetPoint("BOTTOMRIGHT", -12, 28)
 		content:Hide()
 		frame.contents[i] = content
 
@@ -180,7 +185,7 @@ local function Create()
 	PanelTemplates_SetNumTabs(frame, #tabDefs)
 
 	local statusBar = CreateFrame("Frame", nil, frame)
-	statusBar:SetPoint("BOTTOMLEFT", 14, 6)
+	statusBar:SetPoint("BOTTOMLEFT", 60, 6)
 	statusBar:SetPoint("BOTTOMRIGHT", -14, 6)
 	statusBar:SetHeight(18)
 	frame.statusLeft = W.Text(statusBar, "GameFontHighlightSmall", W.MUTED)
@@ -189,6 +194,7 @@ local function Create()
 	frame.statusRight:SetPoint("RIGHT")
 
 	frame:SetScript("OnShow", function()
+		ns.Filters.newMatches = 0
 		local tab = UI.GetCurrentTab()
 		if tab then
 			if tab.OnShow then
@@ -219,6 +225,7 @@ function UI.Show(tabIndex)
 		Create()
 	end
 	frame:Show()
+	ns.Filters.newMatches = 0
 	if tabIndex and tabDefs[tabIndex] then
 		SelectTab(tabIndex)
 	end
