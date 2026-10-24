@@ -7,8 +7,10 @@ GuildFinderForever/          addon folder (the only thing that gets installed)
   GuildFinderForever.toc     load order, interface version, SavedVariables
   Libs/                      libraries (git-ignored, see below)
   Locales/                   enUS (base) + deDE
-  Core/                      namespace, events, DB, channel, comm, slash commands
-  Probe/                     phase 1 feasibility test (/gff probe)
+  Core/                      namespace, events, DB, channel, comm, slash commands,
+                             serializer, ad model, cache, sync, search, /who check
+  UI/                        window, tabs, widgets, minimap button, settings
+  Probe/                     transport test tools (/gff probe)
 docs/                        architecture, feasibility test guide
 tools/fetch-libs.sh          fetches the libraries for local development
 .pkgmeta                     packaging config (BigWigs packager)

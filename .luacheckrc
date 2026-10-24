@@ -20,6 +20,10 @@ globals = {
 	"SLASH_GUILDFINDERFOREVER1",
 	"SLASH_GUILDFINDERFOREVER2",
 	"SlashCmdList",
+	-- Addon compartment callbacks (.toc)
+	"GuildFinderForever_OnAddonCompartmentClick",
+	"GuildFinderForever_OnAddonCompartmentEnter",
+	"GuildFinderForever_OnAddonCompartmentLeave",
 }
 
 -- WoW API shared by most files. Everything else is declared inline:

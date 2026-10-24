@@ -8,6 +8,10 @@
 ## Category-deDE: Soziales
 ## SavedVariables: GuildFinderForeverDB
 ## SavedVariablesPerCharacter: GuildFinderForeverCharDB
+## IconTexture: Interface\Icons\INV_Shirt_GuildTabard_01
+## AddonCompartmentFunc: GuildFinderForever_OnAddonCompartmentClick
+## AddonCompartmentFuncOnEnter: GuildFinderForever_OnAddonCompartmentEnter
+## AddonCompartmentFuncOnLeave: GuildFinderForever_OnAddonCompartmentLeave
 
 # Libraries (.pkgmeta externals; tools/fetch-libs.sh for local dev)
 Libs\LibStub\LibStub.lua
@@ -25,6 +29,23 @@ Core\Database.lua
 Core\SlashCommands.lua
 Core\Channel.lua
 Core\Comm.lua
+Core\Serializer.lua
+Core\Constants.lua
+Core\Ads.lua
+Core\Store.lua
+Core\Sync.lua
+Core\MyAds.lua
+Core\Search.lua
+Core\Verify.lua
 
-# Phase 1 feasibility test
+# UI
+UI\Widgets.lua
+UI\MainFrame.lua
+UI\SearchTab.lua
+UI\MyAdTab.lua
+UI\MinimapButton.lua
+UI\Settings.lua
+UI\Commands.lua
+
+# Transport test tools (/gff probe)
 Probe\Probe.lua

@@ -2,8 +2,8 @@ local _, ns = ...
 
 local L = ns.L
 
--- Subcommands register themselves with ns:RegisterCommand; `/gff` without a
--- known subcommand prints the list.
+-- Subcommands register themselves with ns:RegisterCommand; `/gff` alone runs
+-- ns.defaultCommand (opens the window), an unknown subcommand prints the list.
 local commands = {}
 local order = {}
 
@@ -32,6 +32,8 @@ SlashCmdList.GUILDFINDERFOREVER = function(input)
 	local command = commands[name]
 	if command then
 		command.handler(rest)
+	elseif name == "" and ns.defaultCommand then
+		ns.defaultCommand()
 	else
 		if name ~= "" and name ~= "help" then
 			ns:Print(L.UNKNOWN_COMMAND, name)

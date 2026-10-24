@@ -16,49 +16,100 @@ running the addon and are cached locally.
   A multi-part message interrupted by a starting lockdown is lost; the sync
   repairs that later.
 
-## Sync (phase 2)
+## Data model (`Core/Ads.lua`, `Core/Store.lua`)
 
-1. On login a client announces its inventory: number of ads + hash over
-   (id, version).
-2. Clients whose inventory differs answer with a list of (id, version) –
-   after a random delay; an answer is cancelled when someone else already
-   answered the same announcement.
-3. The client requests only the ads it is missing or has in an older version.
+Ads are flat tables with short keys, identical in the saved data and on the
+wire: `i` id, `k` kind (`P` player / `G` guild), `v` version (server time of
+the last change), `o` owner (`Name-Realm` of whoever posted this version),
+`f` faction, `l` language, `g` goals mask, `t` play times mask (7 days × 3
+slots), `x` text (≤ 200 characters, `|` and control characters stripped),
+`m` game mode as reported by `C_GameRules.GetActiveGameMode()`.
 
-- Version = server timestamp (`GetServerTime()`) of the last change.
-- Ads expire after 14 days; the owner renews them on login.
-- Deleted ads spread as tombstones (id + version) until they expire.
-- Limits: maximum size per ad, maximum number of cached ads, per-sender
-  rate limit.
+- **Player ad:** id `P:<Name-Realm>`, one per character; `c` class file,
+  `lv` level, `r` roles mask.
+- **Guild ad:** id `G:<Guild>-<Realm>`, one per guild; `n` guild name (from
+  `GetGuildInfo("player")`, not editable), `gm` member count, `r` wanted
+  roles. Only members with invite rights post it; the newest version wins.
+  When the author of the current version leaves the guild, the ad is
+  withdrawn.
+- **Tombstone:** `d = true` plus `i`, `k`, `v`, `o`; replaces a withdrawn ad
+  until it expires.
+- Every received ad goes through `Ads.Sanitize`, which copies only known
+  fields, checks types, ranges and the id/owner relation, and rejects
+  versions older than 14 days or more than 1 h in the future.
+- Ads and tombstones expire 14 days after their version. Owners renew their
+  ads once a day on login (and after a level-up).
+- The cache holds at most 3000 entries; the oldest are dropped first,
+  tombstones before ads, own ads never.
+- Local-only state (never sent): hidden ads, blocked characters/guilds,
+  `/who` results.
 
-## Ads
+## Sync protocol (`Core/Sync.lua`)
 
-Shared fields: faction, ruleset, language, play times, goals
-(raid/PvP/leveling/social), short free text.
+Messages are serialized tables (`Core/Serializer.lua`: length-prefixed
+strings, no code execution, depth and size limits), compressed and encoded by
+`ns.Comm`, and broadcast on the channel:
 
-- **Player ad:** one per character; class, roles, level.
-- **Guild ad:** one per guild (key = guild). Only members with invite rights
-  can post it, only for their own guild; the guild name comes from
-  `GetGuildInfo("player")` and is not editable. The newest version wins.
-  Leaving the guild withdraws the ad.
+| Type | Fields | Purpose |
+|------|--------|---------|
+| `H` hello | nonce, 16 bucket summaries | sent after joining the channel and every 15 min |
+| `I` inventory | nonce, target, own summaries, covered buckets, `(id, version)` list | answer to a hello whose summaries differ |
+| `R` request | target, ids | ads the target listed that the sender lacks or has older |
+| `A` ads | up to 15 ads/tombstones | own changes, answers to requests, pushes |
 
-## Abuse protection (phase 4)
+1. Every id falls into one of 16 buckets. A bucket summary is the
+   order-independent sum of `hash(id .. version)` over its entries, so two
+   caches with equal summaries hold the same versions there.
+2. A client receiving a hello with different summaries answers after a random
+   1.5–6 s delay. It cancels its answer once two others answered, or as soon
+   as one answer carries the same summaries as its own cache.
+3. For buckets the hello sender has nothing in, the answer is the ads
+   themselves; for the others an inventory of at most 400 entries per
+   message.
+4. The hello sender requests what it lacks and pushes what the responder
+   lacks in the covered buckets. Since everything is broadcast, every
+   listener picks up ads it is missing from any `A` message.
 
-- "Contact" runs a `/who` on the poster. A matching guild shows a "verified"
-  check; a mismatch marks the ad as suspicious and hides it.
-- Local block list and a "Hide" button.
+Limits: incoming messages per sender (token bucket, 40, +1 per 2 s), 400 ads
+served per requester per 10 min, 100 ids per request. Sync traffic uses
+ChatThrottleLib priority `BULK`, own changes `NORMAL`.
 
-## UI (phase 3)
+Known limitation: nothing is signed. A client can forge ads or tombstones
+for others; owners overwrite forgeries by renewing, and the `/who` check
+below catches mismatching guild/class claims.
 
-Own window (no AceGUI), slash command and minimap button. Tabs "Find guilds",
-"Find players", "My ad": filters, result list with match score, detail view,
-"Contact" opens a whisper.
+## Abuse protection (`Core/Verify.lua`, `Core/Store.lua`)
+
+- "Contact" opens a whisper and runs a `/who` on the poster. For a guild ad
+  the poster must be in that guild, for a player ad the class must match.
+  A match shows "checked via /who", a mismatch marks the ad suspicious and
+  hides it. An offline poster gives no verdict.
+- "Hide" hides one ad (undo: "Show hidden ads"), "Block" hides all ads of a
+  character or guild (`/gff blocked`, `/gff unblock <name>`).
+
+## UI (`UI/`)
+
+Own window (`PortraitFrameTemplate`, no AceGUI), slash command `/gff`,
+minimap button, addon compartment entry and a settings page. Tabs:
+
+- **Find guilds / Find players:** filters (search text, faction or class,
+  roles, level, language, goals, "like my ad" play times, same ruleset),
+  result list sorted by match score, detail view with play time grid and
+  Contact / Hide / Block. Filters are saved per account.
+- **My ad:** player ad of the character, or – with invite rights – the
+  guild ad; roles, goals, language, play time grid, short text, status,
+  publish and withdraw.
+
+The match score (0–100) weighs shared goals (3), shared play times (3),
+roles (2) and language (1) against the searcher's own ad, overridden by the
+filter values where set.
 
 ## Phases
 
-0. Repository scaffolding
-1. Feasibility test (`Probe/`, [`FEASIBILITY.md`](FEASIBILITY.md))
-2. Data model + protocol
-3. UI
-4. Abuse protection
+0. Repository scaffolding – done
+1. Feasibility test (`Probe/`, [`FEASIBILITY.md`](FEASIBILITY.md)) – built,
+   in-game results pending
+2. Data model + protocol – built
+3. UI – built
+4. Abuse protection – built
 5. Beta test + release
