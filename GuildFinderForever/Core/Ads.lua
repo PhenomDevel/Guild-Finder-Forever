@@ -168,6 +168,7 @@ function Ads.BuildGuildAd(form)
 	}, form)
 	if C.HasBit(ad.g or 0, C.GOAL_RAID) then
 		ad.ps, ad.cl, ad.rd, ad.rn = form.style, form.classes, form.raidDays, form.raidsPerWeek
+		ad.cr = form.classRoles
 		ad.rs, ad.re = form.raidStart, form.raidEnd
 	end
 	ad.i = Ads.GuildAdId(guild, realm)
@@ -204,6 +205,20 @@ local function Int(value, min, max)
 		return nil
 	end
 	return value
+end
+
+-- Role digits only for wanted classes; nil when none is left.
+function Ads.CleanClassRoles(value, classes)
+	if type(value) ~= "string" or IsSecret(value) or #value > C.MAX_CLASS_ID or not value:find("^[0-7]*$") then
+		return nil
+	end
+	local clean
+	for classID = 1, #value do
+		if C.HasBit(classes, C.ClassBit(classID)) then
+			clean = C.SetClassRoles(clean, classID, C.GetClassRoles(value, classID))
+		end
+	end
+	return clean
 end
 
 -- Free text: drop "|" (UI escape sequences: colors, links, textures) and
@@ -279,6 +294,7 @@ function Ads.Sanitize(raw)
 		if C.HasBit(ad.g, C.GOAL_RAID) then
 			ad.ps = Int(raw.ps, 1, #C.STYLES)
 			ad.cl = Int(raw.cl, 0, C.ALL_CLASSES)
+			ad.cr = ad.cl and Ads.CleanClassRoles(raw.cr, ad.cl)
 			ad.rd = Int(raw.rd, 0, C.ALL_DAYS)
 			ad.rn = Int(raw.rn, 1, 7)
 			ad.rs = Int(raw.rs, 0, 24 * 60 - 1)

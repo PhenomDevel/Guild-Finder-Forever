@@ -34,7 +34,7 @@ C.SLOTS = { L.SLOT_AFTERNOON, L.SLOT_EVENING, L.SLOT_NIGHT }
 C.ALL_TIMES = 2 ^ 21 - 1
 
 -- Raid details of a guild ad, only with the raid goal set:
---   ps = style, cl = wanted classes, rd = raid days (bit day - 1),
+--   ps = style, cl = wanted classes, cr = their roles, rd = raid days (bit day - 1),
 --   rn = raids per week, rs/re = start/end in minutes after midnight
 --   (realm time; end < start runs past midnight). Missing = not stated.
 C.GOAL_RAID = 1
@@ -62,9 +62,39 @@ function C.StyleName(value)
 end
 
 -- Wanted classes (cl): bit (classID - 1); 0 = any class. Room for 20 IDs.
-C.ALL_CLASSES = 2 ^ 20 - 1
+-- Wanted roles per class (cr): one digit per class ID, the role mask
+-- (0–7, 0 = any role), e.g. "1004" = class 1 as tank, class 4 as damage.
+C.MAX_CLASS_ID = 20
+C.ALL_CLASSES = 2 ^ C.MAX_CLASS_ID - 1
 function C.ClassBit(classID)
 	return 2 ^ (classID - 1)
+end
+
+function C.GetClassRoles(classRoles, classID)
+	return tonumber((classRoles or ""):sub(classID, classID)) or 0
+end
+
+-- Returns the new cr string, nil when no class has roles set.
+function C.SetClassRoles(classRoles, classID, mask)
+	local digits = classRoles or ""
+	digits = digits .. ("0"):rep(math.max(0, classID - #digits))
+	digits = digits:sub(1, classID - 1) .. mask .. digits:sub(classID + 1)
+	digits = digits:gsub("0+$", "")
+	return digits ~= "" and digits or nil
+end
+
+-- Whether a guild ad wants this class (and, when both sides name roles,
+-- one of these roles).
+function C.WantsClass(ad, classID, roles)
+	local classes = ad.cl or 0
+	if classes == 0 then
+		return true
+	end
+	if not C.HasBit(classes, C.ClassBit(classID)) then
+		return false
+	end
+	local wanted = C.GetClassRoles(ad.cr, classID)
+	return wanted == 0 or (roles or 0) == 0 or C.CommonBits(wanted, roles) > 0
 end
 
 function C.TimeBit(day, slot)
@@ -193,6 +223,17 @@ function C.CommonBits(a, b)
 		flag = flag * 2
 	end
 	return count
+end
+
+-- "Tank, Damage" for a roles mask.
+function C.RoleNames(roles)
+	local parts = {}
+	for _, role in ipairs(C.ROLES) do
+		if C.HasBit(roles or 0, role.bit) then
+			parts[#parts + 1] = role.label
+		end
+	end
+	return table.concat(parts, ", ")
 end
 
 -- "Raid, Social" for a goals mask.
