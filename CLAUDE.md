@@ -1,6 +1,7 @@
 # Guild Finder Forever – notes for Claude
 
-World of Warcraft **Forever** addon (Interface 16001): an in-game marketplace
+World of Warcraft **Forever** addon (Interface 16001; also loads on retail
+Midnight for testing until Forever launches): an in-game marketplace
 where players post "looking for guild" ads, guilds post recruiting ads, and
 both sides search each other with filters. Forever has no Blizzard guild
 finder and no realm list. Forever runs on the modern mainline API (Midnight

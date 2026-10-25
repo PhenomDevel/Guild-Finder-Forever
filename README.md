@@ -12,7 +12,8 @@ which has no guild finder of its own.
 Ads are shared between players running the addon over a hidden chat channel
 and cached locally – no website, no external tool.
 
-> **Status:** feature-complete first build, not released yet. The transport
+> **Status:** feature-complete first build, not released yet. Until Forever
+> launches it also loads on retail (Midnight) for testing. The transport
 > test tools from the feasibility phase are still included (`/gff probe`, see
 > [`docs/FEASIBILITY.md`](docs/FEASIBILITY.md)).
 

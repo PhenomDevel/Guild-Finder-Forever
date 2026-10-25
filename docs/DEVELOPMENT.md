@@ -90,6 +90,12 @@ curl -s https://raw.githubusercontent.com/BigWigsMods/packager/master/release.sh
 
 ## Interface version
 
-The `.toc` declares `## Interface: 16001` (Forever beta). If the launch build
-uses a different value, read it via `/dump select(4, GetBuildInfo())` and
-update the `.toc`.
+The `.toc` lists `16001` (Forever beta) plus the retail Midnight builds
+(`120000`, `120001`, `120005`, `120007`). Retail is supported so the addon
+can be tested before Forever launches; both run the same API. If a client
+shows the addon as out of date, read its value via
+`/dump select(4, GetBuildInfo())` and add it to the comma-separated list.
+
+Testing on retail: sync and `/who` only reach the own realm (and its
+connected realms), and the game-mode filter compares retail's game mode.
+Ruleset- or Forever-specific behaviour still needs a check on Forever.
