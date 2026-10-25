@@ -10,9 +10,11 @@ GuildFinderForever/          addon folder (the only thing that gets installed)
   Core/                      namespace, events, DB, channel, comm, slash commands,
                              serializer, ad model, cache, sync, search, /who check
   UI/                        window, tabs, widgets, minimap button, settings
+  Media/Icon.tga             addon icon (64x64, 32-bit TGA), exported from docs/logo/logo.svg
   Dev/                       dev flag (ns.DEV), test ads (/gff testdata); not packaged
   Probe/                     transport test tools (/gff probe); not packaged
 docs/                        architecture, feasibility test guide
+  logo/                      logo source (SVG) and 400x400 PNG for CurseForge/Wago
 tools/fetch-libs.sh          fetches the libraries for local development
 .pkgmeta                     packaging config (BigWigs packager)
 ```

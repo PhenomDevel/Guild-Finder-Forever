@@ -9,7 +9,7 @@ ns.MinimapButton = MinimapButton
 local L = ns.L
 
 local RADIUS_OFFSET = 10
-local ICON = "Interface\\Icons\\INV_Shirt_GuildTabard_01"
+local ICON = "Interface\\AddOns\\GuildFinderForever\\Media\\Icon"
 
 ns.dbDefaults.settings.minimapHidden = false
 ns.dbDefaults.settings.minimapAngle = 200
@@ -64,7 +64,6 @@ local function Create()
 	icon:SetTexture(ICON)
 	icon:SetSize(20, 20)
 	icon:SetPoint("TOPLEFT", 7, -5)
-	icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
 	local border = button:CreateTexture(nil, "OVERLAY")
 	border:SetTexture("Interface\\Minimap\\MiniMap-TrackingBorder")
 	border:SetSize(53, 53)

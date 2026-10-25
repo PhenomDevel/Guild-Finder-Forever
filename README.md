@@ -1,5 +1,7 @@
 # Guild Finder Forever
 
+<img src="docs/logo/logo-400.png" alt="Guild Finder Forever logo" width="96" align="right">
+
 [![CI](https://github.com/PhenomDevel/Guild-Finder-Forever/actions/workflows/ci.yml/badge.svg)](https://github.com/PhenomDevel/Guild-Finder-Forever/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![WoW Forever](https://img.shields.io/badge/WoW-Forever%2016001-e6b43a)
