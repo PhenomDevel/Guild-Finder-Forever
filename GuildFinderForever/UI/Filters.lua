@@ -222,12 +222,14 @@ local function BuildFilterMenu(root, kind, changed)
 		end
 	end
 	root:CreateTitle(L.FILTER_OTHER)
-	root:CreateCheckbox(L.FILTER_MY_TIMES, function()
-		return filter.myTimes
-	end, function()
-		filter.myTimes = not filter.myTimes
-		changed()
-	end)
+	if C.SHOW_TIMES then
+		root:CreateCheckbox(L.FILTER_MY_TIMES, function()
+			return filter.myTimes
+		end, function()
+			filter.myTimes = not filter.myTimes
+			changed()
+		end)
+	end
 	if kind == Ads.KIND_GUILD then
 		root:CreateCheckbox(L.FILTER_MY_CLASS, function()
 			return filter.myClass
@@ -315,7 +317,7 @@ function Filters.ChipBar(parent, kind, changed)
 				filter.style = nil
 			end }
 		end
-		if filter.myTimes then
+		if filter.myTimes and C.SHOW_TIMES then
 			items[#items + 1] = { L.CHIP_MY_TIMES, function()
 				filter.myTimes = false
 			end }

@@ -31,7 +31,7 @@ local function Matches(ad, filter, profile, myMode)
 	if filter.roles and filter.roles > 0 and C.CommonBits(filter.roles, ad.r) == 0 then
 		return false
 	end
-	if filter.myTimes and profile.times > 0 and (ad.t or 0) > 0 and C.CommonBits(profile.times, ad.t) == 0 then
+	if C.SHOW_TIMES and filter.myTimes and profile.times > 0 and (ad.t or 0) > 0 and C.CommonBits(profile.times, ad.t) == 0 then
 		return false
 	end
 	if filter.sameMode and myMode and ad.m and ad.m ~= myMode then
@@ -83,7 +83,7 @@ function Search.Score(ad, filter, profile)
 		Add(C.CommonBits(goals, ad.g) / C.CountBits(goals), 3)
 	end
 	-- Ads without times (optional for guilds) are neutral here.
-	local times = profile.times or 0
+	local times = C.SHOW_TIMES and profile.times or 0
 	if times > 0 and (ad.t or 0) > 0 then
 		local common = C.CommonBits(times, ad.t)
 		Add(math.min(1, common / math.min(C.CountBits(times), math.max(C.CountBits(ad.t), 1))), 3)

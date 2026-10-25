@@ -31,6 +31,24 @@ local COLUMNS = {
 	{ key = "strip", numeric = true, x = 542, width = 100, label = L.COL_EVENINGS, value = function(r) return C.CountBits(r.ad.t or 0) end },
 	{ key = "match", numeric = true, x = 650, width = 56, label = L.COL_MATCH, value = function(r) return r.score or -1 end },
 }
+-- Without play times the week strip column goes; its width goes to name,
+-- class, language and goals.
+if not C.SHOW_TIMES then
+	local extra = { name = 40, class = 20, lang = 14, goals = 24 }
+	local x
+	for i = #COLUMNS, 1, -1 do
+		if COLUMNS[i].key == "strip" then
+			table.remove(COLUMNS, i)
+		end
+	end
+	for _, column in ipairs(COLUMNS) do
+		if x then
+			column.x = x
+		end
+		column.width = column.width + (extra[column.key] or 0)
+		x = column.x + column.width + (column.key == "icon" and 10 or column.key == "goals" and 8 or 4)
+	end
+end
 local ARROW_UP = "|TInterface\\Buttons\\Arrow-Up-Up:0|t"
 
 local function Column(key)
@@ -183,8 +201,10 @@ local function BuildRow(tab, row)
 	row.lang = Cell("lang")
 	row.goals = W.GoalIcons(hit, 18)
 	row.goals:SetPoint("LEFT", Column("goals").x, 0)
-	row.strip = W.WeekStrip(hit, 12)
-	row.strip:SetPoint("LEFT", Column("strip").x, 0)
+	if C.SHOW_TIMES then
+		row.strip = W.WeekStrip(hit, 12)
+		row.strip:SetPoint("LEFT", Column("strip").x, 0)
+	end
 	row.match = Cell("match", "GameFontNormal")
 
 	-- Expanded part
@@ -251,7 +271,9 @@ local function FillRow(tab, row, result)
 		row.lang:SetText(table.concat(langs, "/"):upper())
 	end
 	row.goals:SetGoals(ad.g)
-	row.strip:SetMask(ad.t)
+	if row.strip then
+		row.strip:SetMask(ad.t)
+	end
 	if result.score then
 		row.match:SetText(result.score .. " %")
 		W.Color(row.match, W.ScoreColor(result.score))

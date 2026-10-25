@@ -125,8 +125,8 @@ Layout follows the v2 sketches. Files:
   classes per role and whether the own class fits; the tooltip names the
   classes; the poster check is in the details only); first-run screen until "Create my ad" / "Just look
   around".
-- `GuildDialog.lua`: details over the dimmed window – left: text, goals,
-  time grid with the own times highlighted; right: raid style, days and
+- `GuildDialog.lua`: details over the dimmed window – left: text, goals
+  (plus the time grid with the own times highlighted when `C.SHOW_TIMES`); right: raid style, days and
   time, wanted classes as class icons grouped by role (or the wanted roles for
   non-raid ads); Whisper / Hide / Block.
 - `Welcome.lua`: welcome dialog on the first start (community driven, few
@@ -134,7 +134,8 @@ Layout follows the v2 sketches. Files:
 - `PlayersTab.lua`: toolbar (role toggles, level range, class, chips,
   search), dense list; the selected row expands inline with the actions.
 - `MyAdTab.lua`: one page of four numbered steps (roles, goals +
-  languages (multi-select), time grid with presets, text); a guild ad with
+  languages (multi-select), time grid with presets (only with
+  `C.SHOW_TIMES`), text); a guild ad with
   the raid goal drops the roles step and gets a second page with style
   cards, schedule and a class × role needs table; live preview of how the other
   side sees the ad with the number of matching ads in the cache, publish /
@@ -142,8 +143,8 @@ Layout follows the v2 sketches. Files:
 
 The match score (0–100) weighs shared goals (3), shared play times (3),
 roles (2), wanted classes (2), raid days with own play time (2) and
-language (1) against the searcher's own ad, overridden by the filter values
-where set. The "same ruleset" filter exists only on Forever; retail has no
+language (1) against the searcher's own ad, overridden by the filter
+values where set. The two time parts only count with `C.SHOW_TIMES`. The "same ruleset" filter exists only on Forever; retail has no
 rulesets.
 
 ## Phases

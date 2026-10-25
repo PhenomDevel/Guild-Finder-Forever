@@ -276,7 +276,9 @@ local function Build(content)
 
 	-- Text
 	local secText = Section("text")
-	controls.text = W.TextArea(secText, 400, 64, C.MAX_TEXT, function(text)
+	-- Taller while the times section is hidden: it uses the free room.
+	local textHeight = C.SHOW_TIMES and 64 or 120
+	controls.text = W.TextArea(secText, 400, textHeight, C.MAX_TEXT, function(text)
 		Draft().text = text
 		Changed()
 	end)
@@ -285,7 +287,7 @@ local function Build(content)
 	local textHint = W.Text(secText, "GameFontDisableSmall")
 	textHint:SetPoint("TOPLEFT", controls.text, "BOTTOMLEFT", 0, -4)
 	textHint:SetText(L.TEXT_HINT)
-	secText:SetHeight(116)
+	secText:SetHeight(textHeight + 52)
 
 	--------------------------------------------------------------------------
 	-- Raid (guild ads with the raid goal): style, schedule, needs per class
@@ -605,24 +607,29 @@ local function Build(content)
 	card:SetPoint("TOPLEFT", 12, -40)
 	card:SetPoint("TOPRIGHT", -12, -40)
 	card:SetHeight(112)
+	controls.card = card
 	controls.cardClass = W.ClassIcon(card, 36)
 	controls.cardClass:SetPoint("TOPLEFT", 10, -10)
 	controls.cardEmblem = W.GuildEmblem(card, 36)
 	controls.cardEmblem:SetPoint("TOPLEFT", 10, -10)
 	controls.cardName = W.Text(card, "GameFontNormal")
 	controls.cardName:SetPoint("TOPLEFT", 54, -10)
-	controls.cardName:SetPoint("RIGHT", -10, 0)
 	controls.cardName:SetWordWrap(false)
+	-- Player ads: week strip next to the name, as in the player list. Guild
+	-- ads: the raid schedule below the name, as on the guild cards.
+	controls.cardStrip = W.WeekStrip(card, 8)
+	controls.cardStrip:SetPoint("TOPRIGHT", -10, -14)
+	controls.cardMeta = W.Text(card, "GameFontHighlightSmall", W.TEXT)
+	controls.cardMeta:SetPoint("TOPLEFT", controls.cardName, "BOTTOMLEFT", 0, -4)
+	controls.cardMeta:SetPoint("RIGHT", -10, 0)
+	controls.cardMeta:SetWordWrap(false)
 	controls.cardText = W.Text(card, "GameFontHighlightSmall", W.TEXT)
-	controls.cardText:SetPoint("TOPLEFT", controls.cardName, "BOTTOMLEFT", 0, -5)
 	controls.cardText:SetPoint("RIGHT", -10, 0)
 	controls.cardText:SetJustifyV("TOP")
 	controls.cardText:SetMaxLines(3)
 	controls.cardText:SetSpacing(2)
 	controls.cardTags = W.GoalTags(card)
 	controls.cardTags:SetPoint("BOTTOMLEFT", 54, 8)
-	controls.cardStrip = W.WeekStrip(card, 8)
-	controls.cardStrip:SetPoint("BOTTOMRIGHT", -10, 14)
 
 	controls.matches = W.Text(preview, "GameFontHighlightSmall", W.MUTED)
 	controls.matches:SetPoint("TOPLEFT", card, "BOTTOMLEFT", 2, -10)
@@ -765,14 +772,35 @@ local function Build(content)
 			controls.cardEmblem:SetGuild(guild, Ads.GetFactionCode())
 			local style = HasRaid(self.mode, draft) and C.StyleName(draft.style)
 			controls.cardName:SetText("|cffffd100" .. guild .. "|r" .. (style and ("  |cff9d9d9d" .. style .. "|r") or ""))
+			local schedule = {}
+			if HasRaid(self.mode, draft) then
+				local raid = { rs = draft.raidStart, re = draft.raidEnd }
+				if (draft.raidDays or 0) > 0 then
+					schedule[#schedule + 1] = C.DaysText(draft.raidDays)
+				end
+				schedule[#schedule + 1] = C.RaidTimeText(raid)
+				if draft.raidsPerWeek then
+					schedule[#schedule + 1] = "|cff9d9d9d" .. L.PER_WEEK:format(draft.raidsPerWeek) .. "|r"
+				end
+			end
+			controls.cardMeta:SetText(table.concat(schedule, "  "))
 		else
 			controls.cardEmblem:Hide()
 			controls.cardClass:Show()
 			local _, classFile = UnitClass("player")
 			controls.cardClass:SetClass(classFile)
-			controls.cardName:SetText("|c" .. W.ClassColorHex(classFile) .. Ads.OwnerName(ns:GetPlayerFullName() or "?")
-				.. "|r  |cff9d9d9d" .. C.ClassName(classFile) .. " · " .. UnitLevel("player") .. "|r")
+			controls.cardName:SetText("|c" .. W.ClassColorHex(classFile) .. Ads.OwnerName(ns:GetPlayerFullName() or "?") .. "|r")
+			controls.cardMeta:SetText("|cff9d9d9d" .. C.ClassName(classFile) .. " · " .. UnitLevel("player") .. "|r")
 		end
+		local guildMode = self.mode == MODE_GUILD
+		local strip = C.SHOW_TIMES and not guildMode
+		controls.cardStrip:SetShown(strip)
+		controls.cardName:SetPoint("RIGHT", strip and controls.cardStrip or controls.card, strip and "LEFT" or "RIGHT", -10, 0)
+		local hasMeta = controls.cardMeta:GetText() ~= nil and controls.cardMeta:GetText() ~= ""
+		controls.cardText:ClearAllPoints()
+		controls.cardText:SetPoint("TOPLEFT", hasMeta and controls.cardMeta or controls.cardName, "BOTTOMLEFT", 0, -5)
+		controls.cardText:SetPoint("RIGHT", controls.card, "RIGHT", -10, 0)
+		controls.cardText:SetMaxLines(hasMeta and 2 or 3)
 		controls.cardText:SetText(text ~= "" and text or ("|cff9d9d9d" .. L.NO_TEXT .. "|r"))
 		controls.cardTags:SetGoals(draft.goals)
 		controls.cardStrip:SetMask(draft.times)
@@ -872,7 +900,8 @@ local function Build(content)
 		controls.wizLine:SetShown(pages ~= nil)
 		controls.footer:SetShown(pages ~= nil)
 		if not pages then
-			local order = { { "roles", -52 }, { "goals", -122 }, { "times", -192 }, { "text", -310 } }
+			local order = C.SHOW_TIMES and { { "roles", -52 }, { "goals", -122 }, { "times", -192 }, { "text", -310 } }
+				or { { "roles", -52 }, { "goals", -122 }, { "text", -192 } }
 			local visible = {}
 			for i, entry in ipairs(order) do
 				sections[entry[1]]:SetNumbered(i)
@@ -896,7 +925,8 @@ local function Build(content)
 		if pages[self.page] == "raid" then
 			ShowSections({ raid = PAGE_TOP })
 		else
-			local order = { { "goals", PAGE_TOP }, { "times", PAGE_TOP - 70 }, { "text", PAGE_TOP - 188 } }
+			local order = C.SHOW_TIMES and { { "goals", PAGE_TOP }, { "times", PAGE_TOP - 70 }, { "text", PAGE_TOP - 188 } }
+				or { { "goals", PAGE_TOP }, { "text", PAGE_TOP - 70 } }
 			local visible = {}
 			for i, entry in ipairs(order) do
 				sections[entry[1]]:SetNumbered(i)
