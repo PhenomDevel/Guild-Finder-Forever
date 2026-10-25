@@ -33,6 +33,7 @@
   results now reach the addon (`SetWhoToUi`).
 - Raid guilds without a class list ("all classes welcome") now also show
   whether your class and roles fit.
+- Player list: languages on their own line in the row details.
 - New ads start with all play times ticked; new "always" preset for play times.
 - Raid cards: number of wanted classes per role instead of class icons, names
   in the card tooltip; the poster check shows only in the details; the
