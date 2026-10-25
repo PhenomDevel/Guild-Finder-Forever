@@ -294,6 +294,18 @@ L.CMD_UNBLOCK_ARG = "name"
 L.CMD_UNBLOCKED = "%s unblocked."
 L.CMD_UNBLOCK_UNKNOWN = "%s is not blocked."
 
+-- Welcome dialog
+L.WELCOME_TITLE = "Welcome to Guild Finder Forever"
+L.WELCOME_SUBTITLE = "Guild recruitment, right in the game"
+L.WELCOME_HEAD1 = "Made by the community"
+L.WELCOME_TEXT1 = "Ads are shared directly between players running the addon, with no server or website behind it. Everything you see comes from other players."
+L.WELCOME_HEAD2 = "Few ads at first"
+L.WELCOME_TEXT2 = "The addon is new, so the lists start out small. They fill up as more players and guilds post an ad and are online."
+L.WELCOME_HEAD3 = "Help it grow"
+L.WELCOME_TEXT3 = "Post your ad and tell your guild and friends about the addon. Every ad makes the search better for everyone."
+L.WELCOME_OK = "Got it"
+L.WELCOME_DEV = "Development version: this dialog shows on every login."
+
 -- Guild ad wizard, raid needs, details, test data
 L.WIZ_GOALS = "Goals & language"
 L.WIZ_RAID = "Raid"

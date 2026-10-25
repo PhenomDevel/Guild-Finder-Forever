@@ -291,6 +291,18 @@ L.CMD_UNBLOCK_ARG = "nombre"
 L.CMD_UNBLOCKED = "%s desbloqueado."
 L.CMD_UNBLOCK_UNKNOWN = "%s no está bloqueado."
 
+-- Welcome dialog
+L.WELCOME_TITLE = "Bienvenido a Guild Finder Forever"
+L.WELCOME_SUBTITLE = "Reclutamiento de hermandades, dentro del juego"
+L.WELCOME_HEAD1 = "Hecho por la comunidad"
+L.WELCOME_TEXT1 = "Los anuncios se intercambian directamente entre jugadores con el addon, sin servidor ni web detrás. Todo lo que ves viene de otros jugadores."
+L.WELCOME_HEAD2 = "Pocos anuncios al principio"
+L.WELCOME_TEXT2 = "El addon es nuevo, así que al principio las listas son pequeñas. Se llenan a medida que más jugadores y hermandades publican un anuncio y están conectados."
+L.WELCOME_HEAD3 = "Ayuda a crecer"
+L.WELCOME_TEXT3 = "Publica tu anuncio y habla del addon a tu hermandad y a tus amigos. Cada anuncio mejora la búsqueda para todos."
+L.WELCOME_OK = "Entendido"
+L.WELCOME_DEV = "Versión de desarrollo: este diálogo aparece en cada inicio de sesión."
+
 -- Guild ad wizard, raid needs, details, test data
 L.WIZ_GOALS = "Objetivos e idioma"
 L.WIZ_RAID = "Banda"

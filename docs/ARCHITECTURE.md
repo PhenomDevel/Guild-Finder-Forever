@@ -117,6 +117,8 @@ Layout follows the v2 sketches. Files:
   time grid with the own times highlighted; right: raid style, days and
   time, wanted classes grouped by role with the own class marked (or the
   wanted roles for non-raid ads); Whisper / Hide / Block.
+- `Welcome.lua`: welcome dialog on the first start (community driven, few
+  ads at first); every login when `ns.DEV` is set by the unpackaged `Dev/`.
 - `PlayersTab.lua`: toolbar (role toggles, level range, class, chips,
   search), dense list; the selected row expands inline with the actions.
 - `MyAdTab.lua`: player ad as four numbered steps (roles, goals +

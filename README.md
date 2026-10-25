@@ -1,49 +1,43 @@
 # Guild Finder Forever
 
-An in-game marketplace for guild recruitment in World of Warcraft **Forever**,
-which has no guild finder of its own.
+[![CI](https://github.com/PhenomDevel/Guild-Finder-Forever/actions/workflows/ci.yml/badge.svg)](https://github.com/PhenomDevel/Guild-Finder-Forever/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![WoW Forever](https://img.shields.io/badge/WoW-Forever%2016001-e6b43a)
+![Retail](https://img.shields.io/badge/retail-Midnight%20(testing)-555)
 
-- **Players** post a "looking for guild" ad per character: class, roles,
-  level, play times, goals and a short text.
-- **Guilds** post one recruiting ad per guild, by members who may invite.
-  Raiding guilds add raid style (casual, semi-hardcore, hardcore), raid
-  days, raids per week, raid time and wanted classes, each with the wanted
-  roles.
-- Both sides search each other with filters (faction, ruleset, language,
-  play times, goals) and contact the poster with one click.
+**The guild finder that World of Warcraft Forever doesn't have.**
 
-Ads are shared between players running the addon over a hidden chat channel
-and cached locally – no website, no external tool.
+Players post a "looking for guild" ad, guilds post a recruiting ad, and both
+sides browse each other in game. There's no website and no external tool:
+ads go from player to player over a hidden addon channel.
 
-> **Status:** feature-complete first build, not released yet. Until Forever
-> launches it also loads on retail (Midnight) for testing. The transport
-> test tools from the feasibility phase are still included (`/gff probe`, see
-> [`docs/FEASIBILITY.md`](docs/FEASIBILITY.md)).
+- 🔎 **Find guilds**: cards sorted by how well a guild fits your own ad
+- 🧑‍🤝‍🧑 **Find players**: a compact list with role, level and class filters
+- 📝 **My ad**: create your ad in under a minute, with a live preview
+- ⚔️ **Raid details**: style, raid days and time, and wanted classes per role
+- 💬 **One-click contact**: whisper the poster, with a `/who` check
+- 🌍 **7 languages**: English, Deutsch, Français, Español, Italiano, Русский, Português
+
+> **Community driven.** Guild Finder only knows what other players running
+> it share. Right after release the lists will be short, and they grow with
+> every player and guild that posts an ad. Tell your guild and friends!
+
+## Installation
+
+1. Install it with the CurseForge or Wago app, or download the zip from
+   [GitHub releases](https://github.com/PhenomDevel/Guild-Finder-Forever/releases).
+2. For a manual install, extract `GuildFinderForever` into the game
+   client's `Interface/AddOns/` folder (currently `_classic_beta_` for
+   the Forever beta).
+3. Log in. A short welcome explains how it works, and `/gff` opens the window.
+
+Until Forever launches, the addon also loads on retail (Midnight) for testing.
 
 ## Usage
 
 Open the window with `/gff`, the minimap button or the addon compartment.
 
-- **Find guilds:** guild ads as cards, sorted by how well they match your
-  own ad. Narrow them with the search box and filter chips (faction,
-  language, goals, raid style, "wants my class", "my times", and on Forever
-  "same ruleset"). A click opens the details with the
-  guild's play times next to yours and, for raiding guilds, the raid
-  schedule and wanted classes per role (your class highlighted); *Whisper* opens a whisper and checks the
-  poster via `/who`, *Hide* and *Block guild* remove the ad from your results.
-- **Find players:** list of player ads with role, level and class filters;
-  a click expands the row with the text and the same actions.
-- **My ad:** a player ad for the current character, or – as a guild member
-  with invite rights – the ad of your guild, in four short steps with a live
-  preview. A guild ad is a step-by-step form; with the *Raid* goal it gets
-  an extra page for raid style, schedule and a class × role table of
-  wanted classes. Ads are renewed on login and expire after 14 days without one.
-
-On first start a short intro explains the addon. The status line shows
-where the ads come from: the realm on retail, the ruleset on Forever.
-
-Languages: English, German, French, Spanish, Italian, Russian and
-Portuguese (Brazil) – the EU client languages.
+### Chat commands
 
 | Command | |
 |---------|-|
@@ -52,15 +46,82 @@ Portuguese (Brazil) – the EU client languages.
 | `/gff settings` | settings (minimap button, chat notice for new matching ads) |
 | `/gff sync` | ask other players for missing ads |
 | `/gff status` | cache and network status |
+| `/gff blocked`, `/gff unblock <name>` | list / unblock blocked characters and guilds |
 | `/gff debug [on\|off]` | show sync traffic in chat: what is sent and received, from whom, and whether a received ad shows in your search (or why not, e.g. other faction) |
 | `/gff testdata` | add/remove made-up guild and player ads for trying out the UI (development checkouts only; this session only, never shared) |
-| `/gff blocked`, `/gff unblock <name>` | list / unblock blocked characters and guilds |
-| `/gff probe` | transport test tools |
+| `/gff probe` | transport test tools from the feasibility phase ([`docs/FEASIBILITY.md`](docs/FEASIBILITY.md)) |
+
+## Features
+
+### Find guilds
+
+- Guild ads as cards, sorted by match score (shared goals, play times,
+  roles, wanted classes, raid days and language).
+- Raid guilds show their style, raid days, time and wanted classes per role
+  on the card, plus whether your class fits.
+- Search box and filter chips: faction, language, goals, raid style, "wants
+  my class", "my times", and on Forever "same ruleset".
+- Details dialog with the guild's online times next to yours. For raiding
+  guilds it also shows the raid schedule and the wanted classes grouped by
+  role, with your class highlighted.
+- *Whisper* opens a whisper and checks the poster via `/who`. *Hide* and
+  *Block guild* remove the ad from your results.
+
+### Find players
+
+- Dense list of player ads: class, level, roles, goals and times.
+- Filter by role, level range and class. A click expands the row with the
+  text and the same actions.
+
+### My ad
+
+- **Player ad** per character: roles, goals and language, play times, text.
+- **Guild ad** per guild, by members who may invite, as a step-by-step
+  form: goals and language › raid › online times › text.
+- With the *Raid* goal you get an extra page with style cards (casual,
+  semi-hardcore, hardcore), raid days, start and end time, raids per week,
+  and a class × role table of wanted classes.
+- Live preview of how the other side sees your ad, with the number of
+  matching ads in your cache.
+- Ads are renewed on login and expire after 14 days without one.
+
+### Notifications
+
+- Optional chat notice when a new matching ad arrives.
+- The status line shows where ads come from: the realm on retail, the
+  ruleset on Forever.
+
+## FAQ
+
+**Why do I see so few ads?**
+Ads come only from players running the addon. Each client caches what it
+has seen and passes it on, so the lists grow with every player online.
+`/gff sync` asks others for ads you're missing.
+
+**Can I see the other faction?**
+Not live: the addon channel is separate per faction. Other-faction ads only
+show up through the account-wide cache, for example from a character of
+yours on the other faction, or from players who changed faction.
+
+**Is anything sent while I'm in a raid encounter?**
+No. During addon message lockdown nothing is sent; messages wait and go
+out afterwards.
+
+**Do my test ads (`/gff testdata`) reach other players?**
+No. They exist only in your current session and are never saved, synced or
+sent.
+
+## Known limitations
+
+- No cross-faction sync (see FAQ).
+- The ruleset list for the "same ruleset" filter is not final until Forever
+  launches.
 
 ## Development
 
 See [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) and
-[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). Bug reports and ideas are
+welcome as [GitHub issues](https://github.com/PhenomDevel/Guild-Finder-Forever/issues).
 
 ## License
 

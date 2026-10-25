@@ -66,9 +66,11 @@ UI\MyAdTab.lua
 UI\MinimapButton.lua
 UI\Settings.lua
 UI\Commands.lua
+UI\Welcome.lua
 
-# Test ads for trying out the UI (/gff testdata); development checkouts only
+# Development checkouts only: dev flag, test ads (/gff testdata)
 #@do-not-package@
+Dev\Dev.lua
 Dev\TestData.lua
 #@end-do-not-package@
 

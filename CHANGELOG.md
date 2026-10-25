@@ -17,6 +17,8 @@
   wanted classes grouped by role; guild cards with a raid line instead of
   the week strip.
 - `/gff testdata`: session-only test ads for trying out the UI.
+- Welcome dialog on first start: the addon is community driven and starts
+  with few ads (development checkouts: on every login).
 - Status line shows the search scope: realm (retail) or ruleset (Forever).
 - Fix "integer overflow" in the serializer on sync (bucket hashes ≥ 2^31).
 - Guild cards and details mark the faction: crest, coloured emblem border
