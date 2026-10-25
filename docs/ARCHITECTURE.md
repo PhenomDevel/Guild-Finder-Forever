@@ -127,9 +127,8 @@ Layout follows the v2 sketches. Files:
   around".
 - `GuildDialog.lua`: details over the dimmed window – left: text, goals,
   time grid with the own times highlighted; right: raid style, days and
-  time, wanted classes as class icons grouped by role with the own class
-  ringed (or the
-  wanted roles for non-raid ads); Whisper / Hide / Block.
+  time, wanted classes as class icons grouped by role (or the wanted roles for
+  non-raid ads); Whisper / Hide / Block.
 - `Welcome.lua`: welcome dialog on the first start (community driven, few
   ads at first); every login when `ns.DEV` is set by the unpackaged `Dev/`.
 - `PlayersTab.lua`: toolbar (role toggles, level range, class, chips,

@@ -214,13 +214,12 @@ local function Create()
 	unfit:SetText(L.UNFIT)
 end
 
--- Class chip: class icon, name in the tooltip; a green ring marks your class.
+-- Class chip: class icon, name in the tooltip.
 local function ClassChip(parent)
-	local chip = CreateFrame("Frame", nil, parent, "BackdropTemplate")
+	local chip = CreateFrame("Frame", nil, parent)
 	chip:SetSize(CHIP_SIZE, CHIP_SIZE)
-	chip:SetBackdrop({ edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1 })
-	chip.icon = W.ClassIcon(chip, CHIP_SIZE - 4)
-	chip.icon:SetPoint("CENTER")
+	chip.icon = W.ClassIcon(chip, CHIP_SIZE)
+	chip.icon:SetAllPoints()
 	chip:EnableMouse(true)
 	chip:SetScript("OnEnter", function(self)
 		GameTooltip:SetOwner(self, "ANCHOR_TOP")
@@ -230,10 +229,9 @@ local function ClassChip(parent)
 	chip:SetScript("OnLeave", function()
 		GameTooltip:Hide()
 	end)
-	function chip:SetClass(class, mine)
+	function chip:SetClass(class)
 		self.class = class
 		self.icon:SetClass(class.key)
-		self:SetBackdropBorderColor(W.GREEN[1], W.GREEN[2], W.GREEN[3], mine and 1 or 0)
 	end
 	return chip
 end
@@ -241,8 +239,6 @@ end
 -- Wanted classes grouped by role, chips wrapping in the right column;
 -- returns the y below the list.
 local function LayoutNeeds(ad, top)
-	local _, myClass = UnitClass("player")
-	local fit, fitRoles = Filters.ClassFit(ad)
 	local needs = C.NeedsByRole(ad)
 	local y = top
 	for _, row in ipairs(dialog.needRows) do
@@ -255,7 +251,7 @@ local function LayoutNeeds(ad, top)
 				chip = ClassChip(dialog.side)
 				row.chips[i] = chip
 			end
-			chip:SetClass(class, fit == "fit" and class.key == myClass and C.HasBit(fitRoles, row.bit))
+			chip:SetClass(class)
 			if x > 0 and x + CHIP_SIZE > dialog.chipWidth then
 				x, lineY = 0, lineY - CHIP_SIZE - CHIP_GAP
 			end
