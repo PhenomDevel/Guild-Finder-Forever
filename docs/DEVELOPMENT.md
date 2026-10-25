@@ -7,15 +7,15 @@ GuildFinderForever/          addon folder (the only thing that gets installed)
   GuildFinderForever.toc     load order, interface version, SavedVariables
   Libs/                      libraries (git-ignored, see below)
   Locales/                   enUS (base), deDE, frFR, esES, itIT, ruRU, ptBR
-  Core/                      namespace, events, DB, channel, comm, slash commands,
+  Media/                     Logo.tga (addon icon, 64x64, 32-bit TGA from docs/logo/logo.svg)
+  Core/                      setup (Init.lua), events, DB, channel, comm, slash commands,
                              serializer, ad model, cache, sync, search, /who check
   UI/                        window, tabs, widgets, minimap button, settings
-  Media/Icon.tga             addon icon (64x64, 32-bit TGA), exported from docs/logo/logo.svg
   Dev/                       dev flag (ns.DEV), test ads (/gff testdata); not packaged
   Probe/                     transport test tools (/gff probe); not packaged
-docs/                        architecture, feasibility test guide
-  logo/                      logo source (SVG) and 400x400 PNG for CurseForge/Wago
-tools/fetch-libs.sh          fetches the libraries for local development
+docs/                        developer docs, architecture, feasibility test guide, release
+                             process, logo/ (logo.svg, README logo, 400x400 for CurseForge/Wago)
+tools/                       fetch-libs.sh (libraries for local development)
 .pkgmeta                     packaging config (BigWigs packager)
 ```
 
