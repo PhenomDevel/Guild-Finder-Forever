@@ -20,9 +20,32 @@ local VERY_GOOD = 75
 
 local MODE_PLAYER, MODE_GUILD = "player", "guild"
 
-local function SameDraft(draft, ad)
+local RAID_BLOCK = 112 -- height of the raid details plus gap
+local TEXT_HEIGHT, TEXT_HEIGHT_RAID = 64, 44
+
+local function HasRaid(mode, draft)
+	return mode == MODE_GUILD and C.HasBit(draft.goals or 0, C.GOAL_RAID)
+end
+
+local function SameRaid(draft, ad)
+	local start = draft.raidStart
+	return draft.style == ad.ps and (draft.classes or 0) == (ad.cl or 0) and (draft.raidDays or 0) == (ad.rd or 0)
+		and draft.raidsPerWeek == ad.rn and start == ad.rs and (start and draft.raidEnd) == ad.re
+end
+
+local function SameDraft(mode, draft, ad)
 	return ad ~= nil and draft.roles == (ad.r or 0) and draft.goals == ad.g and draft.times == ad.t
 		and draft.lang == ad.l and Ads.CleanText(draft.text) == ad.x
+		and (not HasRaid(mode, draft) or SameRaid(draft, ad))
+end
+
+-- { value, label } list for the raid time dropdowns; nil = not stated.
+local function TimeOptions()
+	local list = { { value = nil, label = "–" } }
+	for minutes = 0, 24 * 60 - 1, C.TIME_STEP do
+		list[#list + 1] = { value = minutes, label = C.FormatTime(minutes) }
+	end
+	return list
 end
 
 -- Gold pill with role icon and label.
@@ -144,7 +167,7 @@ local function Build(content)
 		controls.goals[i] = chip
 	end
 	local langHeader = W.Header(form, L.FILTER_LANGUAGE, "GameFontNormalLarge")
-	langHeader:SetPoint("TOPLEFT", 346, -124)
+	langHeader:SetPoint("TOPLEFT", step2, "TOPLEFT", 332, -2)
 	controls.lang = W.Dropdown(form, 150, function()
 		local list = {}
 		for _, lang in ipairs(C.LANGUAGES) do
@@ -157,7 +180,122 @@ local function Build(content)
 		Draft().lang = value
 		Changed()
 	end)
-	controls.lang:SetPoint("TOPLEFT", 346, -150)
+	controls.lang:SetPoint("TOPLEFT", step2, "TOPLEFT", 332, -28)
+
+	-- Raid details (guild ads with the raid goal)
+	local raid = W.Panel(form, { 0.09, 0.08, 0.06, 1 }, { 0.35, 0.29, 0.15, 1 })
+	raid:SetPoint("TOPLEFT", step2, "TOPLEFT", STEP_X - 14, -64)
+	raid:SetPoint("RIGHT", form, "RIGHT", -14, 0)
+	raid:SetHeight(RAID_BLOCK - 8)
+	controls.raid = raid
+	local LABEL_WIDTH = 78
+	local function RowLabel(text, y)
+		local label = W.Text(raid, "GameFontNormalSmall", W.GOLD)
+		label:SetPoint("TOPLEFT", 10, y - 5)
+		label:SetWidth(LABEL_WIDTH - 6)
+		label:SetJustifyH("LEFT")
+		label:SetWordWrap(false)
+		label:SetText(text)
+		return label
+	end
+
+	RowLabel(L.FILTER_STYLE, -8)
+	controls.styles = {}
+	x = LABEL_WIDTH + 10
+	for i, style in ipairs(C.STYLES) do
+		local chip = W.Chip(raid, function()
+			local draft = Draft()
+			draft.style = draft.style ~= style.value and style.value or nil
+			tab:UpdateRaid()
+			Changed()
+		end)
+		chip:SetLabel(style.label)
+		chip:SetPoint("TOPLEFT", x, -8)
+		chip.value = style.value
+		x = x + chip:GetWidth() + 4
+		controls.styles[i] = chip
+	end
+	local perWeekOptions = { { value = nil, label = "–" } }
+	for count = 1, 7 do
+		perWeekOptions[#perWeekOptions + 1] = { value = count, label = L.PER_WEEK_COUNT:format(count) }
+	end
+	controls.perWeek = W.Dropdown(raid, 64, perWeekOptions, function()
+		return Draft().raidsPerWeek
+	end, function(value)
+		Draft().raidsPerWeek = value
+		Changed()
+	end)
+	controls.perWeek:SetPoint("TOPRIGHT", -8, -6)
+	local perWeekLabel = W.Text(raid, "GameFontNormalSmall", W.GOLD)
+	perWeekLabel:SetPoint("RIGHT", controls.perWeek, "LEFT", -6, 0)
+	perWeekLabel:SetText(L.RAIDS_PER_WEEK)
+
+	RowLabel(L.RAID_DAYS, -40)
+	controls.raidDays = {}
+	for day, name in ipairs(C.DAYS) do
+		local chip = W.Chip(raid, function(self)
+			self:SetActive(not self.active)
+			local draft = Draft()
+			draft.raidDays = C.SetBit(draft.raidDays or 0, C.DayBit(day), self.active)
+			Changed()
+		end)
+		chip:SetLabel(name)
+		chip:SetWidth(30)
+		chip:SetPoint("TOPLEFT", LABEL_WIDTH + 10 + (day - 1) * 32, -40)
+		chip.bit = C.DayBit(day)
+		controls.raidDays[day] = chip
+	end
+	controls.raidEnd = W.Dropdown(raid, 70, TimeOptions, function()
+		return Draft().raidEnd
+	end, function(value)
+		Draft().raidEnd = value
+		Changed()
+	end)
+	controls.raidEnd:SetPoint("TOPRIGHT", -8, -38)
+	local dash = W.Text(raid, "GameFontHighlightSmall")
+	dash:SetPoint("RIGHT", controls.raidEnd, "LEFT", -3, 0)
+	dash:SetText("–")
+	controls.raidStart = W.Dropdown(raid, 70, TimeOptions, function()
+		return Draft().raidStart
+	end, function(value)
+		Draft().raidStart = value
+		Changed()
+	end)
+	controls.raidStart:SetPoint("RIGHT", dash, "LEFT", -3, 0)
+	W.Tooltip(controls.raidStart, L.RAID_TIME, L.RAID_TIME_TIP)
+	W.Tooltip(controls.raidEnd, L.RAID_TIME, L.RAID_TIME_TIP)
+
+	RowLabel(L.WANTED_CLASSES, -72)
+	controls.classes = {}
+	for i, class in ipairs(C.GetClasses()) do
+		local icon = W.ClassIcon(raid, 22)
+		icon:SetClass(class.key)
+		icon:SetPoint("TOPLEFT", LABEL_WIDTH + 10 + (i - 1) * 25, -72)
+		icon:EnableMouse(true)
+		icon.bit = C.ClassBit(class.id)
+		icon:SetScript("OnMouseDown", function(self)
+			local draft = Draft()
+			draft.classes = C.SetBit(draft.classes or 0, self.bit, not C.HasBit(draft.classes or 0, self.bit))
+			tab:UpdateRaid()
+			Changed()
+		end)
+		icon:SetScript("OnEnter", function(self)
+			GameTooltip:SetOwner(self, "ANCHOR_TOP")
+			GameTooltip:SetText(class.label, 1, 1, 1)
+			GameTooltip:AddLine(L.CLASSES_HINT, nil, nil, nil, true)
+			GameTooltip:Show()
+		end)
+		icon:SetScript("OnLeave", function()
+			GameTooltip:Hide()
+		end)
+		controls.classes[i] = icon
+		x = LABEL_WIDTH + 10 + i * 25
+	end
+	controls.classesHint = W.Text(raid, "GameFontDisableSmall")
+	controls.classesHint:SetPoint("TOPLEFT", x + 4, -77)
+	controls.classesHint:SetPoint("RIGHT", raid, "RIGHT", -8, 0)
+	controls.classesHint:SetJustifyH("LEFT")
+	controls.classesHint:SetWordWrap(false)
 
 	-- 3: play times with presets
 	local step3 = Step(3, -192)
@@ -190,7 +328,7 @@ local function Build(content)
 
 	-- 4: text
 	local step4 = Step(4, -310)
-	controls.text = W.TextArea(form, 400, 64, C.MAX_TEXT, function(text)
+	controls.text = W.TextArea(form, 400, TEXT_HEIGHT, C.MAX_TEXT, function(text)
 		Draft().text = text
 		Changed()
 	end)
@@ -292,6 +430,9 @@ local function Build(content)
 		if ad then
 			local draft = Draft()
 			draft.roles, draft.goals, draft.times, draft.lang, draft.text = ad.r or 0, ad.g, ad.t, ad.l, ad.x
+			if tab.mode == MODE_GUILD then
+				MyAds.CopyRaid(draft, ad)
+			end
 			tab:Refresh()
 		end
 	end)
@@ -330,7 +471,7 @@ local function Build(content)
 		local draft = Draft()
 		local canEdit = self.mode == MODE_PLAYER or Ads.CanInvite()
 		if ad then
-			local dirty = not SameDraft(draft, ad)
+			local dirty = not SameDraft(self.mode, draft, ad)
 			if dirty then
 				SetBadge(L.STATUS_CHANGED, W.GOLD)
 			else
@@ -368,7 +509,8 @@ local function Build(content)
 			controls.cardEmblem:Show()
 			local guild = Ads.GetGuild() or "?"
 			controls.cardEmblem:SetGuild(guild, Ads.GetFactionCode())
-			controls.cardName:SetText("|cffffd100" .. guild .. "|r")
+			local style = HasRaid(self.mode, draft) and C.StyleName(draft.style)
+			controls.cardName:SetText("|cffffd100" .. guild .. "|r" .. (style and ("  |cff9d9d9d" .. style .. "|r") or ""))
 		else
 			controls.cardEmblem:Hide()
 			controls.cardClass:Show()
@@ -385,7 +527,11 @@ local function Build(content)
 		local otherKind = self.mode == MODE_GUILD and Ads.KIND_PLAYER or Ads.KIND_GUILD
 		local faction = Ads.GetFactionCode()
 		local filter = { kind = otherKind, factions = { [faction] = true }, sameMode = true }
-		local profile = { goals = draft.goals or 0, times = draft.times or 0, roles = draft.roles or 0, lang = draft.lang }
+		local profile = {
+			goals = draft.goals or 0, times = draft.times or 0, roles = draft.roles or 0, lang = draft.lang,
+			classes = self.mode == MODE_GUILD and HasRaid(self.mode, draft) and draft.classes or 0,
+			classId = self.mode == MODE_PLAYER and select(3, UnitClass("player")) or nil,
+		}
 		local results = Search.Run(filter, profile)
 		local good = 0
 		for _, result in ipairs(results) do
@@ -406,8 +552,40 @@ local function Build(content)
 		steps[4].circle:SetDone(Ads.CleanText(draft.text or "") ~= "")
 	end
 
+	-- Shows the raid details and moves steps 3 and 4 below them.
+	function tab:UpdateLayout()
+		local raidShown = HasRaid(self.mode, Draft())
+		controls.raid:SetShown(raidShown)
+		local shift = raidShown and RAID_BLOCK or 0
+		local steps = controls.steps
+		steps[3].circle:ClearAllPoints()
+		steps[3].circle:SetPoint("TOPLEFT", 14, -192 - shift)
+		steps[4].circle:ClearAllPoints()
+		steps[4].circle:SetPoint("TOPLEFT", 14, -310 - shift)
+		controls.text:SetHeight(raidShown and TEXT_HEIGHT_RAID or TEXT_HEIGHT)
+	end
+
+	function tab:UpdateRaid()
+		local draft = Draft()
+		for _, chip in ipairs(controls.styles) do
+			chip:SetActive(draft.style == chip.value)
+		end
+		for _, chip in ipairs(controls.raidDays) do
+			chip:SetActive(C.HasBit(draft.raidDays or 0, chip.bit))
+		end
+		local classes = draft.classes or 0
+		for _, icon in ipairs(controls.classes) do
+			icon:SetAlpha((classes == 0 or C.HasBit(classes, icon.bit)) and 1 or 0.3)
+		end
+		controls.classesHint:SetText(classes == 0 and L.ANY_CLASS or "")
+		controls.perWeek:Refresh()
+		controls.raidStart:Refresh()
+		controls.raidEnd:Refresh()
+	end
+
 	-- Everything that follows the form while typing.
 	function tab:UpdateLive()
+		self:UpdateLayout()
 		self:UpdateSteps()
 		self:UpdatePreview()
 		self:UpdatePublish()
@@ -472,6 +650,7 @@ local function Build(content)
 			chip:SetActive(C.HasBit(draft.goals, chip.bit))
 		end
 		controls.lang:Refresh()
+		self:UpdateRaid()
 		controls.grid:SetMask(draft.times)
 		controls.text:SetText(draft.text)
 		self:UpdateLive()

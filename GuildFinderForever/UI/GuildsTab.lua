@@ -134,6 +134,9 @@ local function BuildCard(tab, row)
 		if ad.gm then
 			meta[#meta + 1] = L.MEMBERS:format(ad.gm)
 		end
+		if ad.ps then
+			meta[#meta + 1] = C.StyleName(ad.ps)
+		end
 		meta[#meta + 1] = L.AGO:format(W.Duration(GetServerTime() - ad.v))
 		self.meta:SetText(table.concat(meta, " · "))
 		self.text:SetText(ad.x ~= "" and ad.x or ("|cff9d9d9d" .. L.NO_TEXT .. "|r"))

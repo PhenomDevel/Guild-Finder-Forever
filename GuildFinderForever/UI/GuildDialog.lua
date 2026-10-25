@@ -1,3 +1,4 @@
+-- luacheck: read globals GameTooltip
 local _, ns = ...
 
 -- Guild details: a dialog over the dimmed main window with the full ad,
@@ -15,6 +16,7 @@ local Verify = ns.Verify
 local Filters = ns.Filters
 
 local WIDTH, HEIGHT = 580, 430
+local RAID_HEIGHT = 72 -- extra height of the raid section
 local PAD = 20
 
 local overlay, dialog
@@ -120,8 +122,29 @@ local function Create()
 	dialog.noRoles:SetPoint("TOPLEFT", rolesHeader, "BOTTOMLEFT", 0, -8)
 	dialog.noRoles:SetText(L.ANY_ROLE)
 
+	-- Raid details, only for ads with the raid goal.
+	local raid = CreateFrame("Frame", nil, dialog)
+	raid:SetPoint("TOPLEFT", PAD, -224)
+	raid:SetPoint("RIGHT", -PAD, 0)
+	raid:SetHeight(RAID_HEIGHT)
+	dialog.raid = raid
+	local raidHeader = W.Header(raid, L.RAID_DETAILS, "GameFontNormalLarge")
+	raidHeader:SetPoint("TOPLEFT")
+	dialog.raidInfo = W.Text(raid, "GameFontHighlight", W.TEXT)
+	dialog.raidInfo:SetPoint("TOPLEFT", raidHeader, "BOTTOMLEFT", 0, -6)
+	dialog.raidInfo:SetPoint("RIGHT")
+	dialog.raidInfo:SetWordWrap(false)
+	dialog.classesLabel = W.Text(raid, "GameFontNormalSmall", W.GOLD)
+	dialog.classesLabel:SetPoint("TOPLEFT", dialog.raidInfo, "BOTTOMLEFT", 0, -9)
+	dialog.classesLabel:SetText(L.WANTED_CLASSES .. ":")
+	dialog.classIcons = {}
+	dialog.anyClass = W.Text(raid, "GameFontHighlightSmall", W.MUTED)
+	dialog.anyClass:SetPoint("LEFT", dialog.classesLabel, "RIGHT", 6, 0)
+	dialog.anyClass:SetText(L.ANY_CLASS)
+
 	local timesHeader = W.Header(dialog, L.RAID_TIMES, "GameFontNormalLarge")
 	timesHeader:SetPoint("TOPLEFT", PAD, -224)
+	dialog.timesHeader = timesHeader
 	dialog.grid = W.TimeGrid(dialog, 64, 16, false)
 	dialog.grid:SetPoint("TOPLEFT", timesHeader, "BOTTOMLEFT", 0, -6)
 	local legendOn = dialog:CreateTexture(nil, "ARTWORK")
@@ -233,6 +256,63 @@ local function Update()
 		end
 	end
 	dialog.noRoles:SetShown(x == 0)
+
+	local count = 0
+	if (ad.cl or 0) > 0 then
+		for _, class in ipairs(C.GetClasses()) do
+			if C.HasBit(ad.cl, C.ClassBit(class.id)) then
+				count = count + 1
+				local icon = dialog.classIcons[count]
+				if not icon then
+					icon = W.ClassIcon(dialog.raid, 20)
+					icon:SetPoint("LEFT", dialog.classesLabel, "RIGHT", 6 + (count - 1) * 23, 0)
+					icon:EnableMouse(true)
+					icon:SetScript("OnEnter", function(self)
+						GameTooltip:SetOwner(self, "ANCHOR_TOP")
+						GameTooltip:SetText(self.label)
+						GameTooltip:Show()
+					end)
+					icon:SetScript("OnLeave", function()
+						GameTooltip:Hide()
+					end)
+					dialog.classIcons[count] = icon
+				end
+				icon:SetClass(class.key)
+				icon.label = class.label
+				icon:Show()
+			end
+		end
+	end
+	for i = count + 1, #dialog.classIcons do
+		dialog.classIcons[i]:Hide()
+	end
+	dialog.anyClass:SetShown(count == 0)
+
+	local hasRaid = C.HasBit(ad.g or 0, C.GOAL_RAID)
+	dialog.raid:SetShown(hasRaid)
+	dialog.timesHeader:SetPoint("TOPLEFT", PAD, hasRaid and -224 - RAID_HEIGHT or -224)
+	dialog:SetHeight(HEIGHT + (hasRaid and RAID_HEIGHT or 0))
+	if hasRaid then
+		local info = {}
+		info[#info + 1] = C.StyleName(ad.ps)
+		if (ad.rd or 0) > 0 then
+			local days = {}
+			for day, name in ipairs(C.DAYS) do
+				if C.HasBit(ad.rd, C.DayBit(day)) then
+					days[#days + 1] = name
+				end
+			end
+			info[#info + 1] = table.concat(days, ", ")
+		end
+		if ad.rn then
+			info[#info + 1] = L.PER_WEEK:format(ad.rn)
+		end
+		if ad.rs then
+			info[#info + 1] = C.FormatTime(ad.rs) .. (ad.re and ("–" .. C.FormatTime(ad.re)) or "")
+				.. " " .. L.REALM_TIME
+		end
+		dialog.raidInfo:SetText(#info > 0 and table.concat(info, " · ") or ("|cff9d9d9d" .. L.RAID_NO_DETAILS .. "|r"))
+	end
 
 	dialog.grid:SetMask(ad.t, Filters.Profile(Ads.KIND_GUILD).times)
 	dialog.contact:SetText(L.CONTACT_NAME:format(poster))

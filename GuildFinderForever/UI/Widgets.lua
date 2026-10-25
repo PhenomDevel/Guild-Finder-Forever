@@ -176,6 +176,9 @@ end
 function W.Dropdown(parent, width, options, get, set)
 	return W.Menu(parent, width, function(root)
 		local list = type(options) == "function" and options() or options
+		if #list > 20 and root.SetScrollMode then
+			root:SetScrollMode(20 * 20)
+		end
 		for _, option in ipairs(list) do
 			root:CreateRadio(option.label, function()
 				return get() == option.value

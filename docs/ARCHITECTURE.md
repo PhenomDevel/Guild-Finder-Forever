@@ -30,7 +30,12 @@ slots), `x` text (≤ 200 characters, `|` and control characters stripped),
   `lv` level, `r` roles mask.
 - **Guild ad:** id `G:<Guild>-<Realm>`, one per guild; `n` guild name (from
   `GetGuildInfo("player")`, not editable), `gm` member count, `r` wanted
-  roles. Only members with invite rights post it; the newest version wins.
+  roles. With the raid goal set also (each optional): `ps` raid style
+  (1 casual, 2 semi-hardcore, 3 hardcore), `cl` wanted classes (bit
+  `classID - 1`, 0 = any), `rd` raid days (bit `day - 1`, Monday first),
+  `rn` raids per week, `rs`/`re` start/end in minutes after midnight, realm
+  time (`re` < `rs` runs past midnight). `Sanitize` drops them without the
+  raid goal. Only members with invite rights post it; the newest version wins.
   When the author of the current version leaves the guild, the ad is
   withdrawn.
 - **Tombstone:** `d = true` plus `i`, `k`, `v`, `o`; replaces a withdrawn ad
@@ -111,13 +116,16 @@ Layout follows the v2 sketches. Files:
 - `PlayersTab.lua`: toolbar (role toggles, level range, class, chips,
   search), dense list; the selected row expands inline with the actions.
 - `MyAdTab.lua`: player or guild ad as four numbered steps (roles, goals +
-  language, time grid with presets, text), live preview of how the other
+  language, time grid with presets, text); guild ads with the raid goal get
+  a raid block (style, raid days, raids per week, raid time, classes), live preview of how the other
   side sees the ad with the number of matching ads in the cache, publish /
   discard / withdraw.
 
 The match score (0–100) weighs shared goals (3), shared play times (3),
-roles (2) and language (1) against the searcher's own ad, overridden by the
-filter values where set.
+roles (2), wanted classes (2), raid days with own play time (2) and
+language (1) against the searcher's own ad, overridden by the filter values
+where set. The "same ruleset" filter exists only on Forever; retail has no
+rulesets.
 
 ## Phases
 

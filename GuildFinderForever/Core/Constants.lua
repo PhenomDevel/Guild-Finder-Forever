@@ -33,6 +33,40 @@ C.DAYS = { L.DAY_MON, L.DAY_TUE, L.DAY_WED, L.DAY_THU, L.DAY_FRI, L.DAY_SAT, L.D
 C.SLOTS = { L.SLOT_AFTERNOON, L.SLOT_EVENING, L.SLOT_NIGHT }
 C.ALL_TIMES = 2 ^ 21 - 1
 
+-- Raid details of a guild ad, only with the raid goal set:
+--   ps = style, cl = wanted classes, rd = raid days (bit day - 1),
+--   rn = raids per week, rs/re = start/end in minutes after midnight
+--   (realm time; end < start runs past midnight). Missing = not stated.
+C.GOAL_RAID = 1
+C.ALL_DAYS = 2 ^ 7 - 1
+C.TIME_STEP = 30
+function C.DayBit(day)
+	return 2 ^ (day - 1)
+end
+function C.FormatTime(minutes)
+	return ("%02d:%02d"):format(math.floor(minutes / 60), minutes % 60)
+end
+
+-- Raid play style (ps).
+C.STYLES = {
+	{ value = 1, key = "CASUAL", label = L.STYLE_CASUAL },
+	{ value = 2, key = "SEMI", label = L.STYLE_SEMI },
+	{ value = 3, key = "HARDCORE", label = L.STYLE_HARDCORE },
+}
+function C.StyleName(value)
+	for _, style in ipairs(C.STYLES) do
+		if style.value == value then
+			return style.label
+		end
+	end
+end
+
+-- Wanted classes (cl): bit (classID - 1); 0 = any class. Room for 20 IDs.
+C.ALL_CLASSES = 2 ^ 20 - 1
+function C.ClassBit(classID)
+	return 2 ^ (classID - 1)
+end
+
 function C.TimeBit(day, slot)
 	return 2 ^ ((day - 1) * 3 + (slot - 1))
 end
@@ -110,6 +144,15 @@ function C.GetClasses()
 		return a.label < b.label
 	end)
 	return classes
+end
+
+-- Class ID for a class file ("MAGE" → 8), from the game data.
+function C.ClassId(classFile)
+	for _, class in ipairs(C.GetClasses()) do
+		if class.key == classFile then
+			return class.id
+		end
+	end
 end
 
 function C.ClassName(classFile)

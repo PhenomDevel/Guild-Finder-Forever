@@ -2,9 +2,11 @@ local _, ns = ...
 
 -- Filtering and match score for the search tabs.
 --   filter = { kind, text, factions = { A = bool, H = bool }, lang, goals,
---              roles, class, minLevel, maxLevel, myTimes, sameMode }
---   profile = { goals, times, roles, lang }: what the searcher wants (own
---              draft), the base of the match score.
+--              roles, class, minLevel, maxLevel, myTimes, sameMode,
+--              style, myClass }
+--   profile = { goals, times, roles, lang, classes, classId }: what the
+--              searcher wants (own draft), the base of the match score.
+-- sameMode only applies on Forever: retail has no rulesets to compare.
 local Search = {}
 ns.Search = Search
 
@@ -35,7 +37,15 @@ local function Matches(ad, filter, profile, myMode)
 	if filter.sameMode and myMode and ad.m and ad.m ~= myMode then
 		return false
 	end
-	if ad.k == Ads.KIND_PLAYER then
+	if ad.k == Ads.KIND_GUILD then
+		if filter.style and ad.ps ~= filter.style then
+			return false
+		end
+		if filter.myClass and profile.classId and (ad.cl or 0) > 0
+			and not C.HasBit(ad.cl, C.ClassBit(profile.classId)) then
+			return false
+		end
+	elseif ad.k == Ads.KIND_PLAYER then
 		if filter.class and ad.c ~= filter.class then
 			return false
 		end
@@ -54,6 +64,11 @@ local function Matches(ad, filter, profile, myMode)
 		end
 	end
 	return true
+end
+
+-- Own ruleset for the sameMode filter; nil (no filtering) outside Forever.
+function Search.MyMode()
+	return Ads.IsForever() and Ads.GetGameMode() or nil
 end
 
 -- 0–100, or nil when there is nothing to compare.
@@ -77,6 +92,31 @@ function Search.Score(ad, filter, profile)
 	if roles > 0 and ad.r and ad.r > 0 then
 		Add(C.CommonBits(roles, ad.r) > 0 and 1 or 0, 2)
 	end
+	-- Raid days of a guild ad: share the player has any play time on.
+	if ad.k == Ads.KIND_GUILD and (ad.rd or 0) > 0 and times > 0 then
+		local days, free = 0, 0
+		for day = 1, #C.DAYS do
+			if C.HasBit(ad.rd, C.DayBit(day)) then
+				days = days + 1
+				for slot = 1, #C.SLOTS do
+					if C.HasBit(times, C.TimeBit(day, slot)) then
+						free = free + 1
+						break
+					end
+				end
+			end
+		end
+		Add(free / days, 2)
+	end
+	-- Wanted classes: guild ad vs. own class, own guild draft vs. player ad.
+	if ad.k == Ads.KIND_GUILD and (ad.cl or 0) > 0 and profile.classId then
+		Add(C.HasBit(ad.cl, C.ClassBit(profile.classId)) and 1 or 0, 2)
+	elseif ad.k == Ads.KIND_PLAYER and (profile.classes or 0) > 0 then
+		local classId = C.ClassId(ad.c)
+		if classId then
+			Add(C.HasBit(profile.classes, C.ClassBit(classId)) and 1 or 0, 2)
+		end
+	end
 	local lang = filter.lang or profile.lang
 	if lang then
 		Add(ad.l == lang and 1 or 0, 1)
@@ -92,14 +132,14 @@ function Search.Accepts(ad, filter, profile)
 	if ad.d or ad.k ~= filter.kind or Store.IsFiltered(ad) or Ads.IsExpired(ad) then
 		return false
 	end
-	return Matches(ad, filter, profile, Ads.GetGameMode())
+	return Matches(ad, filter, profile, Search.MyMode())
 end
 
 -- Returns the matching ads, best score first, each as
 -- { ad = ad, score = n|nil }.
 function Search.Run(filter, profile)
 	local results = {}
-	local myMode = Ads.GetGameMode()
+	local myMode = Search.MyMode()
 	local own = { [Ads.GetOwnPlayerAdId() or ""] = true, [Ads.GetOwnGuildAdId() or ""] = true }
 	for id, ad in Store.Each(filter.kind) do
 		if not own[id] and not Store.IsFiltered(ad) and Matches(ad, filter, profile, myMode) then
