@@ -67,5 +67,10 @@ UI\MinimapButton.lua
 UI\Settings.lua
 UI\Commands.lua
 
+# Test ads for trying out the UI (/gff testdata); development checkouts only
+#@do-not-package@
+Dev\TestData.lua
+#@end-do-not-package@
+
 # Transport test tools (/gff probe)
 Probe\Probe.lua

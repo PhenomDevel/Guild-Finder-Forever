@@ -1,8 +1,10 @@
--- luacheck: read globals GameTooltip
+-- luacheck: read globals GameTooltip UnitClass
 local _, ns = ...
 
--- Guild details: a dialog over the dimmed main window with the full ad,
--- the time grid compared with the own play times, and the actions.
+-- Guild details: a dialog over the dimmed main window. Left the text, goals
+-- and online times (compared with the own ones), right what the guild is
+-- looking for: raid style and schedule plus wanted classes grouped by
+-- role, or just the wanted roles. Actions at the bottom.
 local GuildDialog = {}
 ns.GuildDialog = GuildDialog
 
@@ -15,9 +17,12 @@ local Store = ns.Store
 local Verify = ns.Verify
 local Filters = ns.Filters
 
-local WIDTH, HEIGHT = 580, 430
-local RAID_HEIGHT = 80 -- extra height of the raid section
+local WIDTH, HEIGHT = 720, 470
 local PAD = 20
+local SIDE_WIDTH = 300 -- right column
+local SIDE_X = WIDTH - SIDE_WIDTH
+local ROLE_LABEL = 76 -- role column in the needs list
+local CHIP_GAP = 4
 
 local overlay, dialog
 local current -- { id, score, onClose }
@@ -94,58 +99,23 @@ local function Create()
 	dialog.scoreLabel:SetPoint("TOPRIGHT", dialog.score, "BOTTOMRIGHT", 0, -2)
 	dialog.scoreLabel:SetText(L.FITS_YOU)
 
-	-- Body
+	-- Body, left column
+	local leftWidth = SIDE_X - 2 * PAD
 	dialog.text = W.Text(dialog, "GameFontHighlight", W.TEXT)
 	dialog.text:SetPoint("TOPLEFT", PAD, -112)
-	dialog.text:SetPoint("RIGHT", -PAD, 0)
+	dialog.text:SetWidth(leftWidth)
 	dialog.text:SetJustifyV("TOP")
 	dialog.text:SetSpacing(3)
-	dialog.text:SetHeight(50)
+	dialog.text:SetHeight(62)
 
 	local goalsHeader = W.Header(dialog, L.FILTER_GOALS, "GameFontNormalLarge")
-	goalsHeader:SetPoint("TOPLEFT", PAD, -172)
+	goalsHeader:SetPoint("TOPLEFT", PAD, -184)
 	dialog.tags = W.GoalTags(dialog)
 	dialog.tags:SetPoint("TOPLEFT", goalsHeader, "BOTTOMLEFT", 0, -6)
 
-	local rolesHeader = W.Header(dialog, L.WANTED, "GameFontNormalLarge")
-	rolesHeader:SetPoint("TOPLEFT", 300, -172)
-	dialog.roles = {}
-	for i, role in ipairs(C.ROLES) do
-		local icon = W.RoleIcon(dialog, 18, role.bit)
-		local label = W.Text(dialog, "GameFontHighlight")
-		label:SetText(role.label)
-		label:SetPoint("LEFT", icon, "RIGHT", 4, 0)
-		dialog.roles[i] = { icon = icon, label = label, bit = role.bit }
-	end
-	dialog.rolesHeader = rolesHeader
-	dialog.noRoles = W.Text(dialog, "GameFontDisable")
-	dialog.noRoles:SetPoint("TOPLEFT", rolesHeader, "BOTTOMLEFT", 0, -8)
-	dialog.noRoles:SetText(L.ANY_ROLE)
-
-	-- Raid details, only for ads with the raid goal.
-	local raid = CreateFrame("Frame", nil, dialog)
-	raid:SetPoint("TOPLEFT", PAD, -224)
-	raid:SetPoint("RIGHT", -PAD, 0)
-	raid:SetHeight(RAID_HEIGHT)
-	dialog.raid = raid
-	local raidHeader = W.Header(raid, L.RAID_DETAILS, "GameFontNormalLarge")
-	raidHeader:SetPoint("TOPLEFT")
-	dialog.raidInfo = W.Text(raid, "GameFontHighlight", W.TEXT)
-	dialog.raidInfo:SetPoint("TOPLEFT", raidHeader, "BOTTOMLEFT", 0, -6)
-	dialog.raidInfo:SetPoint("RIGHT")
-	dialog.raidInfo:SetWordWrap(false)
-	dialog.classesLabel = W.Text(raid, "GameFontNormalSmall", W.GOLD)
-	dialog.classesLabel:SetPoint("TOPLEFT", dialog.raidInfo, "BOTTOMLEFT", 0, -9)
-	dialog.classesLabel:SetText(L.WANTED_CLASSES .. ":")
-	dialog.classIcons = {}
-	dialog.anyClass = W.Text(raid, "GameFontHighlightSmall", W.MUTED)
-	dialog.anyClass:SetPoint("LEFT", dialog.classesLabel, "RIGHT", 6, 0)
-	dialog.anyClass:SetText(L.ANY_CLASS)
-
-	local timesHeader = W.Header(dialog, L.RAID_TIMES, "GameFontNormalLarge")
-	timesHeader:SetPoint("TOPLEFT", PAD, -224)
-	dialog.timesHeader = timesHeader
-	dialog.grid = W.TimeGrid(dialog, 64, 16, false)
+	local timesHeader = W.Header(dialog, L.ONLINE_TIMES, "GameFontNormalLarge")
+	timesHeader:SetPoint("TOPLEFT", PAD, -240)
+	dialog.grid = W.TimeGrid(dialog, 38, 16, false)
 	dialog.grid:SetPoint("TOPLEFT", timesHeader, "BOTTOMLEFT", 0, -6)
 	local legendOn = dialog:CreateTexture(nil, "ARTWORK")
 	legendOn:SetSize(10, 10)
@@ -160,6 +130,54 @@ local function Create()
 	local legendBothText = W.Text(dialog, "GameFontDisableSmall")
 	legendBothText:SetPoint("LEFT", legendBoth, "RIGHT", 4, 0)
 	legendBothText:SetText(L.LEGEND_YOU)
+
+	-- Right column
+	local side = W.Panel(dialog, { 0.055, 0.055, 0.05, 1 }, { 0.16, 0.16, 0.16, 1 })
+	side:SetPoint("TOPLEFT", SIDE_X, -97)
+	side:SetPoint("BOTTOMRIGHT", -1, 53)
+	dialog.side = side
+	local sideWidth = SIDE_WIDTH - 2 * 16
+
+	dialog.raidHeader = W.Header(side, L.RAID_DETAILS, "GameFontNormalLarge")
+	dialog.raidHeader:SetPoint("TOPLEFT", 16, -14)
+	dialog.style = W.Tag(side)
+	dialog.style:SetPoint("TOPRIGHT", -16, -12)
+	dialog.days = {}
+	for day, name in ipairs(C.DAYS) do
+		local tag = W.Panel(side)
+		tag:SetSize(32, 20)
+		tag:SetPoint("TOPLEFT", 16 + (day - 1) * 35, -40)
+		tag.text = W.Text(tag, "GameFontHighlightSmall")
+		tag.text:SetPoint("CENTER")
+		tag.text:SetText(name)
+		dialog.days[day] = tag
+	end
+	dialog.schedule = W.Text(side, "GameFontHighlight", W.TEXT)
+	dialog.schedule:SetPoint("TOPLEFT", 16, -68)
+	dialog.schedule:SetWidth(sideWidth)
+	dialog.schedule:SetWordWrap(false)
+	dialog.raidLine = W.Divider(side)
+	dialog.raidLine:SetPoint("TOPLEFT", 16, -90)
+	dialog.raidLine:SetPoint("TOPRIGHT", -16, -90)
+
+	dialog.wantedHeader = W.Header(side, L.WANTED, "GameFontNormalLarge")
+	dialog.fit = W.Text(side, "GameFontHighlightSmall")
+	dialog.fit:SetPoint("TOPLEFT", dialog.wantedHeader, "BOTTOMLEFT", 0, -5)
+	dialog.fit:SetWidth(sideWidth)
+	dialog.fit:SetWordWrap(false)
+	dialog.needRows = {}
+	for i, role in ipairs(C.ROLES) do
+		local label = CreateFrame("Frame", nil, side)
+		label:SetSize(ROLE_LABEL, 18)
+		local icon = W.RoleIcon(label, 16, role.bit)
+		icon:SetPoint("LEFT")
+		local text = W.Text(label, "GameFontNormalSmall", W.TAG)
+		text:SetPoint("LEFT", icon, "RIGHT", 4, 0)
+		text:SetText(role.label)
+		dialog.needRows[i] = { label = label, bit = role.bit, chips = {} }
+	end
+	dialog.anyClass = W.Text(side, "GameFontHighlight", W.MUTED)
+	dialog.chipWidth = sideWidth - ROLE_LABEL
 
 	-- Footer
 	local footerLine = W.Divider(dialog)
@@ -193,6 +211,67 @@ local function Create()
 	local unfit = W.Text(dialog, "GameFontDisableSmall")
 	unfit:SetPoint("RIGHT", block, "LEFT", -6, 0)
 	unfit:SetText(L.UNFIT)
+end
+
+-- Class chip: icon and class-coloured name.
+local function ClassChip(parent)
+	local chip = W.Panel(parent, { 0.11, 0.11, 0.11, 1 }, { 0.24, 0.24, 0.24, 1 })
+	chip:SetHeight(18)
+	chip.icon = W.ClassIcon(chip, 14)
+	chip.icon:SetPoint("LEFT", 2, 0)
+	chip.text = W.Text(chip, "GameFontHighlightSmall")
+	chip.text:SetPoint("LEFT", chip.icon, "RIGHT", 4, 0)
+	function chip:SetClass(class, mine)
+		self.icon:SetClass(class.key)
+		self.text:SetText("|c" .. W.ClassColorHex(class.key) .. class.label .. "|r")
+		self:SetWidth(self.text:GetStringWidth() + 26)
+		if mine then
+			self:SetBackdropColor(0.07, 0.15, 0.06, 1)
+			self:SetBackdropBorderColor(W.GREEN[1], W.GREEN[2], W.GREEN[3], 1)
+		else
+			self:SetBackdropColor(0.11, 0.11, 0.11, 1)
+			self:SetBackdropBorderColor(0.24, 0.24, 0.24, 1)
+		end
+	end
+	return chip
+end
+
+-- Wanted classes grouped by role, chips wrapping in the right column;
+-- returns the y below the list.
+local function LayoutNeeds(ad, top)
+	local _, myClass = UnitClass("player")
+	local fit, fitRoles = Filters.ClassFit(ad)
+	local needs = C.NeedsByRole(ad)
+	local y = top
+	for _, row in ipairs(dialog.needRows) do
+		local list = needs[row.bit]
+		row.label:SetShown(#list > 0)
+		local x, lineY = 0, y
+		for i, class in ipairs(list) do
+			local chip = row.chips[i]
+			if not chip then
+				chip = ClassChip(dialog.side)
+				row.chips[i] = chip
+			end
+			chip:SetClass(class, fit == "fit" and class.key == myClass and C.HasBit(fitRoles, row.bit))
+			if x > 0 and x + chip:GetWidth() > dialog.chipWidth then
+				x, lineY = 0, lineY - 18 - CHIP_GAP
+			end
+			chip:ClearAllPoints()
+			chip:SetPoint("TOPLEFT", 16 + ROLE_LABEL + x, lineY)
+			chip:Show()
+			x = x + chip:GetWidth() + CHIP_GAP
+		end
+		for i = #list + 1, #row.chips do
+			row.chips[i]:Hide()
+		end
+		if #list > 0 then
+			row.label:ClearAllPoints()
+			row.label:SetPoint("TOPLEFT", 16, y)
+			y = lineY - 18 - 8
+		end
+	end
+	return y
 end
 
 local function Update()
@@ -244,79 +323,86 @@ local function Update()
 	dialog.text:SetText(ad.x ~= "" and ad.x or ("|cff9d9d9d" .. L.NO_TEXT .. "|r"))
 	dialog.tags:SetGoals(ad.g)
 
-	local x = 0
-	for _, role in ipairs(dialog.roles) do
-		local wanted = C.HasBit(ad.r or 0, role.bit)
-		role.icon:SetShown(wanted)
-		role.label:SetShown(wanted)
-		if wanted then
-			role.icon:ClearAllPoints()
-			role.icon:SetPoint("TOPLEFT", dialog.rolesHeader, "BOTTOMLEFT", x, -6)
-			x = x + 18 + 4 + role.label:GetStringWidth() + 16
+	local myTimes = Filters.Profile(Ads.KIND_GUILD).times
+	local raid = C.HasBit(ad.g or 0, C.GOAL_RAID)
+	dialog.raidHeader:SetShown(raid)
+	dialog.schedule:SetShown(raid)
+	dialog.raidLine:SetShown(raid)
+	local style = raid and C.StyleName(ad.ps)
+	dialog.style:SetShown(style ~= nil and style ~= false)
+	if style then
+		dialog.style:SetLabel(style)
+	end
+	for day, tag in ipairs(dialog.days) do
+		tag:SetShown(raid)
+		local on = C.HasBit(ad.rd or 0, C.DayBit(day))
+		local mine = false
+		for slot = 1, #C.SLOTS do
+			mine = mine or C.HasBit(myTimes or 0, C.TimeBit(day, slot))
+		end
+		if on then
+			tag:SetBackdropColor(0.24, 0.19, 0.09, 1)
+			tag:SetBackdropBorderColor(mine and W.GREEN[1] or 0.79, mine and W.GREEN[2] or 0.635, mine and W.GREEN[3] or 0.29, 1)
+			W.Color(tag.text, W.GOLD)
+		else
+			tag:SetBackdropColor(0.08, 0.08, 0.08, 1)
+			tag:SetBackdropBorderColor(0.18, 0.18, 0.18, 1)
+			W.Color(tag.text, { 0.4, 0.4, 0.4 })
 		end
 	end
-	dialog.noRoles:SetShown(x == 0)
-
-	local count = 0
-	if (ad.cl or 0) > 0 then
-		for _, class in ipairs(C.GetClasses()) do
-			if C.HasBit(ad.cl, C.ClassBit(class.id)) then
-				count = count + 1
-				local icon = dialog.classIcons[count]
-				if not icon then
-					icon = W.ClassIcon(dialog.raid, 20)
-					icon:SetPoint("LEFT", dialog.classesLabel, "RIGHT", 6 + (count - 1) * 23, 0)
-					icon:EnableMouse(true)
-					icon.roles = W.RoleIcons(icon, 6)
-					icon.roles:SetPoint("TOP", icon, "BOTTOM", 0, -1)
-					icon:SetScript("OnEnter", function(self)
-						GameTooltip:SetOwner(self, "ANCHOR_TOP")
-						GameTooltip:SetText(self.label, 1, 1, 1)
-						GameTooltip:AddLine(self.roleMask > 0 and C.RoleNames(self.roleMask) or L.ANY_ROLE, 1, 0.82, 0)
-						GameTooltip:Show()
-					end)
-					icon:SetScript("OnLeave", function()
-						GameTooltip:Hide()
-					end)
-					dialog.classIcons[count] = icon
-				end
-				icon:SetClass(class.key)
-				icon.label = class.label
-				icon.roleMask = C.GetClassRoles(ad.cr, class.id)
-				icon.roles:SetRoles(icon.roleMask)
-				icon:Show()
-			end
-		end
-	end
-	for i = count + 1, #dialog.classIcons do
-		dialog.classIcons[i]:Hide()
-	end
-	dialog.anyClass:SetShown(count == 0)
-
-	local hasRaid = C.HasBit(ad.g or 0, C.GOAL_RAID)
-	dialog.raid:SetShown(hasRaid)
-	dialog.timesHeader:SetPoint("TOPLEFT", PAD, hasRaid and -224 - RAID_HEIGHT or -224)
-	dialog:SetHeight(HEIGHT + (hasRaid and RAID_HEIGHT or 0))
-	if hasRaid then
-		local info = {}
-		info[#info + 1] = C.StyleName(ad.ps)
-		if (ad.rd or 0) > 0 then
-			local days = {}
-			for day, name in ipairs(C.DAYS) do
-				if C.HasBit(ad.rd, C.DayBit(day)) then
-					days[#days + 1] = name
-				end
-			end
-			info[#info + 1] = table.concat(days, ", ")
+	local wantedTop = -14
+	if raid then
+		local schedule = {}
+		local time = C.RaidTimeText(ad)
+		if time then
+			schedule[#schedule + 1] = "|cffffffff" .. time .. "|r |cff9d9d9d" .. L.REALM_TIME .. "|r"
 		end
 		if ad.rn then
-			info[#info + 1] = L.PER_WEEK:format(ad.rn)
+			schedule[#schedule + 1] = L.PER_WEEK:format(ad.rn)
 		end
-		if ad.rs then
-			info[#info + 1] = C.FormatTime(ad.rs) .. (ad.re and ("–" .. C.FormatTime(ad.re)) or "")
-				.. " " .. L.REALM_TIME
+		dialog.schedule:SetText(#schedule > 0 and table.concat(schedule, " · ") or ("|cff9d9d9d" .. L.RAID_NO_DETAILS .. "|r"))
+		wantedTop = -102
+	end
+	dialog.wantedHeader:ClearAllPoints()
+	dialog.wantedHeader:SetPoint("TOPLEFT", 16, wantedTop)
+
+	local fit, fitRoles = Filters.ClassFit(ad)
+	local _, myClass = UnitClass("player")
+	if fit == "fit" then
+		dialog.fit:SetText("|cff1eff00✓ " .. L.FIT_YES:format(C.ClassName(myClass), C.RoleNames(fitRoles)) .. "|r")
+	elseif fit == "no" then
+		dialog.fit:SetText("|cff9d9d9d" .. L.FIT_NO:format(C.ClassName(myClass)) .. "|r")
+	end
+	dialog.fit:SetShown(fit ~= nil)
+	local listTop = wantedTop - 24 - (fit and 18 or 0)
+
+	dialog.anyClass:ClearAllPoints()
+	dialog.anyClass:SetPoint("TOPLEFT", 16, listTop)
+	if raid and (ad.cl or 0) > 0 then
+		dialog.anyClass:Hide()
+		LayoutNeeds(ad, listTop)
+	else
+		-- No class needs: the general wanted roles as rows without chips.
+		for _, row in ipairs(dialog.needRows) do
+			for _, chip in ipairs(row.chips) do
+				chip:Hide()
+			end
+			row.label:Hide()
 		end
-		dialog.raidInfo:SetText(#info > 0 and table.concat(info, " · ") or ("|cff9d9d9d" .. L.RAID_NO_DETAILS .. "|r"))
+		local y = listTop
+		for _, row in ipairs(dialog.needRows) do
+			if C.HasBit(ad.r or 0, row.bit) then
+				row.label:ClearAllPoints()
+				row.label:SetPoint("TOPLEFT", 16, y)
+				row.label:Show()
+				y = y - 24
+			end
+		end
+		dialog.anyClass:SetShown(y == listTop or raid)
+		dialog.anyClass:SetText(raid and L.ANY_CLASS or L.ANY_ROLE)
+		if y ~= listTop and raid then
+			dialog.anyClass:SetPoint("TOPLEFT", 16, y)
+		end
 	end
 
 	dialog.grid:SetMask(ad.t, Filters.Profile(Ads.KIND_GUILD).times)

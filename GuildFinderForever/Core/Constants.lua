@@ -97,6 +97,53 @@ function C.WantsClass(ad, classID, roles)
 	return wanted == 0 or (roles or 0) == 0 or C.CommonBits(wanted, roles) > 0
 end
 
+-- Roles a guild ad wants this class in: the stated ones, or all the class
+-- can play when none are stated; 0 when the class is not wanted.
+function C.WantedRoles(ad, class)
+	if not C.HasBit(ad.cl or 0, C.ClassBit(class.id)) then
+		return 0
+	end
+	local roles = C.GetClassRoles(ad.cr, class.id)
+	return roles > 0 and roles or C.ClassRoles(class.key)
+end
+
+-- { [roleBit] = { class, ... } } of a guild ad's wanted classes.
+function C.NeedsByRole(ad)
+	local needs = {}
+	for _, role in ipairs(C.ROLES) do
+		needs[role.bit] = {}
+	end
+	for _, class in ipairs(C.GetClasses()) do
+		local roles = C.WantedRoles(ad, class)
+		for _, role in ipairs(C.ROLES) do
+			if C.HasBit(roles, role.bit) then
+				local list = needs[role.bit]
+				list[#list + 1] = class
+			end
+		end
+	end
+	return needs
+end
+
+-- "Mi · Do · So" for a raid days mask.
+function C.DaysText(days)
+	local parts = {}
+	for day, name in ipairs(C.DAYS) do
+		if C.HasBit(days or 0, C.DayBit(day)) then
+			parts[#parts + 1] = name
+		end
+	end
+	return table.concat(parts, " · ")
+end
+
+-- "19:30–23:00", "19:30" or nil.
+function C.RaidTimeText(ad)
+	if not ad.rs then
+		return nil
+	end
+	return C.FormatTime(ad.rs) .. (ad.re and ("–" .. C.FormatTime(ad.re)) or "")
+end
+
 function C.TimeBit(day, slot)
 	return 2 ^ ((day - 1) * 3 + (slot - 1))
 end

@@ -28,13 +28,16 @@ Open the window with `/gff`, the minimap button or the addon compartment.
   own ad. Narrow them with the search box and filter chips (faction,
   language, goals, raid style, "wants my class", "my times", and on Forever
   "same ruleset"). A click opens the details with the
-  guild's play times next to yours; *Whisper* opens a whisper and checks the
+  guild's play times next to yours and, for raiding guilds, the raid
+  schedule and wanted classes per role (your class highlighted); *Whisper* opens a whisper and checks the
   poster via `/who`, *Hide* and *Block guild* remove the ad from your results.
 - **Find players:** list of player ads with role, level and class filters;
   a click expands the row with the text and the same actions.
 - **My ad:** a player ad for the current character, or – as a guild member
   with invite rights – the ad of your guild, in four short steps with a live
-  preview. Selecting the *Raid* goal in a guild ad opens the raid details. Ads are renewed on login and expire after 14 days without one.
+  preview. A guild ad is a step-by-step form; with the *Raid* goal it gets
+  an extra page for raid style, schedule and a class × role table of
+  wanted classes. Ads are renewed on login and expire after 14 days without one.
 
 On first start a short intro explains the addon. The status line shows
 where the ads come from: the realm on retail, the ruleset on Forever.
@@ -50,6 +53,7 @@ Portuguese (Brazil) – the EU client languages.
 | `/gff sync` | ask other players for missing ads |
 | `/gff status` | cache and network status |
 | `/gff debug [on\|off]` | show sync traffic in chat: what is sent and received, from whom, and whether a received ad shows in your search (or why not, e.g. other faction) |
+| `/gff testdata` | add/remove made-up guild and player ads for trying out the UI (development checkouts only; this session only, never shared) |
 | `/gff blocked`, `/gff unblock <name>` | list / unblock blocked characters and guilds |
 | `/gff probe` | transport test tools |
 

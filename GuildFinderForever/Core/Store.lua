@@ -21,6 +21,8 @@ ns.dbDefaults.hidden = {}
 ns.dbDefaults.blocked = {}
 
 local ads, checks
+-- Test ads (/gff testdata): session only, never saved, synced or served.
+local testAds = {}
 -- Bucket summaries, rebuilt lazily after changes.
 local buckets, dirty = nil, true
 
@@ -46,19 +48,44 @@ local function Changed(id)
 end
 
 function Store.Get(id)
-	return ads and ads[id]
+	return ads and ads[id] or testAds[id]
 end
 
--- Iterates over live (not deleted, not expired) ads.
+-- Iterates over live (not deleted, not expired) ads, test ads last.
 function Store.Each(kind)
 	local now = GetServerTime()
-	local id, ad
+	local source, id, ad = ads, nil, nil
 	return function()
-		repeat
-			id, ad = next(ads, id)
-		until id == nil or (not ad.d and (not kind or ad.k == kind) and not Ads.IsExpired(ad, now))
-		return id, ad
+		while true do
+			id, ad = next(source, id)
+			if id == nil and source == ads then
+				source = testAds
+				id, ad = next(source, nil)
+			end
+			if id == nil or (not ad.d and (not kind or ad.k == kind) and not Ads.IsExpired(ad, now)) then
+				return id, ad
+			end
+		end
 	end
+end
+
+-- Replaces the test ads; list = sanitized ads or nil to remove them.
+function Store.SetTestAds(list)
+	wipe(testAds)
+	for _, ad in ipairs(list or {}) do
+		if not ads[ad.i] then
+			testAds[ad.i] = ad
+		end
+	end
+	Changed(nil)
+end
+
+function Store.HasTestAds()
+	return next(testAds) ~= nil
+end
+
+function Store.IsTestAd(id)
+	return testAds[id] ~= nil
 end
 
 function Store.Count()

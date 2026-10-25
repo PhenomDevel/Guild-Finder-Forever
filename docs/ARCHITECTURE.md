@@ -110,15 +110,19 @@ Layout follows the v2 sketches. Files:
   with the "+ Filter" menu, sort menu, chat notices for new matching ads and
   `/who` results.
 - `GuildsTab.lua`: banner with the own ad status, search + chips + sort, two
-  column card grid; first-run screen until "Create my ad" / "Just look
+  column card grid (raid ads show style, days, time, wanted classes per
+  role and whether the own class fits); first-run screen until "Create my ad" / "Just look
   around".
-- `GuildDialog.lua`: details over the dimmed window – text, goals, wanted
-  roles, time grid with the own times highlighted, Whisper / Hide / Block.
+- `GuildDialog.lua`: details over the dimmed window – left: text, goals,
+  time grid with the own times highlighted; right: raid style, days and
+  time, wanted classes grouped by role with the own class marked (or the
+  wanted roles for non-raid ads); Whisper / Hide / Block.
 - `PlayersTab.lua`: toolbar (role toggles, level range, class, chips,
   search), dense list; the selected row expands inline with the actions.
-- `MyAdTab.lua`: player or guild ad as four numbered steps (roles, goals +
-  language, time grid with presets, text); guild ads with the raid goal get
-  a raid block (style, raid days, raids per week, raid time, classes), live preview of how the other
+- `MyAdTab.lua`: player ad as four numbered steps (roles, goals +
+  language, time grid with presets, text); guild ad as a paged form (goals +
+  language, raid only with the raid goal, times, text) whose raid page holds
+  style cards, schedule and a class × role needs table; live preview of how the other
   side sees the ad with the number of matching ads in the cache, publish /
   discard / withdraw.
 

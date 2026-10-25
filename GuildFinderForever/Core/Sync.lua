@@ -326,7 +326,7 @@ local function OnRequest(message, sender)
 	local list = {}
 	for i = 1, math.min(#message.ids, MAX_REQUEST) do
 		local ad = Store.Get(message.ids[i])
-		if ad and not Ads.IsExpired(ad) then
+		if ad and not Ads.IsExpired(ad) and not Store.IsTestAd(ad.i) then
 			list[#list + 1] = ad
 		end
 	end

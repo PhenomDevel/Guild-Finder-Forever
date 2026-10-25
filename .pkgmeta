@@ -21,6 +21,7 @@ ignore:
   - CLAUDE.md
   - docs
   - tools
+  - GuildFinderForever/Dev
 
 manual-changelog:
   filename: CHANGELOG.md

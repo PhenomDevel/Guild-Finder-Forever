@@ -10,6 +10,7 @@ GuildFinderForever/          addon folder (the only thing that gets installed)
   Core/                      namespace, events, DB, channel, comm, slash commands,
                              serializer, ad model, cache, sync, search, /who check
   UI/                        window, tabs, widgets, minimap button, settings
+  Dev/                       session-only test ads (/gff testdata), not packaged
   Probe/                     transport test tools (/gff probe)
 docs/                        architecture, feasibility test guide
 tools/fetch-libs.sh          fetches the libraries for local development

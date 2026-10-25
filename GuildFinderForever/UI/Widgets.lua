@@ -189,6 +189,50 @@ function W.Dropdown(parent, width, options, get, set)
 	end)
 end
 
+-- [−] value [+] for a whole number min..max or nil ("–"); − below min
+-- clears it. get() returns the value, set(value) stores it.
+function W.Stepper(parent, min, max, get, set)
+	local frame = W.Panel(parent, { 0.08, 0.08, 0.08, 1 }, { 0.3, 0.3, 0.3, 1 })
+	frame:SetSize(74, 24)
+	local value = W.Text(frame, "GameFontHighlight")
+	value:SetPoint("CENTER")
+	value:SetJustifyH("CENTER")
+	local function Button(label, x, delta)
+		local button = CreateFrame("Button", nil, frame)
+		button:SetSize(22, 22)
+		button:SetPoint(x < 0 and "LEFT" or "RIGHT", x < 0 and 1 or -1, 0)
+		local text = W.Text(button, "GameFontNormal", W.GOLD)
+		text:SetPoint("CENTER")
+		text:SetText(label)
+		button:SetHighlightTexture(WHITE8)
+		button:GetHighlightTexture():SetVertexColor(1, 0.82, 0, 0.1)
+		button:SetScript("OnClick", function()
+			local current = get()
+			local new
+			if current == nil then
+				new = delta > 0 and min or nil
+			else
+				new = current + delta
+				if new < min then
+					new = nil
+				elseif new > max then
+					new = max
+				end
+			end
+			set(new)
+			frame:Refresh()
+		end)
+	end
+	Button("−", -1, -1)
+	Button("+", 1, 1)
+	function frame:Refresh()
+		local current = get()
+		value:SetText(current and tostring(current) or "–")
+	end
+	frame:Refresh()
+	return frame
+end
+
 function W.Tooltip(frame, title, text)
 	frame:HookScript("OnEnter", function(self)
 		GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
@@ -328,6 +372,7 @@ function W.StepCircle(parent, number, size)
 	text:SetPoint("CENTER", 0, 0)
 	text:SetJustifyH("CENTER")
 	text:SetText(number)
+	frame.text = text
 	function frame:SetDone(done)
 		if done then
 			ring:SetColorTexture(0.25, 0.6, 0.2, 1)
