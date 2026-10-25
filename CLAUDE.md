@@ -10,9 +10,9 @@ restrictions (secret values, addon message lockdown during encounters). Do not
 assume the old Classic Era API.
 
 ## Layout
-- Dev setup and checks: `docs/DEVELOPMENT.md`. Release (same process in all
-  PhenomDevel addons): `docs/RELEASE.md`; every user-facing change adds a line
-  under `## Unreleased` in `CHANGELOG.md`. Design and roadmap:
+- Dev setup and checks: `docs/DEVELOPMENT.md`. Release and shared
+  conventions: see *Shared with the other PhenomDevel addons* below. Design
+  and roadmap:
   `docs/ARCHITECTURE.md`. Phase 1 test guide: `docs/FEASIBILITY.md`.
 - `GuildFinderForever/` is the addon folder that gets installed; everything
   else (docs, tools, CI) stays in the repo only.
@@ -65,3 +65,34 @@ assume the old Classic Era API.
 - There are no automated tests: Kevin verifies every change in-game. Do not
   add a mocked WoW API. In the PR description, list what he should check
   in-game.
+
+## Shared with the other PhenomDevel addons
+PhenomRaidTools, BlizzHUDTweaks, Quality-of-Life-Forever and
+Guild-Finder-Forever follow the same conventions below; this section is
+identical in their `CLAUDE.md`. A change to a shared file or rule goes to all
+four (one PR per repository).
+
+- Release process: `docs/RELEASE.md`. `.github/workflows/release.yml`,
+  `.github/workflows/ci.yml` and `docs/RELEASE.md` are identical in all four,
+  except the `env` block of `release.yml` and the "This repository" section
+  of `RELEASE.md`.
+- Tags: `vX.Y.Z`, test releases `vX.Y.Z-alphaN` / `-betaN`. Releases are
+  started by Kevin (*Actions → Release → Run workflow*); never push tags or
+  start the release workflow without being asked.
+- Every user-facing PR adds a line under `## Unreleased` in `CHANGELOG.md`
+  (written for players). A release PR renames it to `## vX.Y.Z (YYYY-MM-DD)`
+  and adds the "What's new" entry where the addon has one.
+- README outline, in this order:
+  1. `# Name`, logo (`<img … width="96" align="right">`), badges: CI,
+     Release, Version, CurseForge, License (+ Discord where the addon has one)
+  2. bold one-line tagline, short intro for players
+  3. `## Installation`: CurseForge/Wago app or GitHub releases, manual
+     install folder, first command; then a link to `CHANGELOG.md`
+  4. `## Supported clients`: table `Client | Interface`, matching the `.toc`
+  5. `## Usage` with `### Commands` (table)
+  6. `## Features`; optional `## FAQ`, `## Known limitations`
+  7. `## Feedback & support`, `## Development` (links to
+     `docs/DEVELOPMENT.md` and `docs/RELEASE.md`), `## License`
+  8. footer "Developed with the help of AI …"
+- Developer details (libraries, local setup, checks, release) belong in
+  `docs/`, not in the README.
