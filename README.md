@@ -6,6 +6,8 @@ which has no guild finder of its own.
 - **Players** post a "looking for guild" ad per character: class, roles,
   level, play times, goals and a short text.
 - **Guilds** post one recruiting ad per guild, by members who may invite.
+  Raiding guilds add raid style (casual, semi-hardcore, hardcore), raid
+  days, raids per week, raid time and wanted classes.
 - Both sides search each other with filters (faction, ruleset, language,
   play times, goals) and contact the poster with one click.
 
@@ -23,14 +25,15 @@ Open the window with `/gff`, the minimap button or the addon compartment.
 
 - **Find guilds:** guild ads as cards, sorted by how well they match your
   own ad. Narrow them with the search box and filter chips (faction,
-  language, goals, "my times", ruleset). A click opens the details with the
+  language, goals, raid style, "wants my class", "my times", and on Forever
+  "same ruleset"). A click opens the details with the
   guild's play times next to yours; *Whisper* opens a whisper and checks the
   poster via `/who`, *Hide* and *Block guild* remove the ad from your results.
 - **Find players:** list of player ads with role, level and class filters;
   a click expands the row with the text and the same actions.
 - **My ad:** a player ad for the current character, or – as a guild member
   with invite rights – the ad of your guild, in four short steps with a live
-  preview. Ads are renewed on login and expire after 14 days without one.
+  preview. Selecting the *Raid* goal in a guild ad opens the raid details. Ads are renewed on login and expire after 14 days without one.
 
 On first start a short intro explains the addon. The status line shows
 where the ads come from: the realm on retail, the ruleset on Forever.

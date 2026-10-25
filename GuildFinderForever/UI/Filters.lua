@@ -1,4 +1,4 @@
--- luacheck: read globals MenuUtil GetMaxLevelForPlayerExpansion
+-- luacheck: read globals MenuUtil GetMaxLevelForPlayerExpansion UnitClass
 local _, ns = ...
 
 -- Filter state of the two search tabs (saved per account), the chip bar
@@ -73,7 +73,14 @@ function Filters.Profile(kind)
 		draft = MyAds.GetGuildDraft()
 	end
 	draft = draft or {}
-	return { goals = draft.goals or 0, times = draft.times or 0, roles = draft.roles or 0, lang = draft.lang }
+	local classId
+	if kind == Ads.KIND_GUILD then
+		classId = select(3, UnitClass("player"))
+	end
+	return {
+		goals = draft.goals or 0, times = draft.times or 0, roles = draft.roles or 0, lang = draft.lang,
+		classes = kind == Ads.KIND_PLAYER and draft.classes or 0, classId = classId,
+	}
 end
 
 function Filters.Run(kind)
@@ -152,6 +159,23 @@ local function BuildFilterMenu(root, kind, changed)
 			changed()
 		end)
 	end
+	if kind == Ads.KIND_GUILD then
+		local styleMenu = root:CreateButton(L.FILTER_STYLE)
+		styleMenu:CreateRadio(L.ANY_STYLE, function()
+			return filter.style == nil
+		end, function()
+			filter.style = nil
+			changed()
+		end)
+		for _, style in ipairs(C.STYLES) do
+			styleMenu:CreateRadio(style.label, function()
+				return filter.style == style.value
+			end, function()
+				filter.style = style.value
+				changed()
+			end)
+		end
+	end
 	root:CreateTitle(L.FILTER_OTHER)
 	root:CreateCheckbox(L.FILTER_MY_TIMES, function()
 		return filter.myTimes
@@ -159,12 +183,23 @@ local function BuildFilterMenu(root, kind, changed)
 		filter.myTimes = not filter.myTimes
 		changed()
 	end)
-	root:CreateCheckbox(L.FILTER_SAME_MODE, function()
-		return filter.sameMode
-	end, function()
-		filter.sameMode = not filter.sameMode
-		changed()
-	end)
+	if kind == Ads.KIND_GUILD then
+		root:CreateCheckbox(L.FILTER_MY_CLASS, function()
+			return filter.myClass
+		end, function()
+			filter.myClass = not filter.myClass
+			changed()
+		end)
+	end
+	-- Rulesets exist only on Forever.
+	if Ads.IsForever() then
+		root:CreateCheckbox(L.FILTER_SAME_MODE, function()
+			return filter.sameMode
+		end, function()
+			filter.sameMode = not filter.sameMode
+			changed()
+		end)
+	end
 	root:CreateDivider()
 	root:CreateButton(L.FILTER_RESET, function()
 		ns.db.filters[kind] = Filters.Default(kind)
@@ -230,9 +265,19 @@ function Filters.ChipBar(parent, kind, changed)
 				end }
 			end
 		end
+		if filter.style then
+			items[#items + 1] = { C.StyleName(filter.style) or "?", function()
+				filter.style = nil
+			end }
+		end
 		if filter.myTimes then
 			items[#items + 1] = { L.CHIP_MY_TIMES, function()
 				filter.myTimes = false
+			end }
+		end
+		if filter.myClass then
+			items[#items + 1] = { L.CHIP_MY_CLASS, function()
+				filter.myClass = false
 			end }
 		end
 		local shown = {}

@@ -166,6 +166,10 @@ function Ads.BuildGuildAd(form)
 		gm = type(members) == "number" and members > 0 and members or nil,
 		r = form.roles,
 	}, form)
+	if C.HasBit(ad.g or 0, C.GOAL_RAID) then
+		ad.ps, ad.cl, ad.rd, ad.rn = form.style, form.classes, form.raidDays, form.raidsPerWeek
+		ad.rs, ad.re = form.raidStart, form.raidEnd
+	end
 	ad.i = Ads.GuildAdId(guild, realm)
 	return Ads.Sanitize(ad)
 end
@@ -272,6 +276,14 @@ function Ads.Sanitize(raw)
 	else
 		ad.n = CleanName(raw.n, MAX_GUILD)
 		ad.gm = Int(raw.gm, 1, 10000)
+		if C.HasBit(ad.g, C.GOAL_RAID) then
+			ad.ps = Int(raw.ps, 1, #C.STYLES)
+			ad.cl = Int(raw.cl, 0, C.ALL_CLASSES)
+			ad.rd = Int(raw.rd, 0, C.ALL_DAYS)
+			ad.rn = Int(raw.rn, 1, 7)
+			ad.rs = Int(raw.rs, 0, 24 * 60 - 1)
+			ad.re = ad.rs and Int(raw.re, 0, 24 * 60 - 1)
+		end
 		if not ad.n or ad.i ~= Ads.GuildAdId(ad.n, Ads.OwnerRealm(ad.o)) then
 			return nil
 		end

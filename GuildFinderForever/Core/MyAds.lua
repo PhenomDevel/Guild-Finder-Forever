@@ -25,7 +25,10 @@ ns.charDbDefaults.playerDraft = {
 }
 
 local function NewDraft()
-	return { roles = 0, goals = 0, times = 0, text = "", lang = C.DefaultLanguage() }
+	return {
+		roles = 0, goals = 0, times = 0, text = "", lang = C.DefaultLanguage(),
+		classes = 0, raidDays = 0,
+	}
 end
 
 function MyAds.GetPlayerDraft()
@@ -38,11 +41,21 @@ end
 function MyAds.GetGuildDraft()
 	local ad = MyAds.GetGuildAd()
 	if ad then
-		return { roles = ad.r or 0, goals = ad.g or 0, times = ad.t or 0, text = ad.x or "", lang = ad.l }
+		local draft = { roles = ad.r or 0, goals = ad.g or 0, times = ad.t or 0, text = ad.x or "", lang = ad.l }
+		MyAds.CopyRaid(draft, ad)
+		return draft
 	end
 	local draft = ns.charDb.guildDraft or NewDraft()
+	draft.classes = draft.classes or 0
+	draft.raidDays = draft.raidDays or 0
 	ns.charDb.guildDraft = draft
 	return draft
+end
+
+-- Raid details from a published guild ad into a draft.
+function MyAds.CopyRaid(draft, ad)
+	draft.style, draft.classes, draft.raidDays, draft.raidsPerWeek = ad.ps, ad.cl or 0, ad.rd or 0, ad.rn
+	draft.raidStart, draft.raidEnd = ad.rs, ad.re
 end
 
 -- Live (not withdrawn) published ads, or nil.
