@@ -49,7 +49,7 @@ Open the window with `/gff`, the minimap button or the addon compartment.
 | `/gff blocked`, `/gff unblock <name>` | list / unblock blocked characters and guilds |
 | `/gff debug [on\|off]` | show sync traffic in chat: what is sent and received, from whom, and whether a received ad shows in your search (or why not, e.g. other faction) |
 | `/gff testdata` | add/remove made-up guild and player ads for trying out the UI (development checkouts only; this session only, never shared) |
-| `/gff probe` | transport test tools from the feasibility phase ([`docs/FEASIBILITY.md`](docs/FEASIBILITY.md)) |
+| `/gff probe` | transport test tools from the feasibility phase ([`docs/FEASIBILITY.md`](docs/FEASIBILITY.md); development checkouts only) |
 
 ## Features
 

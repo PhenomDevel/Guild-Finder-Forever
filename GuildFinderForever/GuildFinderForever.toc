@@ -10,6 +10,8 @@
 ## Notes-ptBR: Mural no jogo para guildas e jogadores procurando guilda.
 ## Author: PhenomDevel
 ## Version: @project-version@
+## X-License: MIT
+## X-Website: https://github.com/PhenomDevel/Guild-Finder-Forever
 ## Category: Social
 ## Category-deDE: Soziales
 ## Category-frFR: Social
@@ -74,5 +76,8 @@ Dev\Dev.lua
 Dev\TestData.lua
 #@end-do-not-package@
 
-# Transport test tools (/gff probe)
+# Transport test tools (/gff probe); development checkouts only (enables
+# Comm loopback, logs to the saved variables)
+#@do-not-package@
 Probe\Probe.lua
+#@end-do-not-package@

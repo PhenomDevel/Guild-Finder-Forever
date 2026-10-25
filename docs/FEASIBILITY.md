@@ -4,6 +4,7 @@ Before the data model and UI are built, this test checks in-game whether the
 transport works on Forever: a hidden custom channel, addon messages over
 `CHANNEL`, their reach, throttling, saved data and the chat messaging
 lockdown. All commands are under `/gff probe`; `/gff probe` alone lists them.
+The probe loads only from a git checkout; release builds leave it out.
 
 Every result is printed and also written to a log in the saved data
 (`GuildFinderForeverDB.probe.log`, last 300 lines, in

@@ -11,7 +11,7 @@ GuildFinderForever/          addon folder (the only thing that gets installed)
                              serializer, ad model, cache, sync, search, /who check
   UI/                        window, tabs, widgets, minimap button, settings
   Dev/                       dev flag (ns.DEV), test ads (/gff testdata); not packaged
-  Probe/                     transport test tools (/gff probe)
+  Probe/                     transport test tools (/gff probe); not packaged
 docs/                        architecture, feasibility test guide
 tools/fetch-libs.sh          fetches the libraries for local development
 .pkgmeta                     packaging config (BigWigs packager)
