@@ -101,6 +101,34 @@ function Filters.Run(kind)
 	return results
 end
 
+-- Whether a raid guild ad wants the own class in a role the own player ad
+-- names (all roles of the class if it names none). Returns nil (no raid
+-- needs), "fit" plus roles mask, or "no".
+function Filters.ClassFit(ad)
+	if not C.HasBit(ad.g or 0, C.GOAL_RAID) or (ad.cl or 0) == 0 then
+		return nil
+	end
+	local _, classFile, classId = UnitClass("player")
+	if not classId then
+		return nil
+	end
+	local wanted = C.WantedRoles(ad, { id = classId, key = classFile })
+	local mine = MyAds.GetPlayerDraft().roles or 0
+	if mine == 0 then
+		mine = C.ClassRoles(classFile)
+	end
+	local match = 0
+	for _, role in ipairs(C.ROLES) do
+		if C.HasBit(wanted, role.bit) and C.HasBit(mine, role.bit) then
+			match = match + role.bit
+		end
+	end
+	if match == 0 then
+		return "no"
+	end
+	return "fit", match
+end
+
 function Filters.FactionName(code)
 	return code == "H" and L.FACTION_HORDE or L.FACTION_ALLIANCE
 end

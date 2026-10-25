@@ -1,9 +1,10 @@
 -- luacheck: read globals UnitClass UnitLevel GetNumGuildMembers GameTooltip MenuUtil
 local _, ns = ...
 
--- "My ad" tab: the player ad of this character or, with invite rights,
--- the guild's ad, as four numbered steps. On the right a live preview of
--- how others see the ad and the publish controls.
+-- "My ad" tab: the player ad of this character as four numbered steps or,
+-- with invite rights, the guild's ad step by step (with a raid page for the
+-- raid goal). On the right a live preview of how others see the ad and the
+-- publish controls.
 local L = ns.L
 local W = ns.Widgets
 local C = ns.Constants
@@ -20,8 +21,9 @@ local VERY_GOOD = 75
 
 local MODE_PLAYER, MODE_GUILD = "player", "guild"
 
-local RAID_BLOCK = 112 -- height of the raid details plus gap
-local TEXT_HEIGHT, TEXT_HEIGHT_RAID = 64, 44
+local CONTENT_WIDTH = 512 -- form width minus padding
+local PAGE_TOP = -88 -- guild wizard: below mode switch and step bar
+local CELL_W, CELL_H, ROW_H = 30, 18, 22
 
 local function HasRaid(mode, draft)
 	return mode == MODE_GUILD and C.HasBit(draft.goals or 0, C.GOAL_RAID)
@@ -97,6 +99,7 @@ local function Build(content)
 	controls.playerMode:SetPoint("TOPLEFT", 14, -12)
 	controls.guildMode = W.Chip(form, function()
 		tab.mode = MODE_GUILD
+		tab.page = 1
 		tab.guildDraft = MyAds.GetGuildDraft()
 		tab:Refresh()
 	end)
@@ -120,40 +123,55 @@ local function Build(content)
 	controls.identity:SetPoint("LEFT", controls.guildMode, "RIGHT", 14, 0)
 	controls.identity:SetPoint("RIGHT", form, "RIGHT", -14, 0)
 
-	-- Numbered steps
-	controls.steps = {}
-	local function Step(index, y)
-		local circle = W.StepCircle(form, index, 24)
-		circle:SetPoint("TOPLEFT", 14, y)
-		local header = W.Header(form, "", "GameFontNormalLarge")
-		header:SetPoint("LEFT", circle, "RIGHT", 10, 0)
-		local hint = W.Text(form, "GameFontDisableSmall")
-		hint:SetPoint("BOTTOMLEFT", header, "BOTTOMRIGHT", 8, 1)
-		controls.steps[index] = { circle = circle, header = header, hint = hint }
-		return circle
+	-- Sections: stacked with numbered steps for the player ad, one page
+	-- each in the guild ad's step-by-step form.
+	controls.sections = {}
+	local function Section(key)
+		local section = CreateFrame("Frame", nil, form)
+		section:SetHeight(40)
+		section.circle = W.StepCircle(section, "", 24)
+		section.circle:SetPoint("TOPLEFT")
+		section.header = W.Header(section, "", "GameFontNormalLarge")
+		section.hint = W.Text(section, "GameFontDisableSmall")
+		section.hint:SetPoint("BOTTOMLEFT", section.header, "BOTTOMRIGHT", 8, 1)
+		-- Content starts at (section.x, -32) relative to the section.
+		function section:SetNumbered(number)
+			self.circle:SetShown(number ~= nil)
+			self.header:ClearAllPoints()
+			if number then
+				self.circle.text:SetText(number)
+				self.header:SetPoint("LEFT", self.circle, "RIGHT", 10, 0)
+			else
+				self.header:SetPoint("TOPLEFT", 0, -4)
+			end
+		end
+		section.x = STEP_X - 14
+		controls.sections[key] = section
+		return section
 	end
 
-	-- 1: roles
-	local step1 = Step(1, -52)
+	-- Roles
+	local secRoles = Section("roles")
 	controls.roles = {}
-	local x = STEP_X
+	local x = STEP_X - 14
 	for i, role in ipairs(C.ROLES) do
-		local pill = RolePill(form, role, function(on)
+		local pill = RolePill(secRoles, role, function(on)
 			local draft = Draft()
 			draft.roles = C.SetBit(draft.roles, role.bit, on)
 			Changed()
 		end)
-		pill:SetPoint("TOPLEFT", step1, "TOPLEFT", x - 14, -32)
+		pill:SetPoint("TOPLEFT", x, -32)
 		x = x + pill:GetWidth() + 8
 		controls.roles[i] = pill
 	end
+	secRoles:SetHeight(62)
 
-	-- 2: goals and language
-	local step2 = Step(2, -122)
+	-- Goals and language
+	local secGoals = Section("goals")
 	controls.goals = {}
-	x = STEP_X
+	x = STEP_X - 14
 	for i, goal in ipairs(C.GOALS) do
-		local chip = W.Chip(form, function(self)
+		local chip = W.Chip(secGoals, function(self)
 			self:SetActive(not self.active)
 			local draft = Draft()
 			draft.goals = C.SetBit(draft.goals, goal.bit, self.active)
@@ -162,14 +180,14 @@ local function Build(content)
 		chip:SetLabel(goal.label)
 		chip:SetHeight(26)
 		chip:SetWidth(math.max(64, chip:GetWidth()))
-		chip:SetPoint("TOPLEFT", step2, "TOPLEFT", x - 14, -32)
+		chip:SetPoint("TOPLEFT", x, -32)
 		chip.bit = goal.bit
 		x = x + chip:GetWidth() + 6
 		controls.goals[i] = chip
 	end
-	local langHeader = W.Header(form, L.FILTER_LANGUAGE, "GameFontNormalLarge")
-	langHeader:SetPoint("TOPLEFT", step2, "TOPLEFT", 332, -2)
-	controls.lang = W.Dropdown(form, 150, function()
+	local langHeader = W.Header(secGoals, L.FILTER_LANGUAGE, "GameFontNormalLarge")
+	langHeader:SetPoint("TOPLEFT", 332, -2)
+	controls.lang = W.Dropdown(secGoals, 150, function()
 		local list = {}
 		for _, lang in ipairs(C.LANGUAGES) do
 			list[#list + 1] = { value = lang.key, label = lang.label }
@@ -181,172 +199,16 @@ local function Build(content)
 		Draft().lang = value
 		Changed()
 	end)
-	controls.lang:SetPoint("TOPLEFT", step2, "TOPLEFT", 332, -28)
+	controls.lang:SetPoint("TOPLEFT", 332, -28)
+	secGoals:SetHeight(62)
 
-	-- Raid details (guild ads with the raid goal)
-	local raid = W.Panel(form, { 0.09, 0.08, 0.06, 1 }, { 0.35, 0.29, 0.15, 1 })
-	raid:SetPoint("TOPLEFT", step2, "TOPLEFT", STEP_X - 14, -64)
-	raid:SetPoint("RIGHT", form, "RIGHT", -14, 0)
-	raid:SetHeight(RAID_BLOCK - 8)
-	controls.raid = raid
-	local LABEL_WIDTH = 78
-	local function RowLabel(text, y)
-		local label = W.Text(raid, "GameFontNormalSmall", W.GOLD)
-		label:SetPoint("TOPLEFT", 10, y - 5)
-		label:SetWidth(LABEL_WIDTH - 6)
-		label:SetJustifyH("LEFT")
-		label:SetWordWrap(false)
-		label:SetText(text)
-		return label
-	end
-
-	RowLabel(L.FILTER_STYLE, -8)
-	controls.styles = {}
-	x = LABEL_WIDTH + 10
-	for i, style in ipairs(C.STYLES) do
-		local chip = W.Chip(raid, function()
-			local draft = Draft()
-			draft.style = draft.style ~= style.value and style.value or nil
-			tab:UpdateRaid()
-			Changed()
-		end)
-		chip:SetLabel(style.label)
-		chip:SetPoint("TOPLEFT", x, -8)
-		chip.value = style.value
-		x = x + chip:GetWidth() + 4
-		controls.styles[i] = chip
-	end
-	local perWeekOptions = { { value = nil, label = "–" } }
-	for count = 1, 7 do
-		perWeekOptions[#perWeekOptions + 1] = { value = count, label = L.PER_WEEK_COUNT:format(count) }
-	end
-	controls.perWeek = W.Dropdown(raid, 64, perWeekOptions, function()
-		return Draft().raidsPerWeek
-	end, function(value)
-		Draft().raidsPerWeek = value
-		Changed()
-	end)
-	controls.perWeek:SetPoint("TOPRIGHT", -8, -6)
-	local perWeekLabel = W.Text(raid, "GameFontNormalSmall", W.GOLD)
-	perWeekLabel:SetPoint("RIGHT", controls.perWeek, "LEFT", -6, 0)
-	perWeekLabel:SetText(L.RAIDS_PER_WEEK)
-
-	RowLabel(L.RAID_DAYS, -40)
-	controls.raidDays = {}
-	for day, name in ipairs(C.DAYS) do
-		local chip = W.Chip(raid, function(self)
-			self:SetActive(not self.active)
-			local draft = Draft()
-			draft.raidDays = C.SetBit(draft.raidDays or 0, C.DayBit(day), self.active)
-			Changed()
-		end)
-		chip:SetLabel(name)
-		chip:SetWidth(30)
-		chip:SetPoint("TOPLEFT", LABEL_WIDTH + 10 + (day - 1) * 32, -40)
-		chip.bit = C.DayBit(day)
-		controls.raidDays[day] = chip
-	end
-	controls.raidEnd = W.Dropdown(raid, 70, TimeOptions, function()
-		return Draft().raidEnd
-	end, function(value)
-		Draft().raidEnd = value
-		Changed()
-	end)
-	controls.raidEnd:SetPoint("TOPRIGHT", -8, -38)
-	local dash = W.Text(raid, "GameFontHighlightSmall")
-	dash:SetPoint("RIGHT", controls.raidEnd, "LEFT", -3, 0)
-	dash:SetText("–")
-	controls.raidStart = W.Dropdown(raid, 70, TimeOptions, function()
-		return Draft().raidStart
-	end, function(value)
-		Draft().raidStart = value
-		Changed()
-	end)
-	controls.raidStart:SetPoint("RIGHT", dash, "LEFT", -3, 0)
-	W.Tooltip(controls.raidStart, L.RAID_TIME, L.RAID_TIME_TIP)
-	W.Tooltip(controls.raidEnd, L.RAID_TIME, L.RAID_TIME_TIP)
-
-	RowLabel(L.WANTED_CLASSES, -72)
-	controls.classes = {}
-	for i, class in ipairs(C.GetClasses()) do
-		local icon = W.ClassIcon(raid, 22)
-		icon:SetClass(class.key)
-		icon:SetPoint("TOPLEFT", LABEL_WIDTH + 10 + (i - 1) * 25, -72)
-		icon:EnableMouse(true)
-		icon.bit = C.ClassBit(class.id)
-		icon.classId = class.id
-		icon.roles = W.RoleIcons(raid, 6)
-		icon.roles:SetPoint("TOP", icon, "BOTTOM", 0, -1)
-		local possible = C.ClassRoles(class.key)
-		local function SetWanted(on, roles)
-			local draft = Draft()
-			draft.classes = C.SetBit(draft.classes or 0, icon.bit, on)
-			draft.classRoles = C.SetClassRoles(draft.classRoles, class.id, on and roles or 0)
-			tab:UpdateRaid()
-			Changed()
-		end
-		icon:SetScript("OnMouseDown", function(self)
-			local draft = Draft()
-			local wanted = C.HasBit(draft.classes or 0, self.bit)
-			-- Single-role classes toggle directly, the others pick roles.
-			if C.CountBits(possible) < 2 or not (MenuUtil and MenuUtil.CreateContextMenu) then
-				SetWanted(not wanted, 0)
-				return
-			end
-			MenuUtil.CreateContextMenu(self, function(_, root)
-				root:CreateTitle(class.label)
-				root:CreateCheckbox(L.CLASS_WANTED, function()
-					return C.HasBit(Draft().classes or 0, icon.bit)
-				end, function()
-					SetWanted(not C.HasBit(Draft().classes or 0, icon.bit), 0)
-				end)
-				root:CreateTitle(L.CLASS_ROLES)
-				for _, role in ipairs(C.ROLES) do
-					if C.HasBit(possible, role.bit) then
-						root:CreateCheckbox(role.label, function()
-							return C.HasBit(C.GetClassRoles(Draft().classRoles, class.id), role.bit)
-						end, function()
-							local current = Draft()
-							local roles = C.GetClassRoles(current.classRoles, class.id)
-							if not C.HasBit(current.classes or 0, icon.bit) then
-								roles = 0
-							end
-							SetWanted(true, C.SetBit(roles, role.bit, not C.HasBit(roles, role.bit)))
-						end)
-					end
-				end
-			end)
-		end)
-		icon:SetScript("OnEnter", function(self)
-			GameTooltip:SetOwner(self, "ANCHOR_TOP")
-			GameTooltip:SetText(class.label, 1, 1, 1)
-			local draft = Draft()
-			if C.HasBit(draft.classes or 0, self.bit) then
-				local roles = C.GetClassRoles(draft.classRoles, class.id)
-				GameTooltip:AddLine(roles > 0 and C.RoleNames(roles) or L.ANY_ROLE, 1, 0.82, 0)
-			end
-			GameTooltip:AddLine(C.CountBits(possible) < 2 and L.CLASSES_HINT or L.CLASSES_ROLES_HINT, nil, nil, nil, true)
-			GameTooltip:Show()
-		end)
-		icon:SetScript("OnLeave", function()
-			GameTooltip:Hide()
-		end)
-		controls.classes[i] = icon
-		x = LABEL_WIDTH + 10 + i * 25
-	end
-	controls.classesHint = W.Text(raid, "GameFontDisableSmall")
-	controls.classesHint:SetPoint("TOPLEFT", x + 4, -77)
-	controls.classesHint:SetPoint("RIGHT", raid, "RIGHT", -8, 0)
-	controls.classesHint:SetJustifyH("LEFT")
-	controls.classesHint:SetWordWrap(false)
-
-	-- 3: play times with presets
-	local step3 = Step(3, -192)
-	controls.grid = W.TimeGrid(form, 34, 18, true, function(mask)
+	-- Play times with presets
+	local secTimes = Section("times")
+	controls.grid = W.TimeGrid(secTimes, 34, 18, true, function(mask)
 		Draft().times = mask
 		Changed()
 	end)
-	controls.grid:SetPoint("TOPLEFT", step3, "TOPLEFT", STEP_X - 14, -30)
+	controls.grid:SetPoint("TOPLEFT", STEP_X - 14, -30)
 	local weekend, evenings = 0, 0
 	for slot = 1, #C.SLOTS do
 		weekend = C.SetBit(C.SetBit(weekend, C.TimeBit(6, slot), true), C.TimeBit(7, slot), true)
@@ -360,7 +222,7 @@ local function Build(content)
 		{ L.PRESET_NONE, 0 },
 	}
 	for slot, preset in ipairs(presets) do
-		local link = W.LinkButton(form, preset[1], function()
+		local link = W.LinkButton(secTimes, preset[1], function()
 			Draft().times = preset[2]
 			controls.grid:SetMask(preset[2])
 			Changed()
@@ -368,18 +230,324 @@ local function Build(content)
 		local rowEnd = controls.grid.rowEnds[slot]
 		link:SetPoint("TOPLEFT", controls.grid, "TOPLEFT", rowEnd.x + 4, rowEnd.y - 2)
 	end
+	secTimes:SetHeight(112)
 
-	-- 4: text
-	local step4 = Step(4, -310)
-	controls.text = W.TextArea(form, 400, TEXT_HEIGHT, C.MAX_TEXT, function(text)
+	-- Text
+	local secText = Section("text")
+	controls.text = W.TextArea(secText, 400, 64, C.MAX_TEXT, function(text)
 		Draft().text = text
 		Changed()
 	end)
-	controls.text:SetPoint("TOPLEFT", step4, "TOPLEFT", STEP_X - 14, -32)
-	controls.text:SetPoint("RIGHT", form, "RIGHT", -14, 0)
-	local textHint = W.Text(form, "GameFontDisableSmall")
+	controls.text:SetPoint("TOPLEFT", STEP_X - 14, -32)
+	controls.text:SetPoint("RIGHT", 0, 0)
+	local textHint = W.Text(secText, "GameFontDisableSmall")
 	textHint:SetPoint("TOPLEFT", controls.text, "BOTTOMLEFT", 0, -4)
 	textHint:SetText(L.TEXT_HINT)
+	secText:SetHeight(116)
+
+	--------------------------------------------------------------------------
+	-- Raid (guild ads with the raid goal): style, schedule, needs per class
+	--------------------------------------------------------------------------
+
+	local secRaid = Section("raid")
+	secRaid:SetHeight(350)
+	local raidTop = -30
+	local function SubHeader(text, y)
+		local header = W.Header(secRaid, text, "GameFontNormal")
+		header:SetPoint("TOPLEFT", 0, y)
+		return header
+	end
+
+	SubHeader(L.FILTER_STYLE, raidTop)
+	controls.styles = {}
+	local styleWidth = (CONTENT_WIDTH - 2 * 8) / #C.STYLES
+	for i, style in ipairs(C.STYLES) do
+		local card = CreateFrame("Button", nil, secRaid, "BackdropTemplate")
+		card:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1 })
+		card:SetSize(styleWidth, 40)
+		card:SetPoint("TOPLEFT", (i - 1) * (styleWidth + 8), raidTop - 18)
+		card:SetHighlightTexture("Interface\\Buttons\\WHITE8x8")
+		card:GetHighlightTexture():SetVertexColor(1, 0.82, 0, 0.06)
+		card.title = W.Text(card, "GameFontNormal")
+		card.title:SetPoint("TOPLEFT", 10, -6)
+		card.title:SetText(style.label)
+		card.desc = W.Text(card, "GameFontDisableSmall")
+		card.desc:SetPoint("TOPLEFT", card.title, "BOTTOMLEFT", 0, -3)
+		card.desc:SetPoint("RIGHT", -8, 0)
+		card.desc:SetWordWrap(false)
+		card.desc:SetText(L["STYLE_" .. style.key .. "_DESC"])
+		card.value = style.value
+		function card:SetActive(active)
+			if active then
+				self:SetBackdropColor(0.16, 0.13, 0.06, 1)
+				self:SetBackdropBorderColor(0.79, 0.635, 0.29, 1)
+				W.Color(self.title, W.GOLD)
+			else
+				self:SetBackdropColor(0.1, 0.1, 0.1, 1)
+				self:SetBackdropBorderColor(0.25, 0.25, 0.25, 1)
+				W.Color(self.title, W.WHITE)
+			end
+		end
+		card:SetScript("OnClick", function()
+			local draft = Draft()
+			draft.style = draft.style ~= style.value and style.value or nil
+			tab:UpdateRaid()
+			Changed()
+		end)
+		controls.styles[i] = card
+	end
+
+	local scheduleTop = raidTop - 70
+	local scheduleHeader = SubHeader(L.RAID_SCHEDULE, scheduleTop)
+	local realmHint = W.Text(secRaid, "GameFontDisableSmall")
+	realmHint:SetPoint("BOTTOMLEFT", scheduleHeader, "BOTTOMRIGHT", 6, 0)
+	realmHint:SetText(L.REALM_TIME)
+	controls.perWeek = W.Stepper(secRaid, 1, 7, function()
+		return Draft().raidsPerWeek
+	end, function(value)
+		Draft().raidsPerWeek = value
+		Changed()
+	end)
+	controls.perWeek:SetPoint("TOPRIGHT", secRaid, "TOPRIGHT", 0, scheduleTop + 2)
+	local perWeekLabel = W.Text(secRaid, "GameFontNormalSmall", W.TAG)
+	perWeekLabel:SetPoint("RIGHT", controls.perWeek, "LEFT", -6, 0)
+	perWeekLabel:SetText(L.RAIDS_PER_WEEK)
+
+	controls.raidDays = {}
+	for day, name in ipairs(C.DAYS) do
+		local chip = W.Chip(secRaid, function(self)
+			self:SetActive(not self.active)
+			local draft = Draft()
+			draft.raidDays = C.SetBit(draft.raidDays or 0, C.DayBit(day), self.active)
+			Changed()
+		end)
+		chip:SetLabel(name)
+		chip:SetSize(34, 26)
+		chip:SetPoint("TOPLEFT", (day - 1) * 38, scheduleTop - 20)
+		chip.bit = C.DayBit(day)
+		controls.raidDays[day] = chip
+	end
+	controls.raidStart = W.Dropdown(secRaid, 76, TimeOptions, function()
+		return Draft().raidStart
+	end, function(value)
+		Draft().raidStart = value
+		Changed()
+	end)
+	controls.raidStart:SetPoint("TOPLEFT", 7 * 38 + 14, scheduleTop - 21)
+	local dash = W.Text(secRaid, "GameFontHighlight")
+	dash:SetPoint("LEFT", controls.raidStart, "RIGHT", 4, 0)
+	dash:SetText("–")
+	controls.raidEnd = W.Dropdown(secRaid, 76, TimeOptions, function()
+		return Draft().raidEnd
+	end, function(value)
+		Draft().raidEnd = value
+		Changed()
+	end)
+	controls.raidEnd:SetPoint("LEFT", dash, "RIGHT", 4, 0)
+	W.Tooltip(controls.raidStart, L.RAID_TIME, L.RAID_TIME_TIP)
+	W.Tooltip(controls.raidEnd, L.RAID_TIME, L.RAID_TIME_TIP)
+
+	-- Needs: classes × roles. A cell = class wanted in that role; a class
+	-- with all its roles marked is stored like "any role".
+	local needsTop = scheduleTop - 58
+	local needsHeader = SubHeader(L.RAID_NEEDS, needsTop)
+	local needsHint = W.Text(secRaid, "GameFontDisableSmall")
+	needsHint:SetPoint("BOTTOMLEFT", needsHeader, "BOTTOMRIGHT", 6, 0)
+	needsHint:SetPoint("RIGHT", secRaid, "RIGHT", 0, 0)
+	needsHint:SetWordWrap(false)
+	needsHint:SetText(L.RAID_NEEDS_HINT)
+
+	local function SetClassRoles(class, roles)
+		local draft = Draft()
+		local possible = C.ClassRoles(class.key)
+		roles = C.CommonBits(roles, possible) > 0 and roles or 0
+		draft.classes = C.SetBit(draft.classes or 0, C.ClassBit(class.id), roles > 0)
+		draft.classRoles = C.SetClassRoles(draft.classRoles, class.id, roles == possible and 0 or roles)
+	end
+
+	-- The roles of the wanted classes become the ad's wanted roles.
+	local function NeedsChanged()
+		local draft = Draft()
+		if (draft.classes or 0) > 0 then
+			local roles = 0
+			for _, class in ipairs(C.GetClasses()) do
+				local wanted = C.WantedRoles({ cl = draft.classes, cr = draft.classRoles }, class)
+				for _, role in ipairs(C.ROLES) do
+					if C.HasBit(wanted, role.bit) then
+						roles = C.SetBit(roles, role.bit, true)
+					end
+				end
+			end
+			draft.roles = roles
+		end
+		tab:UpdateRaid()
+		Changed()
+	end
+
+	local classes = C.GetClasses()
+	local half = math.ceil(#classes / 2)
+	local halfWidth = (CONTENT_WIDTH - 16) / 2
+	local nameWidth = halfWidth - #C.ROLES * (CELL_W + 6)
+	controls.cells = {}
+	controls.columns = {}
+	local gridTop = needsTop - 20
+	for column = 1, 2 do
+		local left = (column - 1) * (halfWidth + 16)
+		for r, role in ipairs(C.ROLES) do
+			local head = CreateFrame("Button", nil, secRaid)
+			head:SetSize(CELL_W, 16)
+			head:SetPoint("TOPLEFT", left + nameWidth + (r - 1) * (CELL_W + 6), gridTop)
+			local icon = W.RoleIcon(head, 16, role.bit)
+			icon:SetPoint("CENTER")
+			head:SetScript("OnClick", function()
+				-- Whole column: on unless every class that can is already on.
+				local draft = Draft()
+				local all = true
+				for _, class in ipairs(classes) do
+					if C.HasBit(C.ClassRoles(class.key), role.bit)
+						and not C.HasBit(C.WantedRoles({ cl = draft.classes, cr = draft.classRoles }, class), role.bit) then
+						all = false
+					end
+				end
+				for _, class in ipairs(classes) do
+					if C.HasBit(C.ClassRoles(class.key), role.bit) then
+						local current = C.WantedRoles({ cl = draft.classes, cr = draft.classRoles }, class)
+						SetClassRoles(class, C.SetBit(current, role.bit, not all))
+					end
+				end
+				NeedsChanged()
+			end)
+			W.Tooltip(head, role.label, L.COLUMN_TIP)
+		end
+	end
+	for i, class in ipairs(classes) do
+		local column = i <= half and 1 or 2
+		local row = column == 1 and i or i - half
+		local left = (column - 1) * (halfWidth + 16)
+		local y = gridTop - 18 - (row - 1) * ROW_H
+		local line = secRaid:CreateTexture(nil, "BACKGROUND")
+		line:SetColorTexture(1, 1, 1, 0.05)
+		line:SetPoint("TOPLEFT", left, y + 2)
+		line:SetSize(halfWidth, 1)
+		local icon = W.ClassIcon(secRaid, 16)
+		icon:SetClass(class.key)
+		icon:SetPoint("TOPLEFT", left, y - 2)
+		local name = W.Text(secRaid, "GameFontHighlightSmall")
+		name:SetPoint("LEFT", icon, "RIGHT", 6, 0)
+		name:SetWidth(nameWidth - 26)
+		name:SetWordWrap(false)
+		name:SetText("|c" .. W.ClassColorHex(class.key) .. class.label .. "|r")
+		local possible = C.ClassRoles(class.key)
+		for r, role in ipairs(C.ROLES) do
+			local cx = left + nameWidth + (r - 1) * (CELL_W + 6)
+			if C.HasBit(possible, role.bit) then
+				local cell = CreateFrame("Button", nil, secRaid, "BackdropTemplate")
+				cell:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1 })
+				cell:SetSize(CELL_W, CELL_H)
+				cell:SetPoint("TOPLEFT", cx, y)
+				cell.check = W.Text(cell, "GameFontNormalSmall")
+				cell.check:SetPoint("CENTER")
+				cell.check:SetTextColor(0.1, 0.07, 0.02)
+				cell.check:SetText("✓")
+				cell.class, cell.bit = class, role.bit
+				function cell:SetOn(on)
+					self.check:SetShown(on)
+					if on then
+						self:SetBackdropColor(0.79, 0.635, 0.29, 1)
+						self:SetBackdropBorderColor(1, 0.82, 0, 1)
+					else
+						self:SetBackdropColor(0.11, 0.11, 0.11, 1)
+						self:SetBackdropBorderColor(0.26, 0.26, 0.26, 1)
+					end
+				end
+				cell:SetScript("OnClick", function(self)
+					local draft = Draft()
+					local current = C.WantedRoles({ cl = draft.classes, cr = draft.classRoles }, class)
+					SetClassRoles(class, C.SetBit(current, self.bit, not C.HasBit(current, self.bit)))
+					NeedsChanged()
+				end)
+				cell:SetScript("OnEnter", function(self)
+					GameTooltip:SetOwner(self, "ANCHOR_TOP")
+					GameTooltip:SetText(class.label .. " · " .. role.label, 1, 1, 1)
+					GameTooltip:Show()
+				end)
+				cell:SetScript("OnLeave", function()
+					GameTooltip:Hide()
+				end)
+				controls.cells[#controls.cells + 1] = cell
+			else
+				local na = W.Text(secRaid, "GameFontDisableSmall")
+				na:SetPoint("TOPLEFT", cx, y - 3)
+				na:SetWidth(CELL_W)
+				na:SetJustifyH("CENTER")
+				na:SetText("–")
+			end
+		end
+	end
+
+	local summaryTop = gridTop - 18 - half * ROW_H - 6
+	controls.needsSummary = W.Text(secRaid, "GameFontNormalSmall", W.TAG)
+	controls.needsSummary:SetPoint("TOPLEFT", 0, summaryTop)
+	local clearLink = W.LinkButton(secRaid, L.NEEDS_CLEAR, function()
+		local draft = Draft()
+		draft.classes, draft.classRoles = 0, nil
+		NeedsChanged()
+	end)
+	clearLink:SetPoint("TOPRIGHT", secRaid, "TOPRIGHT", 0, summaryTop)
+	local allLink = W.LinkButton(secRaid, L.NEEDS_ALL, function()
+		local draft = Draft()
+		draft.classes, draft.classRoles = 0, nil
+		for _, class in ipairs(classes) do
+			draft.classes = C.SetBit(draft.classes, C.ClassBit(class.id), true)
+		end
+		NeedsChanged()
+	end)
+	allLink:SetPoint("RIGHT", clearLink, "LEFT", -12, 0)
+	secRaid:SetHeight(-summaryTop + 18)
+
+	--------------------------------------------------------------------------
+	-- Guild wizard: step bar and footer
+	--------------------------------------------------------------------------
+
+	local PAGE_LABELS = { goals = L.WIZ_GOALS, raid = L.WIZ_RAID, times = L.WIZ_TIMES, text = L.WIZ_TEXT }
+	controls.wizChips = {}
+	local wizBar = CreateFrame("Frame", nil, form)
+	wizBar:SetPoint("TOPLEFT", 14, -48)
+	wizBar:SetPoint("RIGHT", form, "RIGHT", -14, 0)
+	wizBar:SetHeight(24)
+	controls.wizBar = wizBar
+	for i = 1, 4 do
+		local chip = W.Chip(wizBar, function(self)
+			tab.page = self.pageIndex
+			tab:UpdateLayout()
+		end)
+		chip:SetHeight(22)
+		controls.wizChips[i] = chip
+	end
+	local wizLine = form:CreateTexture(nil, "BORDER")
+	wizLine:SetColorTexture(1, 1, 1, 0.08)
+	wizLine:SetPoint("TOPLEFT", wizBar, "BOTTOMLEFT", 0, -6)
+	wizLine:SetPoint("TOPRIGHT", wizBar, "BOTTOMRIGHT", 0, -6)
+	wizLine:SetHeight(1)
+	controls.wizLine = wizLine
+
+	local footer = CreateFrame("Frame", nil, form)
+	footer:SetPoint("BOTTOMLEFT", 14, 10)
+	footer:SetPoint("BOTTOMRIGHT", -14, 10)
+	footer:SetHeight(24)
+	controls.footer = footer
+	controls.back = W.Button(footer, L.BACK, 100, function()
+		tab.page = math.max(1, (tab.page or 1) - 1)
+		tab:UpdateLayout()
+	end)
+	controls.back:SetPoint("LEFT")
+	controls.next = W.Button(footer, L.NEXT, 100, function()
+		tab.page = (tab.page or 1) + 1
+		tab:UpdateLayout()
+	end)
+	controls.next:SetPoint("RIGHT")
+	controls.pageText = W.Text(footer, "GameFontDisableSmall")
+	controls.pageText:SetPoint("CENTER")
 
 	--------------------------------------------------------------------------
 	-- Preview
@@ -587,43 +755,132 @@ local function Build(content)
 		controls.matches:SetText(format:format(#results, good))
 	end
 
-	function tab:UpdateSteps()
-		local draft = Draft()
-		local steps = controls.steps
-		steps[1].circle:SetDone((draft.roles or 0) > 0)
-		steps[2].circle:SetDone((draft.goals or 0) > 0 and draft.lang ~= nil)
-		steps[3].circle:SetDone((draft.times or 0) > 0)
-		steps[4].circle:SetDone(Ads.CleanText(draft.text or "") ~= "")
+	-- Guild wizard pages; the raid page only with the raid goal.
+	local function Pages(mode, draft)
+		if mode ~= MODE_GUILD then
+			return nil
+		end
+		local pages = { "goals" }
+		if HasRaid(mode, draft) then
+			pages[#pages + 1] = "raid"
+		end
+		pages[#pages + 1] = "times"
+		pages[#pages + 1] = "text"
+		return pages
 	end
 
-	-- Shows the raid details and moves steps 3 and 4 below them.
+	local function SectionDone(key, draft)
+		if key == "roles" then
+			return (draft.roles or 0) > 0
+		elseif key == "goals" then
+			return (draft.goals or 0) > 0 and draft.lang ~= nil
+		elseif key == "raid" then
+			return draft.style ~= nil or (draft.raidDays or 0) > 0 or (draft.classes or 0) > 0
+		elseif key == "times" then
+			return (draft.times or 0) > 0
+		end
+		return Ads.CleanText(draft.text or "") ~= ""
+	end
+
+	local function Place(section, y)
+		section:ClearAllPoints()
+		section:SetPoint("TOPLEFT", form, "TOPLEFT", 14, y)
+		section:SetPoint("RIGHT", form, "RIGHT", -14, 0)
+		section:Show()
+	end
+
+	function tab:UpdateSteps()
+		local draft = Draft()
+		for key, section in pairs(controls.sections) do
+			section.circle:SetDone(SectionDone(key, draft))
+		end
+		local pages = Pages(self.mode, draft)
+		if pages then
+			self.page = math.max(1, math.min(self.page or 1, #pages))
+			for i, chip in ipairs(controls.wizChips) do
+				local key = pages[i]
+				if key then
+					chip:SetLabel((SectionDone(key, draft) and "|cff1eff00✓|r " or (i .. "  ")) .. PAGE_LABELS[key])
+					chip:SetActive(i == self.page)
+				end
+			end
+		end
+	end
+
+	-- Player ad: four numbered sections on one page. Guild ad: one page per
+	-- step with the step bar on top and back/next below.
 	function tab:UpdateLayout()
-		local raidShown = HasRaid(self.mode, Draft())
-		controls.raid:SetShown(raidShown)
-		local shift = raidShown and RAID_BLOCK or 0
-		local steps = controls.steps
-		steps[3].circle:ClearAllPoints()
-		steps[3].circle:SetPoint("TOPLEFT", 14, -192 - shift)
-		steps[4].circle:ClearAllPoints()
-		steps[4].circle:SetPoint("TOPLEFT", 14, -310 - shift)
-		controls.text:SetHeight(raidShown and TEXT_HEIGHT_RAID or TEXT_HEIGHT)
+		self:UpdateSteps()
+		local draft = Draft()
+		local sections = controls.sections
+		for _, section in pairs(sections) do
+			section:Hide()
+		end
+		local pages = Pages(self.mode, draft)
+		controls.wizBar:SetShown(pages ~= nil)
+		controls.wizLine:SetShown(pages ~= nil)
+		controls.footer:SetShown(pages ~= nil)
+		if not pages then
+			local order = { { "roles", -52 }, { "goals", -122 }, { "times", -192 }, { "text", -310 } }
+			for i, entry in ipairs(order) do
+				local section = sections[entry[1]]
+				section:SetNumbered(i)
+				Place(section, entry[2])
+			end
+			return
+		end
+
+		self.page = math.max(1, math.min(self.page or 1, #pages))
+		local left = 0
+		for i, chip in ipairs(controls.wizChips) do
+			chip:SetShown(pages[i] ~= nil)
+			if pages[i] then
+				chip:ClearAllPoints()
+				chip:SetPoint("LEFT", controls.wizBar, "LEFT", left, 0)
+				left = left + chip:GetWidth() + 6
+				chip.pageIndex = i
+			end
+		end
+		local key = pages[self.page]
+		if key == "goals" then
+			sections.goals:SetNumbered(nil)
+			Place(sections.goals, PAGE_TOP)
+			-- Raid ads take the wanted roles from the needs table.
+			if not HasRaid(self.mode, draft) then
+				sections.roles:SetNumbered(nil)
+				Place(sections.roles, PAGE_TOP - 80)
+			end
+		else
+			sections[key]:SetNumbered(nil)
+			Place(sections[key], PAGE_TOP)
+		end
+		controls.back:SetEnabled(self.page > 1)
+		controls.next:SetShown(self.page < #pages)
+		controls.pageText:SetText(L.WIZ_STEP:format(self.page, #pages))
 	end
 
 	function tab:UpdateRaid()
 		local draft = Draft()
-		for _, chip in ipairs(controls.styles) do
-			chip:SetActive(draft.style == chip.value)
+		for _, styleCard in ipairs(controls.styles) do
+			styleCard:SetActive(draft.style == styleCard.value)
 		end
 		for _, chip in ipairs(controls.raidDays) do
 			chip:SetActive(C.HasBit(draft.raidDays or 0, chip.bit))
 		end
-		local classes = draft.classes or 0
-		for _, icon in ipairs(controls.classes) do
-			local wanted = C.HasBit(classes, icon.bit)
-			icon:SetAlpha((classes == 0 or wanted) and 1 or 0.3)
-			icon.roles:SetRoles(wanted and C.GetClassRoles(draft.classRoles, icon.classId) or 0)
+		local wanted = { cl = draft.classes, cr = draft.classRoles }
+		for _, cell in ipairs(controls.cells) do
+			cell:SetOn(C.HasBit(C.WantedRoles(wanted, cell.class), cell.bit))
 		end
-		controls.classesHint:SetText(classes == 0 and L.ANY_CLASS or "")
+		if (draft.classes or 0) == 0 then
+			controls.needsSummary:SetText(L.ANY_CLASS)
+		else
+			local needs = C.NeedsByRole(wanted)
+			local parts = { L.NEEDS_LABEL }
+			for _, role in ipairs(C.ROLES) do
+				parts[#parts + 1] = ("%s %s"):format(role.label, L.NEEDS_COUNT:format(#needs[role.bit]))
+			end
+			controls.needsSummary:SetText(table.concat(parts, "  "))
+		end
 		controls.perWeek:Refresh()
 		controls.raidStart:Refresh()
 		controls.raidEnd:Refresh()
@@ -632,7 +889,6 @@ local function Build(content)
 	-- Everything that follows the form while typing.
 	function tab:UpdateLive()
 		self:UpdateLayout()
-		self:UpdateSteps()
 		self:UpdatePreview()
 		self:UpdatePublish()
 	end
@@ -654,16 +910,16 @@ local function Build(content)
 
 		local draft = Draft()
 		local faction = Filters.FactionName(Ads.GetFactionCode())
-		local steps = controls.steps
+		local sections = controls.sections
 		if self.mode == MODE_GUILD then
 			local members = GetNumGuildMembers()
 			controls.identity:SetText("|cffffd100<" .. guild .. ">|r · " .. faction
 				.. ((members or 0) > 0 and (" · " .. L.MEMBERS:format(members)) or "") .. " " .. L.GUILD_LOCKED)
-			steps[1].header:SetText(L.STEP_ROLES_GUILD)
-			steps[1].hint:SetText(L.STEP_ROLES_GUILD_HINT)
-			steps[2].header:SetText(L.STEP_GOALS_GUILD)
-			steps[3].header:SetText(L.STEP_TIMES_GUILD)
-			steps[4].header:SetText(L.STEP_TEXT_GUILD)
+			sections.roles.header:SetText(L.STEP_ROLES_GUILD)
+			sections.roles.hint:SetText(L.STEP_ROLES_GUILD_HINT)
+			sections.goals.header:SetText(L.STEP_GOALS_GUILD)
+			sections.times.header:SetText(L.STEP_TIMES_GUILD)
+			sections.text.header:SetText(L.STEP_TEXT_GUILD)
 			controls.previewHeader:SetText(L.PREVIEW_GUILD)
 			controls.otherNote:SetText(L.NOTE_OTHER_PLAYER)
 		else
@@ -672,16 +928,17 @@ local function Build(content)
 			controls.identity:SetText("|c" .. W.ClassColorHex(classFile) .. Ads.OwnerName(name) .. "|r · "
 				.. C.ClassName(classFile) .. " " .. UnitLevel("player") .. " · " .. faction .. " · "
 				.. (guild and ("<" .. guild .. ">") or L.NO_GUILD) .. " " .. L.FROM_CHARACTER)
-			steps[1].header:SetText(L.STEP_ROLES)
-			steps[1].hint:SetText(L.STEP_ROLES_HINT)
-			steps[2].header:SetText(L.STEP_GOALS)
-			steps[3].header:SetText(L.STEP_TIMES)
-			steps[4].header:SetText(L.STEP_TEXT)
+			sections.roles.header:SetText(L.STEP_ROLES)
+			sections.roles.hint:SetText(L.STEP_ROLES_HINT)
+			sections.goals.header:SetText(L.STEP_GOALS)
+			sections.times.header:SetText(L.STEP_TIMES)
+			sections.text.header:SetText(L.STEP_TEXT)
 			controls.previewHeader:SetText(L.PREVIEW_PLAYER)
 			controls.otherNote:SetText(guild and (canInvite and L.NOTE_OTHER_GUILD_CAN or L.NOTE_OTHER_GUILD_CANNOT)
 				or L.NOTE_OTHER_GUILD_NONE)
 		end
-		steps[3].hint:SetText(L.STEP_TIMES_HINT)
+		sections.times.hint:SetText(L.STEP_TIMES_HINT)
+		sections.raid.header:SetText(L.STEP_RAID)
 
 		local classRoles = self.mode == MODE_PLAYER and C.ClassRoles(select(2, UnitClass("player"))) or 7
 		for _, pill in ipairs(controls.roles) do

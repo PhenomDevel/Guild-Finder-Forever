@@ -15,7 +15,7 @@ local Filters = ns.Filters
 
 local KIND = Ads.KIND_GUILD
 local BANNER_HEIGHT = 30
-local CARD_HEIGHT = 104
+local CARD_HEIGHT = 140
 local CARD_GAP = 8
 local VERIFIED_ICON = "|TInterface\\RaidFrame\\ReadyCheck-Ready:14|t"
 
@@ -72,6 +72,17 @@ end
 -- Cards
 --------------------------------------------------------------------------------
 
+-- Role icon with a number next to it ("class count" for raid needs).
+local function RoleCount(parent, roleBit)
+	local holder = CreateFrame("Frame", nil, parent)
+	holder:SetSize(34, 14)
+	local icon = W.RoleIcon(holder, 14, roleBit)
+	icon:SetPoint("LEFT")
+	holder.count = W.Text(holder, "GameFontHighlightSmall")
+	holder.count:SetPoint("LEFT", icon, "RIGHT", 3, 0)
+	return holder
+end
+
 local function BuildCard(tab, row)
 	local card = CreateFrame("Button", nil, row, "BackdropTemplate")
 	card:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1 })
@@ -86,27 +97,52 @@ local function BuildCard(tab, row)
 	card.stripe:SetPoint("BOTTOMLEFT", 1, 1)
 	card.stripe:SetWidth(3)
 	card.emblem = W.GuildEmblem(card, 40)
-	card.emblem:SetPoint("TOPLEFT", 10, -10)
+	card.emblem:SetPoint("TOPLEFT", 12, -10)
+
+	card.score = W.Text(card, "GameFontNormalLarge")
+	card.score:SetPoint("TOPRIGHT", -10, -10)
+	card.scoreLabel = W.Text(card, "GameFontDisableSmall")
+	card.scoreLabel:SetPoint("TOPRIGHT", card.score, "BOTTOMRIGHT", 0, -1)
+	card.scoreLabel:SetText(L.FITS_YOU)
+
 	card.name = W.Text(card, "GameFontNormalLarge", W.GOLD)
 	card.name:SetPoint("TOPLEFT", card.emblem, "TOPRIGHT", 10, 0)
-	card.name:SetPoint("RIGHT", -10, 0)
+	card.name:SetPoint("RIGHT", card, "RIGHT", -64, 0)
 	card.name:SetWordWrap(false)
 	card.meta = W.Text(card, "GameFontDisableSmall")
 	card.meta:SetPoint("TOPLEFT", card.name, "BOTTOMLEFT", 0, -3)
-	card.meta:SetPoint("RIGHT", -10, 0)
+	card.meta:SetPoint("RIGHT", card, "RIGHT", -64, 0)
 	card.meta:SetWordWrap(false)
+
+	-- Raid line: style, days, time; needs line: classes per role + fit.
+	card.raid = CreateFrame("Frame", nil, card)
+	card.raid:SetPoint("TOPLEFT", 12, -58)
+	card.raid:SetPoint("RIGHT", -10, 0)
+	card.raid:SetHeight(36)
+	card.style = W.Tag(card.raid)
+	card.style:SetPoint("TOPLEFT")
+	card.schedule = W.Text(card.raid, "GameFontHighlightSmall", W.TEXT)
+	card.schedule:SetPoint("LEFT", card.style, "RIGHT", 8, 0)
+	card.schedule:SetPoint("RIGHT", card.raid, "RIGHT", 0, 0)
+	card.schedule:SetWordWrap(false)
+	card.needs = {}
+	for i, role in ipairs(C.ROLES) do
+		local count = RoleCount(card.raid, role.bit)
+		count:SetPoint("TOPLEFT", (i - 1) * 40, -20)
+		card.needs[i] = count
+	end
+	card.fit = W.Text(card.raid, "GameFontHighlightSmall")
+	card.fit:SetPoint("TOPRIGHT", 0, -20)
+
 	card.text = W.Text(card, "GameFontHighlightSmall", W.TEXT)
-	card.text:SetPoint("TOPLEFT", card.meta, "BOTTOMLEFT", 0, -5)
 	card.text:SetPoint("RIGHT", -10, 0)
 	card.text:SetJustifyV("TOP")
-	card.text:SetMaxLines(2)
 	card.text:SetSpacing(2)
 
 	card.tags = W.GoalTags(card)
-	card.tags:SetPoint("BOTTOMLEFT", 60, 8)
-	card.strip = W.WeekStrip(card, 10)
-	card.match = W.MatchBar(card, 40)
-	card.match:SetPoint("BOTTOMRIGHT", -10, 10)
+	card.tags:SetPoint("BOTTOMLEFT", 12, 8)
+	card.roles = W.RoleIcons(card, 16)
+	card.roles:SetPoint("BOTTOMRIGHT", -10, 9)
 
 	card:SetScript("OnClick", function(self)
 		if self.result then
@@ -134,17 +170,78 @@ local function BuildCard(tab, row)
 		if ad.gm then
 			meta[#meta + 1] = L.MEMBERS:format(ad.gm)
 		end
-		if ad.ps then
-			meta[#meta + 1] = C.StyleName(ad.ps)
-		end
 		meta[#meta + 1] = L.AGO:format(W.Duration(GetServerTime() - ad.v))
 		self.meta:SetText(table.concat(meta, " · "))
+
+		if result.score then
+			self.score:SetText(result.score .. " %")
+			W.Color(self.score, W.ScoreColor(result.score))
+		end
+		self.score:SetShown(result.score ~= nil)
+		self.scoreLabel:SetShown(result.score ~= nil)
+
+		local raid = C.HasBit(ad.g or 0, C.GOAL_RAID)
+		self.raid:SetShown(raid)
+		if raid then
+			local style = C.StyleName(ad.ps)
+			self.style:SetShown(style ~= nil)
+			if style then
+				self.style:SetLabel(style)
+			end
+			local schedule = {}
+			if (ad.rd or 0) > 0 then
+				schedule[#schedule + 1] = "|cffffffff" .. C.DaysText(ad.rd) .. "|r"
+			end
+			schedule[#schedule + 1] = C.RaidTimeText(ad)
+			if ad.rn then
+				schedule[#schedule + 1] = "|cff9d9d9d" .. L.PER_WEEK:format(ad.rn) .. "|r"
+			end
+			self.schedule:ClearAllPoints()
+			if style then
+				self.schedule:SetPoint("LEFT", self.style, "RIGHT", 8, 0)
+			else
+				self.schedule:SetPoint("TOPLEFT", self.raid, "TOPLEFT", 0, -3)
+			end
+			self.schedule:SetPoint("RIGHT", self.raid, "RIGHT", 0, 0)
+			self.schedule:SetText(#schedule > 0 and table.concat(schedule, "   ") or ("|cff9d9d9d" .. L.RAID_NO_DETAILS .. "|r"))
+
+			local hasNeeds = (ad.cl or 0) > 0
+			local needs = hasNeeds and C.NeedsByRole(ad)
+			for i, role in ipairs(C.ROLES) do
+				local count = self.needs[i]
+				count:SetShown(hasNeeds)
+				if hasNeeds then
+					local n = #needs[role.bit]
+					count.count:SetText(n)
+					count:SetAlpha(n > 0 and 1 or 0.35)
+				end
+			end
+			local fit, roles = Filters.ClassFit(ad)
+			if fit == "fit" then
+				local _, classFile = UnitClass("player")
+				self.fit:SetText("|cff1eff00✓ " .. C.ClassName(classFile) .. " · " .. C.RoleNames(roles) .. "|r")
+			elseif fit == "no" then
+				self.fit:SetText("|cff9d9d9d" .. L.FIT_NO_SHORT .. "|r")
+			else
+				self.fit:SetText("|cff9d9d9d" .. L.ANY_CLASS .. "|r")
+			end
+			self.fit:ClearAllPoints()
+			if hasNeeds then
+				self.fit:SetPoint("TOPRIGHT", self.raid, "TOPRIGHT", 0, -20)
+			else
+				self.fit:SetPoint("TOPLEFT", self.raid, "TOPLEFT", 0, -20)
+			end
+		end
+
+		self.text:ClearAllPoints()
+		self.text:SetPoint("TOPLEFT", 12, raid and -98 or -60)
+		self.text:SetPoint("RIGHT", -10, 0)
+		self.text:SetMaxLines(raid and 1 or 3)
 		self.text:SetText(ad.x ~= "" and ad.x or ("|cff9d9d9d" .. L.NO_TEXT .. "|r"))
-		local tagsWidth = self.tags:SetGoals(ad.g)
-		self.strip:ClearAllPoints()
-		self.strip:SetPoint("LEFT", self.tags, "LEFT", math.max(0, tagsWidth) + 12, 0)
-		self.strip:SetMask(ad.t)
-		self.match:SetScore(result.score)
+		self.tags:SetGoals(ad.g)
+		-- Non-raid ads show their general wanted roles at the bottom.
+		self.roles:SetShown(not raid)
+		self.roles:SetRoles(ad.r or 0)
 		if ad.i == tab.selectedId then
 			self:SetBackdropBorderColor(0.79, 0.635, 0.29, 1)
 		else

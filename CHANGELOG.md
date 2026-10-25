@@ -12,6 +12,11 @@
 - Guild ads with the raid goal: raid style, raid days, raids per week, raid
   time and wanted classes with roles per class; filters for raid style and "wants my class".
 - "Same ruleset" filter only on Forever.
+- Guild ad as a step-by-step form with a raid page (style cards, schedule,
+  class × role needs table); wider guild details with raid schedule and
+  wanted classes grouped by role; guild cards with a raid line instead of
+  the week strip.
+- `/gff testdata`: session-only test ads for trying out the UI.
 - Status line shows the search scope: realm (retail) or ruleset (Forever).
 - Fix "integer overflow" in the serializer on sync (bucket hashes ≥ 2^31).
 - Guild cards and details mark the faction: crest, coloured emblem border

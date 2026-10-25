@@ -14,7 +14,7 @@ assume the old Classic Era API.
   `docs/ARCHITECTURE.md`. Phase 1 test guide: `docs/FEASIBILITY.md`.
 - `GuildFinderForever/` is the addon folder that gets installed; everything
   else (docs, tools, CI) stays in the repo only.
-- Load order is defined in `GuildFinderForever.toc`: Libs → Locales → Core → UI → Probe.
+- Load order is defined in `GuildFinderForever.toc`: Libs → Locales → Core → UI → Dev → Probe.
 
 ## Original code only (strict)
 - Every line of code, data table and asset must be written independently,
