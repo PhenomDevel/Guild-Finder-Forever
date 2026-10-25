@@ -148,6 +148,31 @@ function C.TimeBit(day, slot)
 	return 2 ^ ((day - 1) * 3 + (slot - 1))
 end
 
+-- Further languages of an ad (la): two-letter keys after the main
+-- one (l), concatenated, e.g. "enfr".
+C.MAX_MORE_LANGS = 6
+
+-- { "de", "en", ... } of an ad, main language first.
+function C.AdLanguages(ad)
+	local list = { ad.l }
+	for key in (ad.la or ""):gmatch("%l%l") do
+		list[#list + 1] = key
+	end
+	return list
+end
+
+function C.SpeaksLanguage(ad, key)
+	if ad.l == key then
+		return true
+	end
+	for other in (ad.la or ""):gmatch("%l%l") do
+		if other == key then
+			return true
+		end
+	end
+	return false
+end
+
 C.LANGUAGES = {
 	{ key = "de", label = L.LANG_DE },
 	{ key = "en", label = L.LANG_EN },

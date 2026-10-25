@@ -72,15 +72,18 @@ end
 -- Cards
 --------------------------------------------------------------------------------
 
--- Role icon with a number next to it ("class count" for raid needs).
-local function RoleCount(parent, roleBit)
-	local holder = CreateFrame("Frame", nil, parent)
-	holder:SetSize(34, 14)
-	local icon = W.RoleIcon(holder, 14, roleBit)
-	icon:SetPoint("LEFT")
-	holder.count = W.Text(holder, "GameFontHighlightSmall")
-	holder.count:SetPoint("LEFT", icon, "RIGHT", 3, 0)
-	return holder
+local NEED_ICON = 14 -- class icons in the needs line
+local NEED_GAP = 2
+local GROUP_GAP = 10
+
+-- Class icon from the card's pool, created on demand.
+local function NeedIcon(card, index)
+	local icon = card.needIcons[index]
+	if not icon then
+		icon = W.ClassIcon(card.raid, NEED_ICON)
+		card.needIcons[index] = icon
+	end
+	return icon
 end
 
 local function BuildCard(tab, row)
@@ -125,12 +128,11 @@ local function BuildCard(tab, row)
 	card.schedule:SetPoint("LEFT", card.style, "RIGHT", 8, 0)
 	card.schedule:SetPoint("RIGHT", card.raid, "RIGHT", 0, 0)
 	card.schedule:SetWordWrap(false)
-	card.needs = {}
+	card.roleIcons, card.needIcons = {}, {}
 	for i, role in ipairs(C.ROLES) do
-		local count = RoleCount(card.raid, role.bit)
-		count:SetPoint("TOPLEFT", (i - 1) * 40, -20)
-		card.needs[i] = count
+		card.roleIcons[i] = W.RoleIcon(card.raid, 16, role.bit)
 	end
+	card.more = W.Text(card.raid, "GameFontDisableSmall")
 	card.fit = W.Text(card.raid, "GameFontHighlightSmall")
 	card.fit:SetPoint("TOPRIGHT", 0, -20)
 
@@ -150,6 +152,60 @@ local function BuildCard(tab, row)
 		end
 	end)
 
+	-- Role icon followed by the wanted classes' icons, per role; what doesn't
+	-- fit next to the fit text is summed up as "+n".
+	function card:LayoutNeeds(ad, hasNeeds)
+		for _, icon in ipairs(self.needIcons) do
+			icon:Hide()
+		end
+		self.more:Hide()
+		for _, icon in ipairs(self.roleIcons) do
+			icon:SetShown(hasNeeds)
+		end
+		if not hasNeeds then
+			return
+		end
+		local width = self.raid:GetWidth()
+		local limit = (width > 0 and width or 420) - self.fit:GetStringWidth() - 30
+		local needs = C.NeedsByRole(ad)
+		local x, used, hidden = 0, 0, 0
+		for i, role in ipairs(C.ROLES) do
+			local list = needs[role.bit]
+			local roleIcon = self.roleIcons[i]
+			roleIcon:SetShown(#list > 0)
+			if #list > 0 then
+				if x + 16 + NEED_ICON > limit then
+					roleIcon:Hide()
+					hidden = hidden + #list
+				else
+					roleIcon:ClearAllPoints()
+					roleIcon:SetPoint("TOPLEFT", x, -20)
+					x = x + 16 + 4
+					for _, class in ipairs(list) do
+						if x + NEED_ICON > limit then
+							hidden = hidden + 1
+						else
+							used = used + 1
+							local icon = NeedIcon(self, used)
+							icon:SetClass(class.key)
+							icon:ClearAllPoints()
+							icon:SetPoint("TOPLEFT", x, -21)
+							icon:Show()
+							x = x + NEED_ICON + NEED_GAP
+						end
+					end
+					x = x + GROUP_GAP - NEED_GAP
+				end
+			end
+		end
+		if hidden > 0 then
+			self.more:SetText("+" .. hidden)
+			self.more:ClearAllPoints()
+			self.more:SetPoint("LEFT", self.raid, "TOPLEFT", x, -28)
+			self.more:Show()
+		end
+	end
+
 	function card:SetResult(result)
 		self.result = result
 		if not result then
@@ -166,7 +222,7 @@ local function BuildCard(tab, row)
 		end
 		local check = Store.GetCheck(ad.i)
 		self.name:SetText(ad.n .. (check and check.verified and (" " .. VERIFIED_ICON) or ""))
-		local meta = { W.FactionText(ad.f, Filters.FactionName(ad.f)), Filters.LanguageName(ad.l) }
+		local meta = { W.FactionText(ad.f, Filters.FactionName(ad.f)), Filters.LanguagesText(ad) }
 		if ad.gm then
 			meta[#meta + 1] = L.MEMBERS:format(ad.gm)
 		end
@@ -206,20 +262,16 @@ local function BuildCard(tab, row)
 			self.schedule:SetText(#schedule > 0 and table.concat(schedule, "   ") or ("|cff9d9d9d" .. L.RAID_NO_DETAILS .. "|r"))
 
 			local hasNeeds = (ad.cl or 0) > 0
-			local needs = hasNeeds and C.NeedsByRole(ad)
-			for i, role in ipairs(C.ROLES) do
-				local count = self.needs[i]
-				count:SetShown(hasNeeds)
-				if hasNeeds then
-					local n = #needs[role.bit]
-					count.count:SetText(n)
-					count:SetAlpha(n > 0 and 1 or 0.35)
-				end
-			end
 			local fit, roles = Filters.ClassFit(ad)
 			if fit == "fit" then
 				local _, classFile = UnitClass("player")
-				self.fit:SetText("|cff1eff00✓ " .. C.ClassName(classFile) .. " · " .. C.RoleNames(roles) .. "|r")
+				-- Roles only when not every role of the class is wanted: keeps
+				-- room for the class icons.
+				local label = C.ClassName(classFile)
+				if roles ~= C.ClassRoles(classFile) then
+					label = label .. " · " .. C.RoleNames(roles)
+				end
+				self.fit:SetText(W.CHECK .. " |cff1eff00" .. label .. "|r")
 			elseif fit == "no" then
 				self.fit:SetText("|cff9d9d9d" .. L.FIT_NO_SHORT .. "|r")
 			else
@@ -227,10 +279,11 @@ local function BuildCard(tab, row)
 			end
 			self.fit:ClearAllPoints()
 			if hasNeeds then
-				self.fit:SetPoint("TOPRIGHT", self.raid, "TOPRIGHT", 0, -20)
+				self.fit:SetPoint("TOPRIGHT", self.raid, "TOPRIGHT", 0, -21)
 			else
-				self.fit:SetPoint("TOPLEFT", self.raid, "TOPLEFT", 0, -20)
+				self.fit:SetPoint("TOPLEFT", self.raid, "TOPLEFT", 0, -21)
 			end
+			self:LayoutNeeds(ad, hasNeeds)
 		end
 
 		self.text:ClearAllPoints()

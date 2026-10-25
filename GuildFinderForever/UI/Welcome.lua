@@ -55,7 +55,7 @@ local function Create()
 
 	-- Paragraphs with a gold heading each, stacked below the title.
 	dialog.blocks = {}
-	for i = 1, 3 do
+	for i = 1, 4 do
 		local dot = W.Dot(dialog, 8, W.GOLD)
 		local header = W.Header(dialog, L["WELCOME_HEAD" .. i])
 		header:SetPoint("LEFT", dot, "RIGHT", 10, 0)

@@ -73,7 +73,7 @@ local GUILDS = {
 		text = "Kleine Truppe mit Mythic-Ambitionen. Heiler dringend gesucht.",
 		style = 3, days = Days(2, 5), perWeek = 2, start = 20 * 60, stop = 23 * 60 + 30,
 		needs = { { "DEATHKNIGHT", T }, { "PALADIN", H }, { "MONK", H } } },
-	{ name = "Nachtschwingen", owner = "Mirelle", lang = "en", members = 120, age = 70,
+	{ name = "Nachtschwingen", owner = "Mirelle", lang = "en", more = "de", members = 120, age = 70,
 		goals = { "RAID", "PVP" }, times = Times({ 1, 2 }, { 3, 2 }, { 4, 2 }),
 		text = "Ranged-heavy roster, looking for melee damage dealers.",
 		style = 2, days = Days(1, 3, 4), perWeek = 3, start = 19 * 60, stop = 22 * 60,
@@ -82,7 +82,7 @@ local GUILDS = {
 		goals = { "RAID", "SOCIAL", "LEVELING" }, times = Times(unpack(WEEKEND)),
 		text = "Gemütlicher Raid am Sonntag, jeder ist willkommen.",
 		style = 1, days = Days(7), perWeek = 1, start = 18 * 60, stop = 21 * 60, needs = {} },
-	{ name = "Klingen des Ostens", owner = "Corvin", lang = "fr", members = 64, age = 30,
+	{ name = "Klingen des Ostens", owner = "Corvin", lang = "fr", more = "deen", members = 64, age = 30,
 		goals = { "PVP", "SOCIAL" }, times = Times(unpack(EVENINGS)), roles = D,
 		text = "Guilde PvP, champs de bataille chaque soir." },
 	{ name = "Laternenträger", owner = "Wenna", lang = "de", members = 18, age = 1,
@@ -102,7 +102,7 @@ local PLAYERS = {
 	{ name = "Aldric", class = "PALADIN", level = 80, roles = T + H, lang = "de", age = 3,
 		goals = { "RAID" }, times = Times({ 3, 2 }, { 4, 2 }, { 7, 2 }),
 		text = "Heiler mit Raiderfahrung, suche feste Raidgilde Mi/Do." },
-	{ name = "Fenja", class = "MAGE", level = 80, roles = D, lang = "de", age = 10,
+	{ name = "Fenja", class = "MAGE", level = 80, roles = D, lang = "de", more = "en", age = 10,
 		goals = { "RAID", "SOCIAL" }, times = Times(unpack(EVENINGS)),
 		text = "Suche nette Gilde zum Raiden unter der Woche." },
 	{ name = "Gorrim", class = "WARRIOR", level = 78, roles = T + D, lang = "de", age = 26,
@@ -111,7 +111,7 @@ local PLAYERS = {
 	{ name = "Liora", class = "PRIEST", level = 64, roles = H + D, lang = "en", age = 4,
 		goals = { "LEVELING", "SOCIAL" }, times = Times(unpack(WEEKEND)),
 		text = "Returning player, looking for a friendly levelling guild." },
-	{ name = "Maelis", class = "DRUID", level = 80, roles = T + H + D, lang = "de", age = 50,
+	{ name = "Maelis", class = "DRUID", level = 80, roles = 0, lang = "de", more = "enfrnl", age = 50,
 		goals = { "RAID" }, times = Times({ 1, 2 }, { 3, 2 }, { 4, 2 }, { 7, 2 }),
 		text = "Flexibler Druide, spiele jede Rolle." },
 	{ name = "Torvik", class = "HUNTER", level = 80, roles = D, lang = "de", age = 8,
@@ -143,7 +143,7 @@ local function Build()
 		local raw = {
 			k = Ads.KIND_GUILD, i = Ads.GuildAdId(g.name, realm), v = now - g.age * HOUR,
 			o = g.owner .. "-" .. realm, f = g.other and otherFaction or faction, l = g.lang, m = mode,
-			g = Goals(unpack(g.goals)), t = g.times, x = g.text, n = g.name, gm = g.members, r = g.roles or 0,
+			g = Goals(unpack(g.goals)), la = g.more, t = g.times, x = g.text, n = g.name, gm = g.members, r = g.roles or 0,
 			ps = g.style, rd = g.days, rn = g.perWeek, rs = g.start, re = g.stop, cl = classes, cr = classRoles,
 		}
 		-- Wanted roles of raid ads follow their needs, like the form does.
@@ -165,7 +165,7 @@ local function Build()
 		local owner = p.name .. "-" .. realm
 		Add({
 			k = Ads.KIND_PLAYER, i = Ads.PlayerAdId(owner), v = now - p.age * HOUR, o = owner,
-			f = p.other and otherFaction or faction, l = p.lang, m = mode, g = Goals(unpack(p.goals)),
+			f = p.other and otherFaction or faction, l = p.lang, la = p.more, m = mode, g = Goals(unpack(p.goals)),
 			t = p.times, x = p.text, c = p.class, lv = p.level, r = p.roles,
 		})
 	end

@@ -22,7 +22,8 @@ Ads are flat tables with short keys, identical in the saved data and on the
 wire: `i` id, `k` kind (`P` player / `G` guild), `v` version (server time of
 the last change), `o` owner (`Name-Realm` of whoever posted this version),
 `f` faction, `l` language (two-letter ISO 639-1 code; unknown codes are
-kept and shown as the code, so new languages need no protocol change), `g` goals mask, `t` play times mask (7 days × 3
+kept and shown as the code, so new languages need no protocol change), `la`
+further languages (concatenated codes, e.g. `"enfr"`, at most 6; optional), `g` goals mask, `t` play times mask (7 days × 3
 slots), `x` text (≤ 200 characters, `|` and control characters stripped),
 `m` game mode as reported by `C_GameRules.GetActiveGameMode()`.
 
@@ -122,7 +123,7 @@ Layout follows the v2 sketches. Files:
 - `PlayersTab.lua`: toolbar (role toggles, level range, class, chips,
   search), dense list; the selected row expands inline with the actions.
 - `MyAdTab.lua`: player ad as four numbered steps (roles, goals +
-  language, time grid with presets, text); guild ad as a paged form (goals +
+  languages (multi-select), time grid with presets, text); guild ad as a paged form (goals +
   language, raid only with the raid goal, times, text) whose raid page holds
   style cards, schedule and a class × role needs table; live preview of how the other
   side sees the ad with the number of matching ads in the cache, publish /

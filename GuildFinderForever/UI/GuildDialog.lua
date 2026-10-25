@@ -283,7 +283,7 @@ local function Update()
 	local poster = Ads.OwnerName(ad.o)
 	dialog.emblem:SetGuild(ad.n, ad.f)
 	dialog.name:SetText("<" .. ad.n .. ">")
-	local meta = { W.FactionText(ad.f, Filters.FactionName(ad.f)), Filters.LanguageName(ad.l) }
+	local meta = { W.FactionText(ad.f, Filters.FactionName(ad.f)), Filters.LanguagesText(ad) }
 	if ad.gm then
 		meta[#meta + 1] = L.MEMBERS:format(ad.gm)
 	end
@@ -369,7 +369,7 @@ local function Update()
 	local fit, fitRoles = Filters.ClassFit(ad)
 	local _, myClass = UnitClass("player")
 	if fit == "fit" then
-		dialog.fit:SetText("|cff1eff00✓ " .. L.FIT_YES:format(C.ClassName(myClass), C.RoleNames(fitRoles)) .. "|r")
+		dialog.fit:SetText(W.CHECK .. " |cff1eff00" .. L.FIT_YES:format(C.ClassName(myClass), C.RoleNames(fitRoles)) .. "|r")
 	elseif fit == "no" then
 		dialog.fit:SetText("|cff9d9d9d" .. L.FIT_NO:format(C.ClassName(myClass)) .. "|r")
 	end
