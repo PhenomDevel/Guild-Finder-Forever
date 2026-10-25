@@ -7,6 +7,7 @@
   and match score, "My ad" in four steps with live preview, first-run intro,
   /who check on contact, hide and block, minimap button, addon compartment
   entry and settings.
+- Status line shows the search scope: realm (retail) or ruleset (Forever).
 - UI in English, German, French, Spanish, Italian, Russian and Portuguese.
 - Ad languages: the client languages plus Danish, Dutch, Finnish, Greek,
   Hungarian, Norwegian, Polish, Romanian, Swedish, Czech, Turkish and

@@ -212,6 +212,8 @@ L.MINIMAP_RIGHT = "Rechtsklick: Meine Anzeige"
 -- Status line
 L.STATUS_CONNECTED = "Verbunden"
 L.STATUS_DISCONNECTED = "Kanal nicht verbunden"
+L.STATUS_REALM = "Realm: %s"
+L.STATUS_RULESET = "Regelwerk: %s"
 L.STATUS_CACHED = "%d Anzeigen"
 L.STATUS_MATCHES_GUILDS = "%d Gilden passen"
 L.STATUS_MATCHES_PLAYERS = "%d Spieler passen"

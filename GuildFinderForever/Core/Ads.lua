@@ -1,4 +1,4 @@
--- luacheck: read globals UnitName UnitLevel UnitClass UnitFactionGroup GetGuildInfo GetNormalizedRealmName IsInGuild CanGuildInvite C_GuildInfo C_GameRules GetNumGuildMembers
+-- luacheck: read globals UnitName UnitLevel UnitClass UnitFactionGroup GetGuildInfo GetNormalizedRealmName IsInGuild CanGuildInvite C_GuildInfo C_GameRules GetNumGuildMembers GetBuildInfo GetRealmName Enum
 local _, ns = ...
 
 -- Ad model: building own ads and validating received ones. Ads are flat
@@ -47,6 +47,36 @@ function Ads.GetGameMode()
 	if ok and type(mode) == "number" and not (issecretvalue and issecretvalue(mode)) then
 		return mode
 	end
+end
+
+-- Forever builds use interface numbers below retail's (16001 vs. 12xxxx).
+function Ads.IsForever()
+	local _, _, _, interface = GetBuildInfo()
+	return type(interface) == "number" and interface < 100000
+end
+
+-- Enum key of the active game mode ("Standard", ...), or nil.
+function Ads.GetGameModeName()
+	local mode = Ads.GetGameMode()
+	if not mode or not (Enum and Enum.GameMode) then
+		return nil
+	end
+	for name, value in pairs(Enum.GameMode) do
+		if value == mode then
+			return name
+		end
+	end
+	return tostring(mode)
+end
+
+-- Where ads come from: the ruleset on Forever (no realm list there), the
+-- realm (plus its connected realms) on retail.
+function Ads.GetScopeText()
+	local L = ns.L
+	if Ads.IsForever() then
+		return L.STATUS_RULESET:format(Ads.GetGameModeName() or "?")
+	end
+	return L.STATUS_REALM:format(GetRealmName() or Ads.GetRealm() or "?")
 end
 
 function Ads.GetRealm()
