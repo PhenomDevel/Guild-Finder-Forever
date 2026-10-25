@@ -10,7 +10,9 @@ restrictions (secret values, addon message lockdown during encounters). Do not
 assume the old Classic Era API.
 
 ## Layout
-- Dev setup, release and checks: `docs/DEVELOPMENT.md`. Design and roadmap:
+- Dev setup and checks: `docs/DEVELOPMENT.md`. Release (same process in all
+  PhenomDevel addons): `docs/RELEASE.md`; every user-facing change adds a line
+  under `## Unreleased` in `CHANGELOG.md`. Design and roadmap:
   `docs/ARCHITECTURE.md`. Phase 1 test guide: `docs/FEASIBILITY.md`.
 - `GuildFinderForever/` is the addon folder that gets installed; everything
   else (docs, tools, CI) stays in the repo only.
