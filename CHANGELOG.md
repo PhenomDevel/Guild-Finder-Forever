@@ -1,60 +1,52 @@
 # Changelog
 
-## Unreleased
+## v0.1.0
 
-- Guild finder: player and guild ads shared over a hidden channel, guild
-  cards with details dialog, player list with inline details, filter chips
-  and match score, "My ad" in four steps with live preview, first-run intro,
-  /who check on contact, hide and block, minimap button, addon compartment
-  entry and settings.
-- `/gff debug`: sync traffic in chat, including whether received ads are
-  shown in the own search.
-- Guild ads with the raid goal: raid style, raid days, raids per week, raid
-  time and wanted classes with roles per class; filters for raid style and "wants my class".
-- "Same ruleset" filter only on Forever.
-- Guild ad as a step-by-step form with a raid page (style cards, schedule,
-  class × role needs table); wider guild details with raid schedule and
-  wanted classes grouped by role; guild cards with a raid line instead of
-  the week strip.
-- `/gff testdata`: session-only test ads for trying out the UI.
-- Ads with several languages (new optional field `la`); player ads without
-  a role count as every role of the class.
-- Guild emblems show the faction logo; cards list wanted classes as class
-  icons per role; tabs fit their label; status line notes "<faction> only"
-  and counts guild and player ads separately.
-- Fix: the ad text field lost focus after every keystroke.
-- Guild ad form: one page (ad) plus a raid page instead of four steps;
-  online times optional for guilds and neutral in the score when empty.
-- Cards: raid info in its own box; name and meta no longer run into the
-  score.
-- Goals as coloured chips with icons; player list with separate class and
-  level columns, sortable by any column, languages in the row details.
-- Background ping verifies an ad's poster (addon whisper `P`/`Q`); `/who`
-  results now reach the addon (`SetWhoToUi`).
-- Raid guilds without a class list ("all classes welcome") now also show
-  whether your class and roles fit.
-- Raid guilds without a class list: "any class as" plus the wanted role
-  icons when only some roles are wanted, no role icons when all are.
-- Play times hidden for now behind `C.SHOW_TIMES` (form step, "my times"
-  filter, player list column, details grid, score); ads still carry them.
-  The freed room goes to the ad text and the player list columns.
-- "My ad" preview: guild ads show the raid schedule under the name; the
-  player week strip no longer hides behind the goal chips.
-- Player list: languages on their own line in the row details.
-- New ads start with all play times ticked; new "always" preset for play times.
-- Raid cards: number of wanted classes per role instead of class icons, names
-  in the card tooltip; the poster check shows only in the details; the
-  schedule gets the full width. Guild details list wanted classes as
-  compact class icons (name on hover), so long lists fit.
-- Welcome dialog on first start: the addon is community driven and starts
-  with few ads (development checkouts: on every login).
-- Status line shows the search scope: realm (retail) or ruleset (Forever).
-- Fix "integer overflow" in the serializer on sync (bucket hashes ≥ 2^31).
-- Guild cards and details mark the faction: crest, coloured emblem border
-  and stripe.
+First release. Guild Finder Forever is community driven: it only knows the
+ads of other players running it, so the lists start short and grow with
+every player and guild that posts one.
+
+### Find guilds
+- Guild ads as cards sorted by how well they fit your own ad, with faction
+  crest, goals as coloured chips and a raid box (style, raid days and time,
+  wanted classes per role, whether your class fits).
+- Search box and filters: faction, language, goals, raid style, "wants my
+  class" and, on Forever, "same ruleset".
+- Details dialog with the full text, raid schedule and wanted classes by
+  role. Opening it checks in the background whether the poster is online
+  and in that guild.
+
+### Find players
+- Compact list of player ads with class, level, roles, languages and goals,
+  sortable by any column.
+- Filters for role, level range and class; a click on a row shows the text.
+
+### My ad
+- Player ad per character and guild ad per guild (members who may invite),
+  with a live preview and the number of matching ads.
+- Raiding guilds add style, raid days, start and end time, raids per week and
+  a class × role table of wanted classes.
+- Ads can name several languages: the seven UI languages plus Czech, Danish,
+  Dutch, Finnish, Greek, Hungarian, Norwegian, Polish, Romanian, Swedish,
+  Turkish and Ukrainian.
+- Ads are renewed on login and expire after 14 days without one.
+- Play times are switched off for now.
+
+### Contact and moderation
+- *Whisper* opens a whisper and checks the poster via `/who`.
+- *Hide* an ad, *Block* a character or guild (`/gff blocked`, `/gff unblock`).
+
+### General
+- Ads travel player to player over a hidden addon channel; nothing is sent
+  during encounter lockdown, queued messages go out afterwards.
+- Welcome dialog on first start, minimap button, addon compartment entry,
+  settings (minimap button, chat notice for new matching ads).
+- Chat commands: `/gff`, `/gff ad`, `/gff settings`, `/gff sync`,
+  `/gff status`, `/gff debug` (sync traffic in chat, for bug reports).
 - UI in English, German, French, Spanish, Italian, Russian and Portuguese.
-- Ad languages: the client languages plus Danish, Dutch, Finnish, Greek,
-  Hungarian, Norwegian, Polish, Romanian, Swedish, Czech, Turkish and
-  Ukrainian.
-- Transport test tools (`/gff probe`): hidden addon channel, messaging,
-  saved data and lockdown checks.
+- Runs on WoW Forever and, until Forever launches, on retail (Midnight).
+
+### Known limitations
+- No cross-faction sync: the addon channel is separate per faction.
+- The ruleset list for the "same ruleset" filter is not final until Forever
+  launches.

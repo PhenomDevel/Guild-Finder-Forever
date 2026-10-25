@@ -22,6 +22,7 @@ ignore:
   - docs
   - tools
   - GuildFinderForever/Dev
+  - GuildFinderForever/Probe
 
 manual-changelog:
   filename: CHANGELOG.md
