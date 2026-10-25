@@ -50,7 +50,8 @@ assume the old Classic Era API.
 - In-game strings in `Locales/`: enUS (base) and deDE always; frFR, esES
   (also esMX), itIT, ruRU and ptBR get every new UI string too. The probe
   (`PROBE_*`) strings are enUS + deDE only. Missing keys fall back to enUS.
-- Commit messages: `[feature] …`, `[fix] …`, `[chore] …`.
+- Commit messages and PR titles: Conventional Commits (`feat: …`, `fix: …`,
+  `docs: …`, `chore: …`, see the general rules).
 - `.luacheckrc` holds common globals only; declare others per file with
   `-- luacheck: read globals …`.
 - SavedVariables keys are persistent – never rename a released key without a
