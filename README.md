@@ -4,7 +4,7 @@
 
 [![Version](https://img.shields.io/github/v/release/PhenomDevel/Guild-Finder-Forever?label=version)](https://github.com/PhenomDevel/Guild-Finder-Forever/releases/latest)
 [![CurseForge](https://img.shields.io/curseforge/dt/1765174?label=CurseForge)](https://www.curseforge.com/projects/1765174)
-[![License](https://img.shields.io/github/license/PhenomDevel/Guild-Finder-Forever)](LICENSE)
+[![License](https://img.shields.io/github/license/PhenomDevel/Guild-Finder-Forever)](https://github.com/PhenomDevel/Guild-Finder-Forever/blob/main/LICENSE)
 
 **The guild finder that World of Warcraft Forever doesn't have.**
 
@@ -34,7 +34,7 @@ Era and other clients are not supported.
    for the Forever beta).
 3. Log in. A short welcome explains how it works, and `/gff` opens the window.
 
-What changed: [CHANGELOG.md](CHANGELOG.md)
+What changed: [CHANGELOG.md](https://github.com/PhenomDevel/Guild-Finder-Forever/blob/main/CHANGELOG.md)
 
 ## Features
 
