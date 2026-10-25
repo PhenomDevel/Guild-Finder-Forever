@@ -19,6 +19,7 @@ C.ROLES = {
 	{ bit = C.ROLE.HEALER, key = "HEALER", label = L.ROLE_HEALER, short = L.ROLE_HEALER_SHORT, color = { 0.18, 0.48, 0.2 } },
 	{ bit = C.ROLE.DAMAGE, key = "DAMAGE", label = L.ROLE_DAMAGE, short = L.ROLE_DAMAGE_SHORT, color = { 0.56, 0.16, 0.12 } },
 }
+C.ALL_ROLES = 7
 
 -- Each goal has an icon and colour so chips are told apart at a glance.
 C.GOALS = {

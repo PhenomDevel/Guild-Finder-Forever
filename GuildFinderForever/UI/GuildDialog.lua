@@ -387,19 +387,28 @@ local function Update()
 			end
 			row.label:Hide()
 		end
+		-- Raid ads: every class, in some roles (rows) or in all (text only).
+		local roles = ad.r or 0
 		local y = listTop
+		if raid then
+			local someRoles = roles > 0 and roles ~= C.ALL_ROLES
+			dialog.anyClass:SetText(someRoles and L.ANY_CLASS_ROLES or L.ANY_CLASS)
+			dialog.anyClass:Show()
+			y = y - 22
+			if not someRoles then
+				roles = 0
+			end
+		else
+			dialog.anyClass:SetText(L.ANY_ROLE)
+			dialog.anyClass:SetShown(roles == 0)
+		end
 		for _, row in ipairs(dialog.needRows) do
-			if C.HasBit(ad.r or 0, row.bit) then
+			if C.HasBit(roles, row.bit) then
 				row.label:ClearAllPoints()
 				row.label:SetPoint("TOPLEFT", 16, y)
 				row.label:Show()
 				y = y - 24
 			end
-		end
-		dialog.anyClass:SetShown(y == listTop or raid)
-		dialog.anyClass:SetText(raid and L.ANY_CLASS or L.ANY_ROLE)
-		if y ~= listTop and raid then
-			dialog.anyClass:SetPoint("TOPLEFT", 16, y)
 		end
 	end
 
