@@ -35,6 +35,8 @@
   whether your class and roles fit.
 - Raid guilds without a class list: "any class as" plus the wanted role
   icons when only some roles are wanted, no role icons when all are.
+- "My ad" preview: guild ads show the raid schedule under the name; the
+  player week strip no longer hides behind the goal chips.
 - Player list: languages on their own line in the row details.
 - New ads start with all play times ticked; new "always" preset for play times.
 - Raid cards: number of wanted classes per role instead of class icons, names
