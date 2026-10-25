@@ -121,12 +121,14 @@ Layout follows the v2 sketches. Files:
   with the "+ Filter" menu, sort menu, chat notices for new matching ads and
   `/who` results.
 - `GuildsTab.lua`: banner with the own ad status, search + chips + sort, two
-  column card grid (raid ads show style, days, time, wanted classes per
-  role and whether the own class fits); first-run screen until "Create my ad" / "Just look
+  column card grid (raid ads show style, days, time, the number of wanted
+  classes per role and whether the own class fits; the tooltip names the
+  classes and the poster check); first-run screen until "Create my ad" / "Just look
   around".
 - `GuildDialog.lua`: details over the dimmed window – left: text, goals,
   time grid with the own times highlighted; right: raid style, days and
-  time, wanted classes grouped by role with the own class marked (or the
+  time, wanted classes as class icons grouped by role with the own class
+  ringed (or the
   wanted roles for non-raid ads); Whisper / Hide / Block.
 - `Welcome.lua`: welcome dialog on the first start (community driven, few
   ads at first); every login when `ns.DEV` is set by the unpackaged `Dev/`.

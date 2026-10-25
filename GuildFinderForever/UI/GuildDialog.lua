@@ -22,7 +22,8 @@ local PAD = 20
 local SIDE_WIDTH = 300 -- right column
 local SIDE_X = WIDTH - SIDE_WIDTH
 local ROLE_LABEL = 76 -- role column in the needs list
-local CHIP_GAP = 4
+local CHIP_SIZE = 24
+local CHIP_GAP = 3
 
 local overlay, dialog
 local current -- { id, score, onClose }
@@ -168,7 +169,7 @@ local function Create()
 	dialog.needRows = {}
 	for i, role in ipairs(C.ROLES) do
 		local label = CreateFrame("Frame", nil, side)
-		label:SetSize(ROLE_LABEL, 18)
+		label:SetSize(ROLE_LABEL, CHIP_SIZE)
 		local icon = W.RoleIcon(label, 16, role.bit)
 		icon:SetPoint("LEFT")
 		local text = W.Text(label, "GameFontNormalSmall", W.TAG)
@@ -213,25 +214,26 @@ local function Create()
 	unfit:SetText(L.UNFIT)
 end
 
--- Class chip: icon and class-coloured name.
+-- Class chip: class icon, name in the tooltip; a green ring marks your class.
 local function ClassChip(parent)
-	local chip = W.Panel(parent, { 0.11, 0.11, 0.11, 1 }, { 0.24, 0.24, 0.24, 1 })
-	chip:SetHeight(18)
-	chip.icon = W.ClassIcon(chip, 14)
-	chip.icon:SetPoint("LEFT", 2, 0)
-	chip.text = W.Text(chip, "GameFontHighlightSmall")
-	chip.text:SetPoint("LEFT", chip.icon, "RIGHT", 4, 0)
+	local chip = CreateFrame("Frame", nil, parent, "BackdropTemplate")
+	chip:SetSize(CHIP_SIZE, CHIP_SIZE)
+	chip:SetBackdrop({ edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1 })
+	chip.icon = W.ClassIcon(chip, CHIP_SIZE - 4)
+	chip.icon:SetPoint("CENTER")
+	chip:EnableMouse(true)
+	chip:SetScript("OnEnter", function(self)
+		GameTooltip:SetOwner(self, "ANCHOR_TOP")
+		GameTooltip:SetText("|c" .. W.ClassColorHex(self.class.key) .. self.class.label .. "|r")
+		GameTooltip:Show()
+	end)
+	chip:SetScript("OnLeave", function()
+		GameTooltip:Hide()
+	end)
 	function chip:SetClass(class, mine)
+		self.class = class
 		self.icon:SetClass(class.key)
-		self.text:SetText("|c" .. W.ClassColorHex(class.key) .. class.label .. "|r")
-		self:SetWidth(self.text:GetStringWidth() + 26)
-		if mine then
-			self:SetBackdropColor(0.07, 0.15, 0.06, 1)
-			self:SetBackdropBorderColor(W.GREEN[1], W.GREEN[2], W.GREEN[3], 1)
-		else
-			self:SetBackdropColor(0.11, 0.11, 0.11, 1)
-			self:SetBackdropBorderColor(0.24, 0.24, 0.24, 1)
-		end
+		self:SetBackdropBorderColor(W.GREEN[1], W.GREEN[2], W.GREEN[3], mine and 1 or 0)
 	end
 	return chip
 end
@@ -254,13 +256,13 @@ local function LayoutNeeds(ad, top)
 				row.chips[i] = chip
 			end
 			chip:SetClass(class, fit == "fit" and class.key == myClass and C.HasBit(fitRoles, row.bit))
-			if x > 0 and x + chip:GetWidth() > dialog.chipWidth then
-				x, lineY = 0, lineY - 18 - CHIP_GAP
+			if x > 0 and x + CHIP_SIZE > dialog.chipWidth then
+				x, lineY = 0, lineY - CHIP_SIZE - CHIP_GAP
 			end
 			chip:ClearAllPoints()
 			chip:SetPoint("TOPLEFT", 16 + ROLE_LABEL + x, lineY)
 			chip:Show()
-			x = x + chip:GetWidth() + CHIP_GAP
+			x = x + CHIP_SIZE + CHIP_GAP
 		end
 		for i = #list + 1, #row.chips do
 			row.chips[i]:Hide()
@@ -268,7 +270,7 @@ local function LayoutNeeds(ad, top)
 		if #list > 0 then
 			row.label:ClearAllPoints()
 			row.label:SetPoint("TOPLEFT", 16, y)
-			y = lineY - 18 - 8
+			y = lineY - CHIP_SIZE - 8
 		end
 	end
 	return y
