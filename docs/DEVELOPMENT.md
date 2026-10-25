@@ -69,26 +69,12 @@ in-game; there are no automated tests and no mocked WoW API.
 
 ## Release
 
-Add a `## vX.Y.Z` section to `CHANGELOG.md` (uploaded as release notes, keep
-it user-facing), merge it, then run *Actions → Release → Run workflow* on
-`main` with the version (`v0.1.0`, or `v0.1.0-beta1` / `-alpha1` for test
-releases). The workflow checks the changelog section and that the tag is new,
-creates the tag, lints and runs the
-[BigWigs packager](https://github.com/BigWigsMods/packager), which uploads to
-CurseForge, Wago and GitHub releases. Pushing a `v*` tag manually triggers the
-same workflow.
-
-Upload targets: [CurseForge](https://www.curseforge.com/projects/1765174)
-(`X-Curse-Project-ID` in the `.toc`, secret `CF_API_KEY`) and
-[Wago](https://addons.wago.io/addons/Q6aqwa6W) (`X-Wago-ID`, secret
-`WAGO_API_TOKEN`).
-
-A site without ID or secret is skipped. Local test build without upload (zip
-in `.release/`):
-
-```bash
-curl -s https://raw.githubusercontent.com/BigWigsMods/packager/master/release.sh | bash -s -- -d
-```
+Rename `## Unreleased` in `CHANGELOG.md` to `## vX.Y.Z (YYYY-MM-DD)`, merge
+it, then run *Actions → Release → Run workflow* on `main` with the version
+(`v0.2.0`, or `v0.2.0-beta1` / `-alpha1` for test releases). The workflow
+tags the commit and uploads to CurseForge, Wago and GitHub. Details, including
+the local test build:
+[`RELEASE.md`](RELEASE.md) (same process in all PhenomDevel addons).
 
 ## Interface version
 
