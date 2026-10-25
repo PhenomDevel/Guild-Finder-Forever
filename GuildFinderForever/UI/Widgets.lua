@@ -674,36 +674,6 @@ function W.WeekStrip(parent, cellWidth)
 	return strip
 end
 
--- Match bar plus "94 %" text.
-function W.MatchBar(parent, width)
-	local frame = CreateFrame("Frame", nil, parent)
-	frame:SetSize(width + 44, 14)
-	local bg = frame:CreateTexture(nil, "BACKGROUND")
-	bg:SetSize(width, 6)
-	bg:SetPoint("LEFT")
-	bg:SetColorTexture(0.16, 0.16, 0.16, 1)
-	local fill = frame:CreateTexture(nil, "ARTWORK")
-	fill:SetHeight(6)
-	fill:SetPoint("LEFT")
-	local text = W.Text(frame, "GameFontNormalSmall")
-	text:SetPoint("LEFT", bg, "RIGHT", 6, 0)
-	function frame:SetScore(score)
-		if not score then
-			fill:Hide()
-			text:SetText("–")
-			Color(text, W.MUTED)
-			return
-		end
-		local color = W.ScoreColor(score)
-		fill:Show()
-		fill:SetWidth(math.max(1, width * score / 100))
-		fill:SetColorTexture(color[1], color[2], color[3], 1)
-		text:SetText(score .. " %")
-		Color(text, color)
-	end
-	return frame
-end
-
 function W.ScoreColor(score)
 	if score >= 75 then
 		return W.GREEN

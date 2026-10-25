@@ -314,17 +314,6 @@ function C.RoleNames(roles)
 	return table.concat(parts, ", ")
 end
 
--- "Raid, Social" for a goals mask.
-function C.GoalsText(goals)
-	local parts = {}
-	for _, goal in ipairs(C.GOALS) do
-		if C.HasBit(goals or 0, goal.bit) then
-			parts[#parts + 1] = goal.label
-		end
-	end
-	return table.concat(parts, ", ")
-end
-
 -- Short play time summary for the result list, e.g. "Wed, Sun evening".
 function C.TimesText(times)
 	times = times or 0
