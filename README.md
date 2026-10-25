@@ -3,9 +3,10 @@
 <img src="docs/logo/logo-400.png" alt="Guild Finder Forever logo" width="96" align="right">
 
 [![CI](https://github.com/PhenomDevel/Guild-Finder-Forever/actions/workflows/ci.yml/badge.svg)](https://github.com/PhenomDevel/Guild-Finder-Forever/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-![WoW Forever](https://img.shields.io/badge/WoW-Forever%2016001-e6b43a)
-![Retail](https://img.shields.io/badge/retail-Midnight%20(testing)-555)
+[![Release](https://github.com/PhenomDevel/Guild-Finder-Forever/actions/workflows/release.yml/badge.svg)](https://github.com/PhenomDevel/Guild-Finder-Forever/actions/workflows/release.yml)
+[![Version](https://img.shields.io/github/v/release/PhenomDevel/Guild-Finder-Forever?label=version)](https://github.com/PhenomDevel/Guild-Finder-Forever/releases/latest)
+[![CurseForge](https://img.shields.io/curseforge/dt/1765174?label=CurseForge)](https://www.curseforge.com/projects/1765174)
+[![License](https://img.shields.io/github/license/PhenomDevel/Guild-Finder-Forever)](LICENSE)
 
 **The guild finder that World of Warcraft Forever doesn't have.**
 
@@ -33,13 +34,23 @@ ads go from player to player over a hidden addon channel.
    the Forever beta).
 3. Log in. A short welcome explains how it works, and `/gff` opens the window.
 
-Until Forever launches, the addon also loads on retail (Midnight) for testing.
+Changes per version: [CHANGELOG.md](CHANGELOG.md).
+
+## Supported clients
+
+| Client | Interface |
+| --- | --- |
+| WoW: Forever | 16001 |
+| Retail | 120000 – 120105 (Midnight, for testing until Forever launches) |
+
+On retail, sync and `/who` only reach your own realm and its connected realms.
+Classic Era and other clients are not supported.
 
 ## Usage
 
 Open the window with `/gff`, the minimap button or the addon compartment.
 
-### Chat commands
+### Commands
 
 | Command | |
 |---------|-|
@@ -128,12 +139,23 @@ sent.
 - The ruleset list for the "same ruleset" filter is not final until Forever
   launches.
 
+## Feedback & support
+
+- Bugs and ideas: [GitHub issues](https://github.com/PhenomDevel/Guild-Finder-Forever/issues).
+- If you like the addon, star it on GitHub and tell your guild about it :)
+
 ## Development
 
-See [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) and
-[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). Bug reports and ideas are
-welcome as [GitHub issues](https://github.com/PhenomDevel/Guild-Finder-Forever/issues).
+- Layout, libraries, local setup and checks: [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md)
+- Design and roadmap: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+- Release (same process in all PhenomDevel addons): [`docs/RELEASE.md`](docs/RELEASE.md)
 
 ## License
 
 [MIT](LICENSE)
+
+---
+
+Developed with the help of AI ([Claude](https://claude.ai) by Anthropic).
+Every change is reviewed by a professional software developer before it is
+merged.
