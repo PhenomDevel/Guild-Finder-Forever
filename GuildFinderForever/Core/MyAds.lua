@@ -55,7 +55,7 @@ end
 -- Raid details from a published guild ad into a draft.
 function MyAds.CopyRaid(draft, ad)
 	draft.style, draft.classes, draft.raidDays, draft.raidsPerWeek = ad.ps, ad.cl or 0, ad.rd or 0, ad.rn
-	draft.raidStart, draft.raidEnd = ad.rs, ad.re
+	draft.raidStart, draft.raidEnd, draft.classRoles = ad.rs, ad.re, ad.cr
 end
 
 -- Live (not withdrawn) published ads, or nil.

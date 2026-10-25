@@ -16,7 +16,7 @@ local Verify = ns.Verify
 local Filters = ns.Filters
 
 local WIDTH, HEIGHT = 580, 430
-local RAID_HEIGHT = 72 -- extra height of the raid section
+local RAID_HEIGHT = 80 -- extra height of the raid section
 local PAD = 20
 
 local overlay, dialog
@@ -267,9 +267,12 @@ local function Update()
 					icon = W.ClassIcon(dialog.raid, 20)
 					icon:SetPoint("LEFT", dialog.classesLabel, "RIGHT", 6 + (count - 1) * 23, 0)
 					icon:EnableMouse(true)
+					icon.roles = W.RoleIcons(icon, 6)
+					icon.roles:SetPoint("TOP", icon, "BOTTOM", 0, -1)
 					icon:SetScript("OnEnter", function(self)
 						GameTooltip:SetOwner(self, "ANCHOR_TOP")
-						GameTooltip:SetText(self.label)
+						GameTooltip:SetText(self.label, 1, 1, 1)
+						GameTooltip:AddLine(self.roleMask > 0 and C.RoleNames(self.roleMask) or L.ANY_ROLE, 1, 0.82, 0)
 						GameTooltip:Show()
 					end)
 					icon:SetScript("OnLeave", function()
@@ -279,6 +282,8 @@ local function Update()
 				end
 				icon:SetClass(class.key)
 				icon.label = class.label
+				icon.roleMask = C.GetClassRoles(ad.cr, class.id)
+				icon.roles:SetRoles(icon.roleMask)
 				icon:Show()
 			end
 		end

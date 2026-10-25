@@ -80,6 +80,7 @@ function Filters.Profile(kind)
 	return {
 		goals = draft.goals or 0, times = draft.times or 0, roles = draft.roles or 0, lang = draft.lang,
 		classes = kind == Ads.KIND_PLAYER and draft.classes or 0, classId = classId,
+		classRoles = kind == Ads.KIND_PLAYER and draft.classRoles or nil,
 	}
 end
 

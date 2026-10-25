@@ -32,7 +32,8 @@ slots), `x` text (≤ 200 characters, `|` and control characters stripped),
   `GetGuildInfo("player")`, not editable), `gm` member count, `r` wanted
   roles. With the raid goal set also (each optional): `ps` raid style
   (1 casual, 2 semi-hardcore, 3 hardcore), `cl` wanted classes (bit
-  `classID - 1`, 0 = any), `rd` raid days (bit `day - 1`, Monday first),
+  `classID - 1`, 0 = any), `cr` wanted roles per class (one digit per class
+  ID, the role mask 0–7, 0 = any role; e.g. `"1004"`), `rd` raid days (bit `day - 1`, Monday first),
   `rn` raids per week, `rs`/`re` start/end in minutes after midnight, realm
   time (`re` < `rs` runs past midnight). `Sanitize` drops them without the
   raid goal. Only members with invite rights post it; the newest version wins.

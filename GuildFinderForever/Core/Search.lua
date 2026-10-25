@@ -4,7 +4,7 @@ local _, ns = ...
 --   filter = { kind, text, factions = { A = bool, H = bool }, lang, goals,
 --              roles, class, minLevel, maxLevel, myTimes, sameMode,
 --              style, myClass }
---   profile = { goals, times, roles, lang, classes, classId }: what the
+--   profile = { goals, times, roles, lang, classes, classRoles, classId }: what the
 --              searcher wants (own draft), the base of the match score.
 -- sameMode only applies on Forever: retail has no rulesets to compare.
 local Search = {}
@@ -41,8 +41,7 @@ local function Matches(ad, filter, profile, myMode)
 		if filter.style and ad.ps ~= filter.style then
 			return false
 		end
-		if filter.myClass and profile.classId and (ad.cl or 0) > 0
-			and not C.HasBit(ad.cl, C.ClassBit(profile.classId)) then
+		if filter.myClass and profile.classId and not C.WantsClass(ad, profile.classId, profile.roles) then
 			return false
 		end
 	elseif ad.k == Ads.KIND_PLAYER then
@@ -110,11 +109,12 @@ function Search.Score(ad, filter, profile)
 	end
 	-- Wanted classes: guild ad vs. own class, own guild draft vs. player ad.
 	if ad.k == Ads.KIND_GUILD and (ad.cl or 0) > 0 and profile.classId then
-		Add(C.HasBit(ad.cl, C.ClassBit(profile.classId)) and 1 or 0, 2)
+		Add(C.WantsClass(ad, profile.classId, profile.roles) and 1 or 0, 2)
 	elseif ad.k == Ads.KIND_PLAYER and (profile.classes or 0) > 0 then
 		local classId = C.ClassId(ad.c)
 		if classId then
-			Add(C.HasBit(profile.classes, C.ClassBit(classId)) and 1 or 0, 2)
+			local wanted = { cl = profile.classes, cr = profile.classRoles }
+			Add(C.WantsClass(wanted, classId, ad.r) and 1 or 0, 2)
 		end
 	end
 	local lang = filter.lang or profile.lang

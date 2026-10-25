@@ -7,7 +7,8 @@ which has no guild finder of its own.
   level, play times, goals and a short text.
 - **Guilds** post one recruiting ad per guild, by members who may invite.
   Raiding guilds add raid style (casual, semi-hardcore, hardcore), raid
-  days, raids per week, raid time and wanted classes.
+  days, raids per week, raid time and wanted classes, each with the wanted
+  roles.
 - Both sides search each other with filters (faction, ruleset, language,
   play times, goals) and contact the poster with one click.
 

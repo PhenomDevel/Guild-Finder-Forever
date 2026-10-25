@@ -1,4 +1,4 @@
--- luacheck: read globals UnitClass UnitLevel GetNumGuildMembers GameTooltip
+-- luacheck: read globals UnitClass UnitLevel GetNumGuildMembers GameTooltip MenuUtil
 local _, ns = ...
 
 -- "My ad" tab: the player ad of this character or, with invite rights,
@@ -29,7 +29,8 @@ end
 
 local function SameRaid(draft, ad)
 	local start = draft.raidStart
-	return draft.style == ad.ps and (draft.classes or 0) == (ad.cl or 0) and (draft.raidDays or 0) == (ad.rd or 0)
+	return draft.style == ad.ps and (draft.classes or 0) == (ad.cl or 0) and draft.classRoles == ad.cr
+		and (draft.raidDays or 0) == (ad.rd or 0)
 		and draft.raidsPerWeek == ad.rn and start == ad.rs and (start and draft.raidEnd) == ad.re
 end
 
@@ -273,16 +274,58 @@ local function Build(content)
 		icon:SetPoint("TOPLEFT", LABEL_WIDTH + 10 + (i - 1) * 25, -72)
 		icon:EnableMouse(true)
 		icon.bit = C.ClassBit(class.id)
-		icon:SetScript("OnMouseDown", function(self)
+		icon.classId = class.id
+		icon.roles = W.RoleIcons(raid, 6)
+		icon.roles:SetPoint("TOP", icon, "BOTTOM", 0, -1)
+		local possible = C.ClassRoles(class.key)
+		local function SetWanted(on, roles)
 			local draft = Draft()
-			draft.classes = C.SetBit(draft.classes or 0, self.bit, not C.HasBit(draft.classes or 0, self.bit))
+			draft.classes = C.SetBit(draft.classes or 0, icon.bit, on)
+			draft.classRoles = C.SetClassRoles(draft.classRoles, class.id, on and roles or 0)
 			tab:UpdateRaid()
 			Changed()
+		end
+		icon:SetScript("OnMouseDown", function(self)
+			local draft = Draft()
+			local wanted = C.HasBit(draft.classes or 0, self.bit)
+			-- Single-role classes toggle directly, the others pick roles.
+			if C.CountBits(possible) < 2 or not (MenuUtil and MenuUtil.CreateContextMenu) then
+				SetWanted(not wanted, 0)
+				return
+			end
+			MenuUtil.CreateContextMenu(self, function(_, root)
+				root:CreateTitle(class.label)
+				root:CreateCheckbox(L.CLASS_WANTED, function()
+					return C.HasBit(Draft().classes or 0, icon.bit)
+				end, function()
+					SetWanted(not C.HasBit(Draft().classes or 0, icon.bit), 0)
+				end)
+				root:CreateTitle(L.CLASS_ROLES)
+				for _, role in ipairs(C.ROLES) do
+					if C.HasBit(possible, role.bit) then
+						root:CreateCheckbox(role.label, function()
+							return C.HasBit(C.GetClassRoles(Draft().classRoles, class.id), role.bit)
+						end, function()
+							local current = Draft()
+							local roles = C.GetClassRoles(current.classRoles, class.id)
+							if not C.HasBit(current.classes or 0, icon.bit) then
+								roles = 0
+							end
+							SetWanted(true, C.SetBit(roles, role.bit, not C.HasBit(roles, role.bit)))
+						end)
+					end
+				end
+			end)
 		end)
 		icon:SetScript("OnEnter", function(self)
 			GameTooltip:SetOwner(self, "ANCHOR_TOP")
 			GameTooltip:SetText(class.label, 1, 1, 1)
-			GameTooltip:AddLine(L.CLASSES_HINT, nil, nil, nil, true)
+			local draft = Draft()
+			if C.HasBit(draft.classes or 0, self.bit) then
+				local roles = C.GetClassRoles(draft.classRoles, class.id)
+				GameTooltip:AddLine(roles > 0 and C.RoleNames(roles) or L.ANY_ROLE, 1, 0.82, 0)
+			end
+			GameTooltip:AddLine(C.CountBits(possible) < 2 and L.CLASSES_HINT or L.CLASSES_ROLES_HINT, nil, nil, nil, true)
 			GameTooltip:Show()
 		end)
 		icon:SetScript("OnLeave", function()
@@ -529,7 +572,8 @@ local function Build(content)
 		local filter = { kind = otherKind, factions = { [faction] = true }, sameMode = true }
 		local profile = {
 			goals = draft.goals or 0, times = draft.times or 0, roles = draft.roles or 0, lang = draft.lang,
-			classes = self.mode == MODE_GUILD and HasRaid(self.mode, draft) and draft.classes or 0,
+			classes = HasRaid(self.mode, draft) and draft.classes or 0,
+			classRoles = HasRaid(self.mode, draft) and draft.classRoles or nil,
 			classId = self.mode == MODE_PLAYER and select(3, UnitClass("player")) or nil,
 		}
 		local results = Search.Run(filter, profile)
@@ -575,7 +619,9 @@ local function Build(content)
 		end
 		local classes = draft.classes or 0
 		for _, icon in ipairs(controls.classes) do
-			icon:SetAlpha((classes == 0 or C.HasBit(classes, icon.bit)) and 1 or 0.3)
+			local wanted = C.HasBit(classes, icon.bit)
+			icon:SetAlpha((classes == 0 or wanted) and 1 or 0.3)
+			icon.roles:SetRoles(wanted and C.GetClassRoles(draft.classRoles, icon.classId) or 0)
 		end
 		controls.classesHint:SetText(classes == 0 and L.ANY_CLASS or "")
 		controls.perWeek:Refresh()
