@@ -20,7 +20,8 @@
 - Ads with several languages (new optional field `la`); player ads without
   a role count as every role of the class.
 - Guild emblems show the faction logo; cards list wanted classes as class
-  icons per role; tabs fit their label; status line notes "<faction> only".
+  icons per role; tabs fit their label; status line notes "<faction> only"
+  and counts guild and player ads separately.
 - Fix: the ad text field lost focus after every keystroke.
 - Welcome dialog on first start: the addon is community driven and starts
   with few ads (development checkouts: on every login).

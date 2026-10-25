@@ -44,7 +44,7 @@ local function ShowTooltip(owner)
 	else
 		GameTooltip:AddLine(L.MINIMAP_AD_NONE, 0.62, 0.62, 0.62)
 	end
-	GameTooltip:AddLine(L.STATUS_CACHED:format(ns.Store.Count()), 0.62, 0.62, 0.62)
+	GameTooltip:AddLine(L.STATUS_CACHED:format(ns.Store.CountByKind()), 0.62, 0.62, 0.62)
 	GameTooltip:AddLine(" ")
 	GameTooltip:AddLine(L.MINIMAP_LEFT, 0.12, 1, 0)
 	GameTooltip:AddLine(L.MINIMAP_RIGHT, 0.12, 1, 0)

@@ -72,8 +72,7 @@ function UI.UpdateStatus()
 	if faction then
 		parts[#parts + 1] = L.STATUS_FACTION_ONLY:format(W.FactionText(faction, ns.Filters.FactionName(faction)))
 	end
-	local live = Store.Count()
-	parts[#parts + 1] = L.STATUS_CACHED:format(live)
+	parts[#parts + 1] = L.STATUS_CACHED:format(Store.CountByKind())
 	if status.matchText then
 		parts[#parts + 1] = "|cffffffff" .. status.matchText .. "|r"
 	end
