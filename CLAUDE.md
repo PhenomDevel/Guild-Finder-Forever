@@ -1,6 +1,7 @@
 # Guild Finder Forever – notes for Claude
 
-World of Warcraft **Forever** addon (Interface 16001): an in-game marketplace
+World of Warcraft **Forever** addon (Interface 16001; also loads on retail
+Midnight for testing until Forever launches): an in-game marketplace
 where players post "looking for guild" ads, guilds post recruiting ads, and
 both sides search each other with filters. Forever has no Blizzard guild
 finder and no realm list. Forever runs on the modern mainline API (Midnight
@@ -13,7 +14,7 @@ assume the old Classic Era API.
   `docs/ARCHITECTURE.md`. Phase 1 test guide: `docs/FEASIBILITY.md`.
 - `GuildFinderForever/` is the addon folder that gets installed; everything
   else (docs, tools, CI) stays in the repo only.
-- Load order is defined in `GuildFinderForever.toc`: Libs → Locales → Core → Probe.
+- Load order is defined in `GuildFinderForever.toc`: Libs → Locales → Core → UI → Probe.
 
 ## Original code only (strict)
 - Every line of code, data table and asset must be written independently,
@@ -44,7 +45,9 @@ assume the old Classic Era API.
 
 ## Conventions
 - Lua 5.1, tabs for indentation, English code comments and docs.
-- In-game strings in enUS + deDE (`Locales/`).
+- In-game strings in `Locales/`: enUS (base) and deDE always; frFR, esES
+  (also esMX), itIT, ruRU and ptBR get every new UI string too. The probe
+  (`PROBE_*`) strings are enUS + deDE only. Missing keys fall back to enUS.
 - Commit messages: `[feature] …`, `[fix] …`, `[chore] …`.
 - `.luacheckrc` holds common globals only; declare others per file with
   `-- luacheck: read globals …`.

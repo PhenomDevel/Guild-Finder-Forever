@@ -1,13 +1,29 @@
-## Interface: 16001
+## Interface: 16001, 120000, 120001, 120005, 120007
 ## Title: Guild Finder |cffe6b43aForever|r
 ## Notes: In-game marketplace for guilds and players looking for a guild.
 ## Notes-deDE: Marktplatz im Spiel für Gilden und Spieler auf Gildensuche.
+## Notes-frFR: Place de marché en jeu pour les guildes et les joueurs qui cherchent une guilde.
+## Notes-esES: Mercado en el juego para hermandades y jugadores que buscan hermandad.
+## Notes-esMX: Mercado en el juego para hermandades y jugadores que buscan hermandad.
+## Notes-itIT: Bacheca di gioco per gilde e giocatori in cerca di gilda.
+## Notes-ruRU: Внутриигровая доска объявлений для гильдий и игроков в поисках гильдии.
+## Notes-ptBR: Mural no jogo para guildas e jogadores procurando guilda.
 ## Author: PhenomDevel
 ## Version: @project-version@
 ## Category: Social
 ## Category-deDE: Soziales
+## Category-frFR: Social
+## Category-esES: Social
+## Category-esMX: Social
+## Category-itIT: Sociale
+## Category-ruRU: Общение
+## Category-ptBR: Social
 ## SavedVariables: GuildFinderForeverDB
 ## SavedVariablesPerCharacter: GuildFinderForeverCharDB
+## IconTexture: Interface\Icons\INV_Shirt_GuildTabard_01
+## AddonCompartmentFunc: GuildFinderForever_OnAddonCompartmentClick
+## AddonCompartmentFuncOnEnter: GuildFinderForever_OnAddonCompartmentEnter
+## AddonCompartmentFuncOnLeave: GuildFinderForever_OnAddonCompartmentLeave
 
 # Libraries (.pkgmeta externals; tools/fetch-libs.sh for local dev)
 Libs\LibStub\LibStub.lua
@@ -18,6 +34,11 @@ Libs\LibDeflate\LibDeflate.lua
 # Locales (enUS must be loaded first, it defines the fallback table)
 Locales\enUS.lua
 Locales\deDE.lua
+Locales\frFR.lua
+Locales\esES.lua
+Locales\itIT.lua
+Locales\ruRU.lua
+Locales\ptBR.lua
 
 # Core
 Core\Init.lua
@@ -25,6 +46,26 @@ Core\Database.lua
 Core\SlashCommands.lua
 Core\Channel.lua
 Core\Comm.lua
+Core\Serializer.lua
+Core\Constants.lua
+Core\Ads.lua
+Core\Store.lua
+Core\Sync.lua
+Core\MyAds.lua
+Core\Search.lua
+Core\Verify.lua
 
-# Phase 1 feasibility test
+# UI
+UI\Widgets.lua
+UI\Filters.lua
+UI\MainFrame.lua
+UI\GuildsTab.lua
+UI\GuildDialog.lua
+UI\PlayersTab.lua
+UI\MyAdTab.lua
+UI\MinimapButton.lua
+UI\Settings.lua
+UI\Commands.lua
+
+# Transport test tools (/gff probe)
 Probe\Probe.lua

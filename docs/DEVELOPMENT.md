@@ -6,9 +6,11 @@
 GuildFinderForever/          addon folder (the only thing that gets installed)
   GuildFinderForever.toc     load order, interface version, SavedVariables
   Libs/                      libraries (git-ignored, see below)
-  Locales/                   enUS (base) + deDE
-  Core/                      namespace, events, DB, channel, comm, slash commands
-  Probe/                     phase 1 feasibility test (/gff probe)
+  Locales/                   enUS (base), deDE, frFR, esES, itIT, ruRU, ptBR
+  Core/                      namespace, events, DB, channel, comm, slash commands,
+                             serializer, ad model, cache, sync, search, /who check
+  UI/                        window, tabs, widgets, minimap button, settings
+  Probe/                     transport test tools (/gff probe)
 docs/                        architecture, feasibility test guide
 tools/fetch-libs.sh          fetches the libraries for local development
 .pkgmeta                     packaging config (BigWigs packager)
@@ -88,6 +90,12 @@ curl -s https://raw.githubusercontent.com/BigWigsMods/packager/master/release.sh
 
 ## Interface version
 
-The `.toc` declares `## Interface: 16001` (Forever beta). If the launch build
-uses a different value, read it via `/dump select(4, GetBuildInfo())` and
-update the `.toc`.
+The `.toc` lists `16001` (Forever beta) plus the retail Midnight builds
+(`120000`, `120001`, `120005`, `120007`). Retail is supported so the addon
+can be tested before Forever launches; both run the same API. If a client
+shows the addon as out of date, read its value via
+`/dump select(4, GetBuildInfo())` and add it to the comma-separated list.
+
+Testing on retail: sync and `/who` only reach the own realm (and its
+connected realms), and the game-mode filter compares retail's game mode.
+Ruleset- or Forever-specific behaviour still needs a check on Forever.
