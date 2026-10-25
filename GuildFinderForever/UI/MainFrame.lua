@@ -66,6 +66,7 @@ function UI.UpdateStatus()
 	else
 		parts[#parts + 1] = "|TInterface\\COMMON\\Indicator-Red:14|t" .. L.STATUS_DISCONNECTED
 	end
+	parts[#parts + 1] = "|cffffd100" .. ns.Ads.GetScopeText() .. "|r"
 	local live = Store.Count()
 	parts[#parts + 1] = L.STATUS_CACHED:format(live)
 	if status.matchText then

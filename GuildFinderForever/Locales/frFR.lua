@@ -212,6 +212,8 @@ L.MINIMAP_RIGHT = "Clic droit : mon annonce"
 -- Status line
 L.STATUS_CONNECTED = "Connecté"
 L.STATUS_DISCONNECTED = "Canal non connecté"
+L.STATUS_REALM = "Royaume : %s"
+L.STATUS_RULESET = "Règles : %s"
 L.STATUS_CACHED = "%d annonces"
 L.STATUS_MATCHES_GUILDS = "%d guildes correspondent"
 L.STATUS_MATCHES_PLAYERS = "%d joueurs correspondent"

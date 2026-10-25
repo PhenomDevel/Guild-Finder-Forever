@@ -1,4 +1,4 @@
-## Interface: 16001, 120000, 120001, 120005, 120007
+## Interface: 16001, 120000, 120001, 120005, 120007, 120100, 120105
 ## Title: Guild Finder |cffe6b43aForever|r
 ## Notes: In-game marketplace for guilds and players looking for a guild.
 ## Notes-deDE: Marktplatz im Spiel für Gilden und Spieler auf Gildensuche.

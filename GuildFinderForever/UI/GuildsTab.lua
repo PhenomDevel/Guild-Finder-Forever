@@ -80,6 +80,11 @@ local function BuildCard(tab, row)
 	card:SetHighlightTexture("Interface\\Buttons\\WHITE8x8")
 	card:GetHighlightTexture():SetVertexColor(1, 0.82, 0, 0.05)
 
+	-- Faction stripe along the left edge.
+	card.stripe = card:CreateTexture(nil, "BORDER")
+	card.stripe:SetPoint("TOPLEFT", 1, -1)
+	card.stripe:SetPoint("BOTTOMLEFT", 1, 1)
+	card.stripe:SetWidth(3)
 	card.emblem = W.GuildEmblem(card, 40)
 	card.emblem:SetPoint("TOPLEFT", 10, -10)
 	card.name = W.Text(card, "GameFontNormalLarge", W.GOLD)
@@ -117,10 +122,15 @@ local function BuildCard(tab, row)
 		end
 		local ad = result.ad
 		self:Show()
-		self.emblem:SetGuild(ad.n)
+		self.emblem:SetGuild(ad.n, ad.f)
+		local faction = W.FACTION[ad.f]
+		self.stripe:SetShown(faction ~= nil)
+		if faction then
+			self.stripe:SetColorTexture(faction.color[1], faction.color[2], faction.color[3], 1)
+		end
 		local check = Store.GetCheck(ad.i)
 		self.name:SetText(ad.n .. (check and check.verified and (" " .. VERIFIED_ICON) or ""))
-		local meta = { Filters.FactionName(ad.f), Filters.LanguageName(ad.l) }
+		local meta = { W.FactionText(ad.f, Filters.FactionName(ad.f)), Filters.LanguageName(ad.l) }
 		if ad.gm then
 			meta[#meta + 1] = L.MEMBERS:format(ad.gm)
 		end

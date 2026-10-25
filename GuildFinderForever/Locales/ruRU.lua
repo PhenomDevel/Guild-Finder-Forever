@@ -215,6 +215,8 @@ L.MINIMAP_RIGHT = "Правый щелчок: моё объявление"
 -- Status line
 L.STATUS_CONNECTED = "Подключено"
 L.STATUS_DISCONNECTED = "Канал не подключён"
+L.STATUS_REALM = "Игровой мир: %s"
+L.STATUS_RULESET = "Правила: %s"
 L.STATUS_CACHED = "Объявлений: %d"
 L.STATUS_MATCHES_GUILDS = "Подходящих гильдий: %d"
 L.STATUS_MATCHES_PLAYERS = "Подходящих игроков: %d"

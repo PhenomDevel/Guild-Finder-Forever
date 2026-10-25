@@ -216,6 +216,8 @@ L.MINIMAP_RIGHT = "Right click: my ad"
 -- Status line
 L.STATUS_CONNECTED = "Connected"
 L.STATUS_DISCONNECTED = "Channel not connected"
+L.STATUS_REALM = "Realm: %s"
+L.STATUS_RULESET = "Ruleset: %s"
 L.STATUS_CACHED = "%d ads"
 L.STATUS_MATCHES_GUILDS = "%d guilds match"
 L.STATUS_MATCHES_PLAYERS = "%d players match"

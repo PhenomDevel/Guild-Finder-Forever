@@ -32,7 +32,8 @@ Open the window with `/gff`, the minimap button or the addon compartment.
   with invite rights – the ad of your guild, in four short steps with a live
   preview. Ads are renewed on login and expire after 14 days without one.
 
-On first start a short intro explains the addon.
+On first start a short intro explains the addon. The status line shows
+where the ads come from: the realm on retail, the ruleset on Forever.
 
 Languages: English, German, French, Spanish, Italian, Russian and
 Portuguese (Brazil) – the EU client languages.

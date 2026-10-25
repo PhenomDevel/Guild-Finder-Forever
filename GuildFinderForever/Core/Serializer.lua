@@ -19,9 +19,11 @@ local function Write(out, value, depth)
 	if kind == "string" then
 		out[#out + 1] = "s" .. #value .. ":" .. value
 	elseif kind == "number" then
-		-- %.17g keeps doubles exact; integers stay short.
+		-- %.17g keeps doubles exact; integers stay short. Not %d: the game's
+		-- format() takes a 32-bit int there and errors on the bucket hashes
+		-- (up to 2^32 - 1) with "integer overflow".
 		if value == math.floor(value) and math.abs(value) < 2 ^ 53 then
-			out[#out + 1] = ("n%d;"):format(value)
+			out[#out + 1] = ("n%.0f;"):format(value)
 		else
 			out[#out + 1] = "n" .. ("%.17g"):format(value) .. ";"
 		end
