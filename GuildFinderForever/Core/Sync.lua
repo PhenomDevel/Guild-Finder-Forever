@@ -20,6 +20,7 @@ local Comm = ns.Comm
 local Store = ns.Store
 local Serializer = ns.Serializer
 local Ads = ns.Ads
+local L = ns.L
 
 local HELLO_DELAY_MIN, HELLO_DELAY_MAX = 3, 8
 local HELLO_INTERVAL = 15 * 60
@@ -39,6 +40,49 @@ local RATE_REFILL = 0.5 -- tokens per second
 Sync.lastSync = nil
 Sync.stats = { received = 0, sent = 0, dropped = 0 }
 
+-- Chat trace of the sync traffic, switched with /gff debug.
+local function Debugging()
+	return ns.db and ns.db.settings and ns.db.settings.debug
+end
+
+local function Debug(text, ...)
+	if Debugging() then
+		ns:Print("|cff9d9d9d[debug]|r " .. text, ...)
+	end
+end
+Sync.Debug = Debug
+
+local function FactionName(code)
+	return code == "H" and L.FACTION_HORDE or code == "A" and L.FACTION_ALLIANCE or "?"
+end
+
+local function AdLabel(ad)
+	local name = ad.k == Ads.KIND_GUILD and ("<" .. tostring(ad.n) .. ">") or Ads.OwnerName(ad.o)
+	if ad.d then
+		return L.DEBUG_AD_WITHDRAWN:format(name)
+	end
+	return ("%s (%s)"):format(name, FactionName(ad.f))
+end
+
+-- Whether a received ad shows up in the own search, and why not.
+local function Visibility(ad)
+	local Filters, Search = ns.Filters, ns.Search
+	if ad.d or not (Filters and Search) then
+		return ""
+	end
+	if ad.i == Ads.GetOwnPlayerAdId() or ad.i == Ads.GetOwnGuildAdId() then
+		return L.DEBUG_OWN
+	end
+	local filter = Filters.Get(ad.k)
+	if Search.Accepts(ad, filter, Filters.Profile(ad.k)) then
+		return L.DEBUG_VISIBLE
+	end
+	if filter.factions and not filter.factions[ad.f] then
+		return L.DEBUG_HIDDEN_FACTION
+	end
+	return L.DEBUG_HIDDEN_FILTER
+end
+
 local function IsMe(name)
 	return type(name) == "string" and (name == ns:GetPlayerFullName() or name == UnitName("player"))
 end
@@ -54,6 +98,13 @@ local function SendAds(list, prio)
 		local chunk = {}
 		for i = first, math.min(first + ADS_PER_MESSAGE - 1, #list) do
 			chunk[#chunk + 1] = list[i]
+		end
+		if Debugging() then
+			local names = {}
+			for _, ad in ipairs(chunk) do
+				names[#names + 1] = AdLabel(ad)
+			end
+			Debug(L.DEBUG_SEND_ADS, #chunk, table.concat(names, ", "))
 		end
 		Send({ y = "A", a = chunk }, prio or "BULK")
 	end
@@ -104,6 +155,7 @@ local function NewNonce()
 end
 
 function Sync.SendHello()
+	Debug(L.DEBUG_SEND_HELLO, (Store.Count()))
 	Send({ y = "H", n = NewNonce(), b = Store.GetBuckets() })
 end
 
@@ -169,6 +221,7 @@ local function SendInventory(nonce, target, theirs)
 		SendAds(list, "BULK")
 	end
 	for _, g in ipairs(groups) do
+		Debug(L.DEBUG_SEND_INVENTORY, target, math.floor(#g.e / 2))
 		Send({ y = "I", n = nonce, to = target, b = ours, k = g.k, e = g.e }, "BULK")
 	end
 end
@@ -176,9 +229,14 @@ end
 local function OnHello(message, sender)
 	local theirs = ValidBuckets(message.b)
 	local nonce = type(message.n) == "string" and #message.n <= 16 and message.n
-	if not theirs or not nonce or SameBuckets(theirs, Store.GetBuckets()) then
+	if not theirs or not nonce then
 		return
 	end
+	if SameBuckets(theirs, Store.GetBuckets()) then
+		Debug(L.DEBUG_RECV_HELLO_SAME, sender)
+		return
+	end
+	Debug(L.DEBUG_RECV_HELLO, sender)
 	if pending[nonce] then
 		return
 	end
@@ -215,6 +273,7 @@ local function OnInventory(message, sender)
 	if not IsMe(message.to) or type(message.e) ~= "table" or type(message.k) ~= "table" then
 		return
 	end
+	Debug(L.DEBUG_RECV_INVENTORY, sender, math.floor(#message.e / 2))
 
 	-- What they have that we lack or hold in an older version.
 	local listed = {}
@@ -235,6 +294,7 @@ local function OnInventory(message, sender)
 		for i = first, math.min(first + MAX_REQUEST - 1, #missing) do
 			ids[#ids + 1] = missing[i]
 		end
+		Debug(L.DEBUG_SEND_REQUEST, sender, #ids)
 		Send({ y = "R", to = sender, ids = ids }, "BULK")
 	end
 
@@ -270,6 +330,7 @@ local function OnRequest(message, sender)
 			list[#list + 1] = ad
 		end
 	end
+	Debug(L.DEBUG_RECV_REQUEST, sender, #message.ids)
 	local allowed = ServeBudget(sender, #list)
 	for i = #list, allowed + 1, -1 do
 		list[i] = nil
@@ -282,13 +343,29 @@ local function OnAds(message, sender)
 		return
 	end
 	local changed = false
-	for i = 1, math.min(#message.a, ADS_PER_MESSAGE) do
+	local count = math.min(#message.a, ADS_PER_MESSAGE)
+	-- Debug: one line per ad the sender posted itself, totals for the rest.
+	local totals = { new = 0, updated = 0, known = 0, invalid = 0 }
+	local details = {}
+	for i = 1, count do
 		local ad = Ads.Sanitize(message.a[i])
-		if ad then
+		if not ad then
+			totals.invalid = totals.invalid + 1
+		else
 			-- A newer copy of an own ad comes from another install (saved
 			-- data is per machine); it is taken over and shows in "My ad".
 			local previous = Store.Get(ad.i)
-			if Store.Put(ad) then
+			local stored = Store.Put(ad)
+			if Debugging() then
+				local state = not stored and "known" or previous and "updated" or "new"
+				totals[state] = totals[state] + 1
+				if ad.o == sender then
+					local visible = stored and Visibility(ad) or ""
+					details[#details + 1] = ("  %s: %s%s"):format(AdLabel(ad), L["DEBUG_AD_" .. state:upper()],
+						visible ~= "" and (" · " .. visible) or "")
+				end
+			end
+			if stored then
 				changed = true
 				if ad.o == sender and not ad.d then
 					-- First-hand: the sender posted this version. isNew: not
@@ -298,6 +375,10 @@ local function OnAds(message, sender)
 			end
 		end
 	end
+	Debug(L.DEBUG_RECV_ADS, count, sender, totals.new, totals.updated, totals.known, totals.invalid)
+	for _, line in ipairs(details) do
+		Debug(line)
+	end
 	if changed then
 		Sync.lastSync = GetServerTime()
 	end
@@ -306,14 +387,19 @@ end
 local HANDLERS = { H = OnHello, I = OnInventory, R = OnRequest, A = OnAds }
 
 Comm.RegisterHandler(function(text, sender)
-	if not ns.db or not Allow(sender) then
+	if not ns.db then
+		return
+	end
+	if not Allow(sender) then
 		Sync.stats.dropped = Sync.stats.dropped + 1
+		Debug(L.DEBUG_DROP_RATE, sender)
 		return
 	end
 	local message = Serializer.Deserialize(text)
 	local handler = type(message) == "table" and HANDLERS[message.y]
 	if not handler then
 		Sync.stats.dropped = Sync.stats.dropped + 1
+		Debug(L.DEBUG_DROP_INVALID, sender)
 		return
 	end
 	Sync.stats.received = Sync.stats.received + 1
@@ -331,7 +417,8 @@ function Sync.Publish(ad)
 end
 
 local helloTicker
-ns.RegisterCallback(Sync, "GFF_CHANNEL_READY", function()
+ns.RegisterCallback(Sync, "GFF_CHANNEL_READY", function(_, number)
+	Debug(L.DEBUG_CHANNEL, number or 0)
 	C_Timer.After(HELLO_DELAY_MIN + math.random() * (HELLO_DELAY_MAX - HELLO_DELAY_MIN), Sync.SendHello)
 	if not helloTicker then
 		helloTicker = C_Timer.NewTicker(HELLO_INTERVAL, function()
@@ -340,4 +427,12 @@ ns.RegisterCallback(Sync, "GFF_CHANNEL_READY", function()
 		end)
 	end
 	ns:Fire("GFF_SYNC_STARTED")
+end)
+
+ns.RegisterCallback(Sync, "GFF_COMM_HELD", function(_, count)
+	Debug(L.DEBUG_HELD, count)
+end)
+
+ns.RegisterCallback(Sync, "GFF_COMM_INVALID", function(_, sender)
+	Debug(L.DEBUG_DROP_INVALID, sender)
 end)

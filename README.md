@@ -49,6 +49,7 @@ Portuguese (Brazil) – the EU client languages.
 | `/gff settings` | settings (minimap button, chat notice for new matching ads) |
 | `/gff sync` | ask other players for missing ads |
 | `/gff status` | cache and network status |
+| `/gff debug [on\|off]` | show sync traffic in chat: what is sent and received, from whom, and whether a received ad shows in your search (or why not, e.g. other faction) |
 | `/gff blocked`, `/gff unblock <name>` | list / unblock blocked characters and guilds |
 | `/gff probe` | transport test tools |
 
