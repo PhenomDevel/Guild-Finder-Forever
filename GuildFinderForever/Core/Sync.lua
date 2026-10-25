@@ -386,8 +386,8 @@ end
 
 local HANDLERS = { H = OnHello, I = OnInventory, R = OnRequest, A = OnAds }
 
-Comm.RegisterHandler(function(text, sender)
-	if not ns.db then
+Comm.RegisterHandler(function(text, sender, distribution)
+	if not ns.db or distribution ~= "CHANNEL" then
 		return
 	end
 	if not Allow(sender) then

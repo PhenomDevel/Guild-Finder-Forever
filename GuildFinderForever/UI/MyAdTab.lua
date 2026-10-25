@@ -134,6 +134,8 @@ local function Build(content)
 		section.header = W.Header(section, "", "GameFontNormalLarge")
 		section.hint = W.Text(section, "GameFontDisableSmall")
 		section.hint:SetPoint("BOTTOMLEFT", section.header, "BOTTOMRIGHT", 8, 1)
+		section.hint:SetPoint("RIGHT", section, "RIGHT", 0, 0)
+		section.hint:SetWordWrap(false)
 		-- Content starts at (section.x, -32) relative to the section.
 		function section:SetNumbered(number)
 			self.circle:SetShown(number ~= nil)
@@ -177,7 +179,7 @@ local function Build(content)
 			draft.goals = C.SetBit(draft.goals, goal.bit, self.active)
 			Changed()
 		end)
-		chip:SetLabel(goal.label)
+		chip:SetLabel(W.GoalIconMarkup(goal) .. " " .. goal.label)
 		chip:SetHeight(26)
 		chip:SetWidth(math.max(64, chip:GetWidth()))
 		chip:SetPoint("TOPLEFT", x, -32)
@@ -547,14 +549,14 @@ local function Build(content)
 	-- Guild wizard: step bar and footer
 	--------------------------------------------------------------------------
 
-	local PAGE_LABELS = { goals = L.WIZ_GOALS, raid = L.WIZ_RAID, times = L.WIZ_TIMES, text = L.WIZ_TEXT }
+	local PAGE_LABELS = { general = L.WIZ_GENERAL, raid = L.WIZ_RAID }
 	controls.wizChips = {}
 	local wizBar = CreateFrame("Frame", nil, form)
 	wizBar:SetPoint("TOPLEFT", 14, -48)
 	wizBar:SetPoint("RIGHT", form, "RIGHT", -14, 0)
 	wizBar:SetHeight(24)
 	controls.wizBar = wizBar
-	for i = 1, 4 do
+	for i = 1, 2 do
 		local chip = W.Chip(wizBar, function(self)
 			tab.page = self.pageIndex
 			tab:UpdateLayout()
@@ -795,18 +797,12 @@ local function Build(content)
 		controls.matches:SetText(format:format(#results, good))
 	end
 
-	-- Guild wizard pages; the raid page only with the raid goal.
+	-- Guild ads with the raid goal get two pages (the ad, the raid); all
+	-- other ads are one page.
 	local function Pages(mode, draft)
-		if mode ~= MODE_GUILD then
-			return nil
-		end
-		local pages = { "goals" }
 		if HasRaid(mode, draft) then
-			pages[#pages + 1] = "raid"
+			return { "general", "raid" }
 		end
-		pages[#pages + 1] = "times"
-		pages[#pages + 1] = "text"
-		return pages
 	end
 
 	local function SectionDone(key, draft)
@@ -818,6 +814,8 @@ local function Build(content)
 			return draft.style ~= nil or (draft.raidDays or 0) > 0 or (draft.classes or 0) > 0
 		elseif key == "times" then
 			return (draft.times or 0) > 0
+		elseif key == "general" then
+			return (draft.goals or 0) > 0
 		end
 		return Ads.CleanText(draft.text or "") ~= ""
 	end
@@ -847,8 +845,9 @@ local function Build(content)
 		end
 	end
 
-	-- Player ad: four numbered sections on one page. Guild ad: one page per
-	-- step with the step bar on top and back/next below.
+	-- One page of four numbered sections; a raid guild ad drops the roles
+	-- (the needs table sets them) and moves the raid to a second page, with
+	-- the page bar on top and back/next below.
 	-- Shows exactly the given sections ({ key = y }). Sections that stay
 	-- visible are not hidden in between: that would take the focus from the
 	-- text field on every keystroke.
@@ -892,15 +891,17 @@ local function Build(content)
 				chip.pageIndex = i
 			end
 		end
-		local key = pages[self.page]
-		local visible = { [key] = PAGE_TOP }
-		sections[key]:SetNumbered(nil)
-		-- Raid ads take the wanted roles from the needs table.
-		if key == "goals" and not HasRaid(self.mode, draft) then
-			sections.roles:SetNumbered(nil)
-			visible.roles = PAGE_TOP - 80
+		if pages[self.page] == "raid" then
+			ShowSections({ raid = PAGE_TOP })
+		else
+			local order = { { "goals", PAGE_TOP }, { "times", PAGE_TOP - 70 }, { "text", PAGE_TOP - 188 } }
+			local visible = {}
+			for i, entry in ipairs(order) do
+				sections[entry[1]]:SetNumbered(i)
+				visible[entry[1]] = entry[2]
+			end
+			ShowSections(visible)
 		end
-		ShowSections(visible)
 		controls.back:SetEnabled(self.page > 1)
 		controls.next:SetShown(self.page < #pages)
 		controls.pageText:SetText(L.WIZ_STEP:format(self.page, #pages))
@@ -984,7 +985,7 @@ local function Build(content)
 			controls.otherNote:SetText(guild and (canInvite and L.NOTE_OTHER_GUILD_CAN or L.NOTE_OTHER_GUILD_CANNOT)
 				or L.NOTE_OTHER_GUILD_NONE)
 		end
-		sections.times.hint:SetText(L.STEP_TIMES_HINT)
+		sections.times.hint:SetText(self.mode == MODE_GUILD and L.STEP_TIMES_GUILD_HINT or L.STEP_TIMES_HINT)
 		sections.raid.header:SetText(L.STEP_RAID)
 
 		local classRoles = self.mode == MODE_PLAYER and C.ClassRoles(select(2, UnitClass("player"))) or 7

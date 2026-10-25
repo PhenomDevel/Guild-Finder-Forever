@@ -79,8 +79,20 @@ function Comm.Send(text, prio, callback)
 	return #data, true
 end
 
--- handler(text, sender) receives every valid message of other players
--- (and own ones while Comm.loopback is set).
+-- Sends text to one player (whisper). Not queued: returns false when it
+-- can't go out right now (lockdown).
+function Comm.SendWhisper(target, text)
+	if Comm.InLockdown() then
+		return false
+	end
+	local data = LibDeflate:EncodeForWoWAddonChannel(LibDeflate:CompressDeflate(text))
+	Comm:SendCommMessage(Comm.PREFIX, data, "WHISPER", target, "ALERT")
+	return true
+end
+
+-- handler(text, sender, distribution) receives every valid message of other
+-- players (and own ones while Comm.loopback is set); distribution is
+-- "CHANNEL" or "WHISPER".
 function Comm.RegisterHandler(handler)
 	handlers[#handlers + 1] = handler
 end
@@ -90,7 +102,7 @@ local function IsSelf(sender)
 end
 
 function Comm:OnCommReceived(_, data, distribution, sender)
-	if distribution ~= "CHANNEL" then
+	if distribution ~= "CHANNEL" and distribution ~= "WHISPER" then
 		return
 	end
 	if issecretvalue and (issecretvalue(data) or issecretvalue(sender)) then
@@ -106,7 +118,7 @@ function Comm:OnCommReceived(_, data, distribution, sender)
 		return
 	end
 	for i = 1, #handlers do
-		handlers[i](text, sender)
+		handlers[i](text, sender, distribution)
 	end
 end
 

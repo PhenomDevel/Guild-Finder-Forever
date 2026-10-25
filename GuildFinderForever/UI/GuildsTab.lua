@@ -15,7 +15,9 @@ local Filters = ns.Filters
 
 local KIND = Ads.KIND_GUILD
 local BANNER_HEIGHT = 30
-local CARD_HEIGHT = 140
+local CARD_HEIGHT = 156
+local RAID_TOP = -56 -- raid box below name and meta
+local RAID_PAD = 8
 local CARD_GAP = 8
 local VERIFIED_ICON = "|TInterface\\RaidFrame\\ReadyCheck-Ready:14|t"
 
@@ -110,31 +112,33 @@ local function BuildCard(tab, row)
 
 	card.name = W.Text(card, "GameFontNormalLarge", W.GOLD)
 	card.name:SetPoint("TOPLEFT", card.emblem, "TOPRIGHT", 10, 0)
-	card.name:SetPoint("RIGHT", card, "RIGHT", -64, 0)
+	card.name:SetPoint("RIGHT", card.score, "LEFT", -8, 0)
 	card.name:SetWordWrap(false)
 	card.meta = W.Text(card, "GameFontDisableSmall")
 	card.meta:SetPoint("TOPLEFT", card.name, "BOTTOMLEFT", 0, -3)
-	card.meta:SetPoint("RIGHT", card, "RIGHT", -64, 0)
+	card.meta:SetPoint("RIGHT", card.scoreLabel, "LEFT", -8, 0)
 	card.meta:SetWordWrap(false)
 
 	-- Raid line: style, days, time; needs line: classes per role + fit.
-	card.raid = CreateFrame("Frame", nil, card)
-	card.raid:SetPoint("TOPLEFT", 12, -58)
+	-- Raid box: style, schedule and fit on top, wanted classes per role below.
+	card.raid = W.Panel(card, { 0.07, 0.07, 0.07, 1 }, { 0.16, 0.16, 0.16, 1 })
+	card.raid:SetPoint("TOPLEFT", 12, RAID_TOP)
 	card.raid:SetPoint("RIGHT", -10, 0)
-	card.raid:SetHeight(36)
 	card.style = W.Tag(card.raid)
-	card.style:SetPoint("TOPLEFT")
+	card.style:SetPoint("TOPLEFT", RAID_PAD, -6)
+	card.fit = W.Text(card.raid, "GameFontHighlightSmall")
+	card.fit:SetPoint("TOPRIGHT", -RAID_PAD, -9)
 	card.schedule = W.Text(card.raid, "GameFontHighlightSmall", W.TEXT)
-	card.schedule:SetPoint("LEFT", card.style, "RIGHT", 8, 0)
-	card.schedule:SetPoint("RIGHT", card.raid, "RIGHT", 0, 0)
 	card.schedule:SetWordWrap(false)
-	card.roleIcons, card.needIcons = {}, {}
+	card.roleIcons, card.needIcons, card.dividers = {}, {}, {}
 	for i, role in ipairs(C.ROLES) do
 		card.roleIcons[i] = W.RoleIcon(card.raid, 16, role.bit)
+		local divider = card.raid:CreateTexture(nil, "ARTWORK")
+		divider:SetColorTexture(1, 1, 1, 0.12)
+		divider:SetSize(1, 14)
+		card.dividers[i] = divider
 	end
 	card.more = W.Text(card.raid, "GameFontDisableSmall")
-	card.fit = W.Text(card.raid, "GameFontHighlightSmall")
-	card.fit:SetPoint("TOPRIGHT", 0, -20)
 
 	card.text = W.Text(card, "GameFontHighlightSmall", W.TEXT)
 	card.text:SetPoint("RIGHT", -10, 0)
@@ -152,56 +156,61 @@ local function BuildCard(tab, row)
 		end
 	end)
 
-	-- Role icon followed by the wanted classes' icons, per role; what doesn't
-	-- fit next to the fit text is summed up as "+n".
+	-- Second line of the raid box: per role its icon and the wanted classes'
+	-- icons, groups split by a thin line; what doesn't fit is summed up as "+n".
 	function card:LayoutNeeds(ad, hasNeeds)
 		for _, icon in ipairs(self.needIcons) do
 			icon:Hide()
 		end
-		self.more:Hide()
-		for _, icon in ipairs(self.roleIcons) do
-			icon:SetShown(hasNeeds)
+		for i = 1, #C.ROLES do
+			self.roleIcons[i]:Hide()
+			self.dividers[i]:Hide()
 		end
+		self.more:Hide()
 		if not hasNeeds then
 			return
 		end
 		local width = self.raid:GetWidth()
-		local limit = (width > 0 and width or 420) - self.fit:GetStringWidth() - 30
+		local limit = (width > 0 and width or 420) - RAID_PAD - 24
 		local needs = C.NeedsByRole(ad)
-		local x, used, hidden = 0, 0, 0
+		local x, used, hidden, groups = RAID_PAD, 0, 0, 0
 		for i, role in ipairs(C.ROLES) do
 			local list = needs[role.bit]
-			local roleIcon = self.roleIcons[i]
-			roleIcon:SetShown(#list > 0)
-			if #list > 0 then
-				if x + 16 + NEED_ICON > limit then
-					roleIcon:Hide()
-					hidden = hidden + #list
-				else
-					roleIcon:ClearAllPoints()
-					roleIcon:SetPoint("TOPLEFT", x, -20)
-					x = x + 16 + 4
-					for _, class in ipairs(list) do
-						if x + NEED_ICON > limit then
-							hidden = hidden + 1
-						else
-							used = used + 1
-							local icon = NeedIcon(self, used)
-							icon:SetClass(class.key)
-							icon:ClearAllPoints()
-							icon:SetPoint("TOPLEFT", x, -21)
-							icon:Show()
-							x = x + NEED_ICON + NEED_GAP
-						end
-					end
-					x = x + GROUP_GAP - NEED_GAP
+			if #list > 0 and x + 16 + NEED_ICON > limit then
+				hidden = hidden + #list
+			elseif #list > 0 then
+				if groups > 0 then
+					local divider = self.dividers[i]
+					divider:ClearAllPoints()
+					divider:SetPoint("TOPLEFT", x - GROUP_GAP / 2, -30)
+					divider:Show()
 				end
+				groups = groups + 1
+				local roleIcon = self.roleIcons[i]
+				roleIcon:ClearAllPoints()
+				roleIcon:SetPoint("TOPLEFT", x, -29)
+				roleIcon:Show()
+				x = x + 16 + 4
+				for _, class in ipairs(list) do
+					if x + NEED_ICON > limit then
+						hidden = hidden + 1
+					else
+						used = used + 1
+						local icon = NeedIcon(self, used)
+						icon:SetClass(class.key)
+						icon:ClearAllPoints()
+						icon:SetPoint("TOPLEFT", x, -30)
+						icon:Show()
+						x = x + NEED_ICON + NEED_GAP
+					end
+				end
+				x = x + GROUP_GAP + GROUP_GAP - NEED_GAP
 			end
 		end
 		if hidden > 0 then
 			self.more:SetText("+" .. hidden)
 			self.more:ClearAllPoints()
-			self.more:SetPoint("LEFT", self.raid, "TOPLEFT", x, -28)
+			self.more:SetPoint("LEFT", self.raid, "TOPLEFT", x - GROUP_GAP, -37)
 			self.more:Show()
 		end
 	end
@@ -256,9 +265,9 @@ local function BuildCard(tab, row)
 			if style then
 				self.schedule:SetPoint("LEFT", self.style, "RIGHT", 8, 0)
 			else
-				self.schedule:SetPoint("TOPLEFT", self.raid, "TOPLEFT", 0, -3)
+				self.schedule:SetPoint("TOPLEFT", self.raid, "TOPLEFT", RAID_PAD, -9)
 			end
-			self.schedule:SetPoint("RIGHT", self.raid, "RIGHT", 0, 0)
+			self.schedule:SetPoint("RIGHT", self.fit, "LEFT", -8, 0)
 			self.schedule:SetText(#schedule > 0 and table.concat(schedule, "   ") or ("|cff9d9d9d" .. L.RAID_NO_DETAILS .. "|r"))
 
 			local hasNeeds = (ad.cl or 0) > 0
@@ -277,17 +286,12 @@ local function BuildCard(tab, row)
 			else
 				self.fit:SetText("|cff9d9d9d" .. L.ANY_CLASS .. "|r")
 			end
-			self.fit:ClearAllPoints()
-			if hasNeeds then
-				self.fit:SetPoint("TOPRIGHT", self.raid, "TOPRIGHT", 0, -21)
-			else
-				self.fit:SetPoint("TOPLEFT", self.raid, "TOPLEFT", 0, -21)
-			end
+			self.raid:SetHeight(hasNeeds and 52 or 30)
 			self:LayoutNeeds(ad, hasNeeds)
 		end
 
 		self.text:ClearAllPoints()
-		self.text:SetPoint("TOPLEFT", 12, raid and -98 or -60)
+		self.text:SetPoint("TOPLEFT", 12, raid and (RAID_TOP - self.raid:GetHeight() - 8) or -60)
 		self.text:SetPoint("RIGHT", -10, 0)
 		self.text:SetMaxLines(raid and 1 or 3)
 		self.text:SetText(ad.x ~= "" and ad.x or ("|cff9d9d9d" .. L.NO_TEXT .. "|r"))

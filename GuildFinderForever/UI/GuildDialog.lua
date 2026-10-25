@@ -421,6 +421,7 @@ function GuildDialog.Open(ad, score, onClose)
 	current = { id = ad.i, score = score, onClose = onClose }
 	overlay:Show()
 	Update()
+	Verify.Ping(ad)
 end
 
 function GuildDialog.Close()

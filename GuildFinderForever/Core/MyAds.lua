@@ -20,13 +20,14 @@ local GUILD_CHECK_DELAY = 10
 ns.charDbDefaults.playerDraft = {
 	roles = 0,
 	goals = 0,
-	times = 0,
+	-- New ads start with every time ticked; the player narrows it down.
+	times = C.ALL_TIMES,
 	text = "",
 }
 
 local function NewDraft()
 	return {
-		roles = 0, goals = 0, times = 0, text = "", lang = C.DefaultLanguage(),
+		roles = 0, goals = 0, times = C.ALL_TIMES, text = "", lang = C.DefaultLanguage(),
 		classes = 0, raidDays = 0,
 	}
 end
