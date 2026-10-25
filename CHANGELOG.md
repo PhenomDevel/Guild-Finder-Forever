@@ -7,6 +7,8 @@
   and match score, "My ad" in four steps with live preview, first-run intro,
   /who check on contact, hide and block, minimap button, addon compartment
   entry and settings.
+- `/gff debug`: sync traffic in chat, including whether received ads are
+  shown in the own search.
 - Guild ads with the raid goal: raid style, raid days, raids per week, raid
   time and wanted classes with roles per class; filters for raid style and "wants my class".
 - "Same ruleset" filter only on Forever.

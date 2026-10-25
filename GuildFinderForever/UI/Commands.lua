@@ -25,6 +25,18 @@ ns:RegisterCommand("sync", function()
 	ns:Print(L.CMD_SYNC_SENT)
 end, "sync", L.CMD_SYNC)
 
+ns:RegisterCommand("debug", function(arg)
+	local settings = ns.db.settings
+	if arg == "on" then
+		settings.debug = true
+	elseif arg == "off" then
+		settings.debug = false
+	else
+		settings.debug = not settings.debug
+	end
+	ns:Print(settings.debug and L.DEBUG_ON or L.DEBUG_OFF)
+end, "debug [on|off]", L.CMD_DEBUG)
+
 ns:RegisterCommand("status", function()
 	local live, total = Store.Count()
 	ns:Print(L.CMD_STATUS_LINE, live, total - live, ns.Channel.ready and L.YES or L.NO,
