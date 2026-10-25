@@ -1,6 +1,6 @@
 # Guild Finder Forever
 
-<img src="docs/logo/logo-400.png" alt="Guild Finder Forever logo" width="96" align="right">
+<img src="https://raw.githubusercontent.com/PhenomDevel/Guild-Finder-Forever/main/docs/logo/logo.png" alt="Guild Finder Forever logo" width="96" align="right">
 
 [![Version](https://img.shields.io/github/v/release/PhenomDevel/Guild-Finder-Forever?label=version)](https://github.com/PhenomDevel/Guild-Finder-Forever/releases/latest)
 [![CurseForge](https://img.shields.io/curseforge/dt/1765174?label=CurseForge)](https://www.curseforge.com/projects/1765174)

@@ -1,9 +1,12 @@
+# Packager output
 .release/
 *.zip
+
+# OS and editor files
 .DS_Store
 Thumbs.db
 .idea/
-.vscode/
+.vscode/*
 
 # Libraries come from .pkgmeta externals (tools/fetch-libs.sh for local dev).
 GuildFinderForever/Libs/

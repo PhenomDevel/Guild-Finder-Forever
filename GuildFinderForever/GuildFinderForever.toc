@@ -24,7 +24,7 @@
 ## Category-ptBR: Social
 ## SavedVariables: GuildFinderForeverDB
 ## SavedVariablesPerCharacter: GuildFinderForeverCharDB
-## IconTexture: Interface\AddOns\GuildFinderForever\Media\Icon
+## IconTexture: Interface\AddOns\GuildFinderForever\Media\Logo
 ## AddonCompartmentFunc: GuildFinderForever_OnAddonCompartmentClick
 ## AddonCompartmentFuncOnEnter: GuildFinderForever_OnAddonCompartmentEnter
 ## AddonCompartmentFuncOnLeave: GuildFinderForever_OnAddonCompartmentLeave

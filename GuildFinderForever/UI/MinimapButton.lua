@@ -9,7 +9,7 @@ ns.MinimapButton = MinimapButton
 local L = ns.L
 
 local RADIUS_OFFSET = 10
-local ICON = "Interface\\AddOns\\GuildFinderForever\\Media\\Icon"
+local ICON = "Interface\\AddOns\\GuildFinderForever\\Media\\Logo"
 
 ns.dbDefaults.settings.minimapHidden = false
 ns.dbDefaults.settings.minimapAngle = 200

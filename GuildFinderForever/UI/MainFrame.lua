@@ -14,7 +14,7 @@ local Sync = ns.Sync
 
 local FRAME_NAME = "GuildFinderForeverFrame"
 local WIDTH, HEIGHT = 900, 580
-local PORTRAIT = "Interface\\AddOns\\GuildFinderForever\\Media\\Icon"
+local PORTRAIT = "Interface\\AddOns\\GuildFinderForever\\Media\\Logo"
 -- Delay that bundles bursts of ad changes into one refresh.
 local REFRESH_DELAY = 0.5
 
