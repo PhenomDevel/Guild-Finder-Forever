@@ -256,19 +256,21 @@ local function Build(content)
 	for day = 1, #C.DAYS do
 		evenings = C.SetBit(evenings, C.TimeBit(day, 2), true)
 	end
+	-- "Always" sits on the day-label row, the others next to the slot rows.
 	local presets = {
+		{ L.PRESET_ALWAYS, C.ALL_TIMES },
 		{ L.PRESET_WEEKEND, weekend },
 		{ L.PRESET_EVENINGS, evenings },
 		{ L.PRESET_NONE, 0 },
 	}
-	for slot, preset in ipairs(presets) do
+	for i, preset in ipairs(presets) do
 		local link = W.LinkButton(secTimes, preset[1], function()
 			Draft().times = preset[2]
 			controls.grid:SetMask(preset[2])
 			Changed()
 		end)
-		local rowEnd = controls.grid.rowEnds[slot]
-		link:SetPoint("TOPLEFT", controls.grid, "TOPLEFT", rowEnd.x + 4, rowEnd.y - 2)
+		local rowEnd = controls.grid.rowEnds[math.max(1, i - 1)]
+		link:SetPoint("TOPLEFT", controls.grid, "TOPLEFT", rowEnd.x + 4, i == 1 and -2 or rowEnd.y - 2)
 	end
 	secTimes:SetHeight(112)
 
