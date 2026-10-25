@@ -31,7 +31,7 @@
   level columns, sortable by any column, languages in the row details.
 - Background ping verifies an ad's poster (addon whisper `P`/`Q`); `/who`
   results now reach the addon (`SetWhoToUi`).
-- New ads start with all play times ticked.
+- New ads start with all play times ticked; new "always" preset for play times.
 - Welcome dialog on first start: the addon is community driven and starts
   with few ads (development checkouts: on every login).
 - Status line shows the search scope: realm (retail) or ruleset (Forever).
