@@ -78,11 +78,10 @@ creates the tag, lints and runs the
 CurseForge, Wago and GitHub releases. Pushing a `v*` tag manually triggers the
 same workflow.
 
-Before the first release:
-
-- Create the CurseForge and Wago projects and add their IDs to the `.toc`
-  (`## X-Curse-Project-ID: …`, `## X-Wago-ID: …`).
-- Add the repository secrets `CF_API_KEY` and `WAGO_API_TOKEN`.
+Upload targets: [CurseForge](https://www.curseforge.com/projects/1765174)
+(`X-Curse-Project-ID` in the `.toc`, secret `CF_API_KEY`) and
+[Wago](https://addons.wago.io/addons/Q6aqwa6W) (`X-Wago-ID`, secret
+`WAGO_API_TOKEN`).
 
 A site without ID or secret is skipped. Local test build without upload (zip
 in `.release/`):
