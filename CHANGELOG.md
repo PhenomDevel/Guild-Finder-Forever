@@ -35,6 +35,9 @@
   whether your class and roles fit.
 - Raid guilds without a class list: "any class as" plus the wanted role
   icons when only some roles are wanted, no role icons when all are.
+- Play times hidden for now behind `C.SHOW_TIMES` (form step, "my times"
+  filter, player list column, details grid, score); ads still carry them.
+  The freed room goes to the ad text and the player list columns.
 - "My ad" preview: guild ads show the raid schedule under the name; the
   player week strip no longer hides behind the goal chips.
 - Player list: languages on their own line in the row details.

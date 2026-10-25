@@ -34,6 +34,10 @@ C.ALL_GOALS = 15
 C.DAYS = { L.DAY_MON, L.DAY_TUE, L.DAY_WED, L.DAY_THU, L.DAY_FRI, L.DAY_SAT, L.DAY_SUN }
 C.SLOTS = { L.SLOT_AFTERNOON, L.SLOT_EVENING, L.SLOT_NIGHT }
 C.ALL_TIMES = 2 ^ 21 - 1
+-- Play times are hidden for now: no form section, filter, list column,
+-- details grid or score share. Ads still carry them (field t), so setting
+-- this to true brings everything back.
+C.SHOW_TIMES = false
 
 -- Raid details of a guild ad, only with the raid goal set:
 --   ps = style, cl = wanted classes, cr = their roles, rd = raid days (bit day - 1),

@@ -2,9 +2,9 @@
 local _, ns = ...
 
 -- Guild details: a dialog over the dimmed main window. Left the text, goals
--- and online times (compared with the own ones), right what the guild is
--- looking for: raid style and schedule plus wanted classes grouped by
--- role, or just the wanted roles. Actions at the bottom.
+-- and online times (compared with the own ones; only with C.SHOW_TIMES),
+-- right what the guild is looking for: raid style and schedule plus wanted
+-- classes grouped by role, or just the wanted roles. Actions at the bottom.
 local GuildDialog = {}
 ns.GuildDialog = GuildDialog
 
@@ -107,30 +107,36 @@ local function Create()
 	dialog.text:SetWidth(leftWidth)
 	dialog.text:SetJustifyV("TOP")
 	dialog.text:SetSpacing(3)
-	dialog.text:SetHeight(62)
-
 	local goalsHeader = W.Header(dialog, L.FILTER_GOALS, "GameFontNormalLarge")
-	goalsHeader:SetPoint("TOPLEFT", PAD, -184)
+	if C.SHOW_TIMES then
+		dialog.text:SetHeight(62)
+		goalsHeader:SetPoint("TOPLEFT", PAD, -184)
+	else
+		-- No times grid: the text takes the height it needs, goals follow.
+		goalsHeader:SetPoint("TOPLEFT", dialog.text, "BOTTOMLEFT", 0, -18)
+	end
 	dialog.tags = W.GoalTags(dialog)
 	dialog.tags:SetPoint("TOPLEFT", goalsHeader, "BOTTOMLEFT", 0, -6)
 
-	local timesHeader = W.Header(dialog, L.ONLINE_TIMES, "GameFontNormalLarge")
-	timesHeader:SetPoint("TOPLEFT", PAD, -240)
-	dialog.grid = W.TimeGrid(dialog, 38, 16, false)
-	dialog.grid:SetPoint("TOPLEFT", timesHeader, "BOTTOMLEFT", 0, -6)
-	local legendOn = dialog:CreateTexture(nil, "ARTWORK")
-	legendOn:SetSize(10, 10)
-	legendOn:SetPoint("TOPLEFT", dialog.grid, "BOTTOMLEFT", 0, -6)
-	legendOn:SetColorTexture(0.79, 0.635, 0.29, 1)
-	local legendOnText = W.Text(dialog, "GameFontDisableSmall")
-	legendOnText:SetPoint("LEFT", legendOn, "RIGHT", 4, 0)
-	legendOnText:SetText(L.LEGEND_GUILD)
-	local legendBoth = W.Panel(dialog, { 0, 0, 0, 0 }, { W.GREEN[1], W.GREEN[2], W.GREEN[3], 1 })
-	legendBoth:SetSize(10, 10)
-	legendBoth:SetPoint("LEFT", legendOnText, "RIGHT", 14, 0)
-	local legendBothText = W.Text(dialog, "GameFontDisableSmall")
-	legendBothText:SetPoint("LEFT", legendBoth, "RIGHT", 4, 0)
-	legendBothText:SetText(L.LEGEND_YOU)
+	if C.SHOW_TIMES then
+		local timesHeader = W.Header(dialog, L.ONLINE_TIMES, "GameFontNormalLarge")
+		timesHeader:SetPoint("TOPLEFT", PAD, -240)
+		dialog.grid = W.TimeGrid(dialog, 38, 16, false)
+		dialog.grid:SetPoint("TOPLEFT", timesHeader, "BOTTOMLEFT", 0, -6)
+		local legendOn = dialog:CreateTexture(nil, "ARTWORK")
+		legendOn:SetSize(10, 10)
+		legendOn:SetPoint("TOPLEFT", dialog.grid, "BOTTOMLEFT", 0, -6)
+		legendOn:SetColorTexture(0.79, 0.635, 0.29, 1)
+		local legendOnText = W.Text(dialog, "GameFontDisableSmall")
+		legendOnText:SetPoint("LEFT", legendOn, "RIGHT", 4, 0)
+		legendOnText:SetText(L.LEGEND_GUILD)
+		local legendBoth = W.Panel(dialog, { 0, 0, 0, 0 }, { W.GREEN[1], W.GREEN[2], W.GREEN[3], 1 })
+		legendBoth:SetSize(10, 10)
+		legendBoth:SetPoint("LEFT", legendOnText, "RIGHT", 14, 0)
+		local legendBothText = W.Text(dialog, "GameFontDisableSmall")
+		legendBothText:SetPoint("LEFT", legendBoth, "RIGHT", 4, 0)
+		legendBothText:SetText(L.LEGEND_YOU)
+	end
 
 	-- Right column
 	local side = W.Panel(dialog, { 0.055, 0.055, 0.05, 1 }, { 0.16, 0.16, 0.16, 1 })
@@ -321,7 +327,7 @@ local function Update()
 	dialog.text:SetText(ad.x ~= "" and ad.x or ("|cff9d9d9d" .. L.NO_TEXT .. "|r"))
 	dialog.tags:SetGoals(ad.g)
 
-	local myTimes = Filters.Profile(Ads.KIND_GUILD).times
+	local myTimes = C.SHOW_TIMES and Filters.Profile(Ads.KIND_GUILD).times or 0
 	local raid = C.HasBit(ad.g or 0, C.GOAL_RAID)
 	dialog.raidHeader:SetShown(raid)
 	dialog.schedule:SetShown(raid)
@@ -412,7 +418,9 @@ local function Update()
 		end
 	end
 
-	dialog.grid:SetMask(ad.t, Filters.Profile(Ads.KIND_GUILD).times)
+	if dialog.grid then
+		dialog.grid:SetMask(ad.t, Filters.Profile(Ads.KIND_GUILD).times)
+	end
 	dialog.contact:SetText(L.CONTACT_NAME:format(poster))
 	dialog.contact:SetWidth(math.max(150, dialog.contact:GetFontString():GetStringWidth() + 30))
 end

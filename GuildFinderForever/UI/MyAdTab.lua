@@ -276,7 +276,9 @@ local function Build(content)
 
 	-- Text
 	local secText = Section("text")
-	controls.text = W.TextArea(secText, 400, 64, C.MAX_TEXT, function(text)
+	-- Taller while the times section is hidden: it uses the free room.
+	local textHeight = C.SHOW_TIMES and 64 or 120
+	controls.text = W.TextArea(secText, 400, textHeight, C.MAX_TEXT, function(text)
 		Draft().text = text
 		Changed()
 	end)
@@ -285,7 +287,7 @@ local function Build(content)
 	local textHint = W.Text(secText, "GameFontDisableSmall")
 	textHint:SetPoint("TOPLEFT", controls.text, "BOTTOMLEFT", 0, -4)
 	textHint:SetText(L.TEXT_HINT)
-	secText:SetHeight(116)
+	secText:SetHeight(textHeight + 52)
 
 	--------------------------------------------------------------------------
 	-- Raid (guild ads with the raid goal): style, schedule, needs per class
@@ -791,8 +793,9 @@ local function Build(content)
 			controls.cardMeta:SetText("|cff9d9d9d" .. C.ClassName(classFile) .. " · " .. UnitLevel("player") .. "|r")
 		end
 		local guildMode = self.mode == MODE_GUILD
-		controls.cardStrip:SetShown(not guildMode)
-		controls.cardName:SetPoint("RIGHT", guildMode and controls.card or controls.cardStrip, guildMode and "RIGHT" or "LEFT", -10, 0)
+		local strip = C.SHOW_TIMES and not guildMode
+		controls.cardStrip:SetShown(strip)
+		controls.cardName:SetPoint("RIGHT", strip and controls.cardStrip or controls.card, strip and "LEFT" or "RIGHT", -10, 0)
 		local hasMeta = controls.cardMeta:GetText() ~= nil and controls.cardMeta:GetText() ~= ""
 		controls.cardText:ClearAllPoints()
 		controls.cardText:SetPoint("TOPLEFT", hasMeta and controls.cardMeta or controls.cardName, "BOTTOMLEFT", 0, -5)
@@ -897,7 +900,8 @@ local function Build(content)
 		controls.wizLine:SetShown(pages ~= nil)
 		controls.footer:SetShown(pages ~= nil)
 		if not pages then
-			local order = { { "roles", -52 }, { "goals", -122 }, { "times", -192 }, { "text", -310 } }
+			local order = C.SHOW_TIMES and { { "roles", -52 }, { "goals", -122 }, { "times", -192 }, { "text", -310 } }
+				or { { "roles", -52 }, { "goals", -122 }, { "text", -192 } }
 			local visible = {}
 			for i, entry in ipairs(order) do
 				sections[entry[1]]:SetNumbered(i)
@@ -921,7 +925,8 @@ local function Build(content)
 		if pages[self.page] == "raid" then
 			ShowSections({ raid = PAGE_TOP })
 		else
-			local order = { { "goals", PAGE_TOP }, { "times", PAGE_TOP - 70 }, { "text", PAGE_TOP - 188 } }
+			local order = C.SHOW_TIMES and { { "goals", PAGE_TOP }, { "times", PAGE_TOP - 70 }, { "text", PAGE_TOP - 188 } }
+				or { { "goals", PAGE_TOP }, { "text", PAGE_TOP - 70 } }
 			local visible = {}
 			for i, entry in ipairs(order) do
 				sections[entry[1]]:SetNumbered(i)
