@@ -23,6 +23,15 @@
   icons per role; tabs fit their label; status line notes "<faction> only"
   and counts guild and player ads separately.
 - Fix: the ad text field lost focus after every keystroke.
+- Guild ad form: one page (ad) plus a raid page instead of four steps;
+  online times optional for guilds and neutral in the score when empty.
+- Cards: raid info in its own box; name and meta no longer run into the
+  score.
+- Goals as coloured chips with icons; player list with separate class and
+  level columns, sortable by any column, languages in the row details.
+- Background ping verifies an ad's poster (addon whisper `P`/`Q`); `/who`
+  results now reach the addon (`SetWhoToUi`).
+- New ads start with all play times ticked.
 - Welcome dialog on first start: the addon is community driven and starts
   with few ads (development checkouts: on every login).
 - Status line shows the search scope: realm (retail) or ruleset (Forever).

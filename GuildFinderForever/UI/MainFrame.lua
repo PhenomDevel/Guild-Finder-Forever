@@ -67,7 +67,8 @@ function UI.UpdateStatus()
 		parts[#parts + 1] = "|TInterface\\COMMON\\Indicator-Red:14|t" .. L.STATUS_DISCONNECTED
 	end
 	parts[#parts + 1] = "|cffffd100" .. ns.Ads.GetScopeText() .. "|r"
-	-- The addon channel is per faction: say so, the other one never shows up live.
+	-- The addon channel is per faction: live sync only reaches the own one;
+	-- other-faction ads come from the account-wide cache (own alts).
 	local faction = ns.Ads.GetFactionCode()
 	if faction then
 		parts[#parts + 1] = L.STATUS_FACTION_ONLY:format(W.FactionText(faction, ns.Filters.FactionName(faction)))

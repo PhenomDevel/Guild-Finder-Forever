@@ -64,12 +64,15 @@ Open the window with `/gff`, the minimap button or the addon compartment.
 - Details dialog with the guild's online times next to yours. For raiding
   guilds it also shows the raid schedule and the wanted classes grouped by
   role, with your class highlighted.
-- *Whisper* opens a whisper and checks the poster via `/who`. *Hide* and
+- Opening the details checks the poster in the background (an addon ping:
+  is the character online and in that guild?); *Whisper* opens a whisper
+  and checks again via `/who`. *Hide* and
   *Block guild* remove the ad from your results.
 
 ### Find players
 
-- Dense list of player ads: class, level, roles, goals and times.
+- Dense list of player ads: class, level, roles, languages, goals and
+  times; click a column header to sort by it.
 - Filter by role, level range and class. A click expands the row with the
   text and the same actions.
 
@@ -77,13 +80,15 @@ Open the window with `/gff`, the minimap button or the addon compartment.
 
 - **Player ad** per character: roles (none picked = every role your class
   can fill), goals and languages, play times, text.
-- **Guild ad** per guild, by members who may invite, as a step-by-step
-  form: goals and languages › raid › online times › text.
-- With the *Raid* goal you get an extra page with style cards (casual,
+- **Guild ad** per guild, by members who may invite: the same one-page
+  form (online times optional).
+- With the *Raid* goal the form gets a second page with style cards (casual,
   semi-hardcore, hardcore), raid days, start and end time, raids per week,
   and a class × role table of wanted classes.
 - Live preview of how the other side sees your ad, with the number of
   matching ads in your cache.
+- New ads start with every play time ticked.
+- Goals show as coloured chips with an icon everywhere.
 - Ads are renewed on login and expire after 14 days without one.
 
 ### Notifications

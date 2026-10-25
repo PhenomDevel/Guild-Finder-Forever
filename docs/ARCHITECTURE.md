@@ -64,6 +64,11 @@ strings, no code execution, depth and size limits), compressed and encoded by
 | `I` inventory | nonce, target, own summaries, covered buckets, `(id, version)` list | answer to a hello whose summaries differ |
 | `R` request | target, ids | ads the target listed that the sender lacks or has older |
 | `A` ads | up to 15 ads/tombstones | own changes, answers to requests, pushes |
+| `P` ping | nonce | whisper to an ad's poster (background check) |
+| `Q` pong | nonce, guild, class | whispered answer to a ping (max one per asker per 2 s) |
+
+`P`/`Q` go as addon whispers; Sync ignores whisper traffic and Verify
+ignores channel traffic.
 
 1. Every id falls into one of 16 buckets. A bucket summary is the
    order-independent sum of `hash(id .. version)` over its entries, so two
@@ -88,10 +93,15 @@ below catches mismatching guild/class claims.
 
 ## Abuse protection (`Core/Verify.lua`, `Core/Store.lua`)
 
-- "Contact" opens a whisper and runs a `/who` on the poster. For a guild ad
-  the poster must be in that guild, for a player ad the class must match.
-  A match shows "checked via /who", a mismatch marks the ad suspicious and
-  hides it. An offline poster gives no verdict.
+- Opening a guild's details or a player's row pings the poster in the
+  background (`P`/`Q`, at most once an hour per ad). The answer proves the
+  character exists, is online and runs the addon; its self-reported guild
+  (guild ad) or class (player ad) must match the ad. An offline poster
+  gives no verdict; the server's "No player named …" line for the ping is
+  filtered from chat.
+- "Contact" opens a whisper and runs a `/who` on the poster (results routed
+  to the who list via `SetWhoToUi`). Same rules, checked by the server.
+- A match shows "checked", a mismatch marks the ad suspicious and hides it.
 - "Hide" hides one ad (undo: "Show hidden ads"), "Block" hides all ads of a
   character or guild (`/gff blocked`, `/gff unblock <name>`).
 
@@ -122,10 +132,10 @@ Layout follows the v2 sketches. Files:
   ads at first); every login when `ns.DEV` is set by the unpackaged `Dev/`.
 - `PlayersTab.lua`: toolbar (role toggles, level range, class, chips,
   search), dense list; the selected row expands inline with the actions.
-- `MyAdTab.lua`: player ad as four numbered steps (roles, goals +
-  languages (multi-select), time grid with presets, text); guild ad as a paged form (goals +
-  language, raid only with the raid goal, times, text) whose raid page holds
-  style cards, schedule and a class × role needs table; live preview of how the other
+- `MyAdTab.lua`: one page of four numbered steps (roles, goals +
+  languages (multi-select), time grid with presets, text); a guild ad with
+  the raid goal drops the roles step and gets a second page with style
+  cards, schedule and a class × role needs table; live preview of how the other
   side sees the ad with the number of matching ads in the cache, publish /
   discard / withdraw.
 

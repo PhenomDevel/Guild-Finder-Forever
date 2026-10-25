@@ -20,11 +20,12 @@ C.ROLES = {
 	{ bit = C.ROLE.DAMAGE, key = "DAMAGE", label = L.ROLE_DAMAGE, short = L.ROLE_DAMAGE_SHORT, color = { 0.56, 0.16, 0.12 } },
 }
 
+-- Each goal has an icon and colour so chips are told apart at a glance.
 C.GOALS = {
-	{ bit = 1, key = "RAID", label = L.GOAL_RAID },
-	{ bit = 2, key = "PVP", label = L.GOAL_PVP },
-	{ bit = 4, key = "LEVELING", label = L.GOAL_LEVELING },
-	{ bit = 8, key = "SOCIAL", label = L.GOAL_SOCIAL },
+	{ bit = 1, key = "RAID", label = L.GOAL_RAID, icon = "Interface\\Icons\\INV_Misc_Head_Dragon_01", color = { 0.85, 0.45, 0.12 } },
+	{ bit = 2, key = "PVP", label = L.GOAL_PVP, icon = "Interface\\Icons\\Ability_DualWield", color = { 0.8, 0.2, 0.2 } },
+	{ bit = 4, key = "LEVELING", label = L.GOAL_LEVELING, icon = "Interface\\Icons\\INV_Misc_Map_01", color = { 0.3, 0.68, 0.3 } },
+	{ bit = 8, key = "SOCIAL", label = L.GOAL_SOCIAL, icon = "Interface\\Icons\\INV_Drink_05", color = { 0.4, 0.55, 0.95 } },
 }
 C.ALL_GOALS = 15
 

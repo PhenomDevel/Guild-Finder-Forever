@@ -302,6 +302,12 @@ function W.FlowChips(chips, parent, x, y, gap)
 	return x
 end
 
+-- Inline goal icon (texture markup, icon border cropped).
+function W.GoalIconMarkup(goal, size)
+	size = size or 14
+	return ("|T%s:%d:%d:0:0:64:64:5:59:5:59|t"):format(goal.icon, size, size)
+end
+
 -- Small read-only label pill for goals.
 function W.Tag(parent)
 	local tag = W.Panel(parent, { 0.16, 0.16, 0.16, 1 }, { 0.3, 0.3, 0.3, 1 })
@@ -311,6 +317,18 @@ function W.Tag(parent)
 	function tag:SetLabel(label)
 		text:SetText(label)
 		self:SetWidth(text:GetStringWidth() + 14)
+	end
+	-- Tinted background and border in a colour, or the neutral look (nil).
+	function tag:SetColor(color)
+		if color then
+			self:SetBackdropColor(color[1] * 0.3, color[2] * 0.3, color[3] * 0.3, 1)
+			self:SetBackdropBorderColor(color[1], color[2], color[3], 1)
+			Color(text, W.WHITE)
+		else
+			self:SetBackdropColor(0.16, 0.16, 0.16, 1)
+			self:SetBackdropBorderColor(0.3, 0.3, 0.3, 1)
+			Color(text, W.TAG)
+		end
 	end
 	return tag
 end
@@ -328,7 +346,8 @@ function W.GoalTags(parent)
 		for i, goal in ipairs(C.GOALS) do
 			local tag = self.tags[i]
 			if C.HasBit(mask or 0, goal.bit) then
-				tag:SetLabel(goal.label)
+				tag:SetLabel(W.GoalIconMarkup(goal, 12) .. " " .. goal.label)
+				tag:SetColor(goal.color)
 				tag:Show()
 				shown[#shown + 1] = tag
 			else
@@ -338,6 +357,37 @@ function W.GoalTags(parent)
 		local width = W.FlowChips(shown, self, 0, 0, 4) - 4
 		self:SetWidth(math.max(1, width))
 		return width
+	end
+	return holder
+end
+
+-- Compact goals for list rows: one coloured icon per goal, label as tooltip.
+function W.GoalIcons(parent, size)
+	local holder = CreateFrame("Frame", nil, parent)
+	holder:SetSize(4 * (size + 4), size)
+	holder.icons = {}
+	for i, goal in ipairs(C.GOALS) do
+		local icon = W.Panel(holder, { 0, 0, 0, 1 }, goal.color)
+		icon:SetSize(size, size)
+		local tex = icon:CreateTexture(nil, "ARTWORK")
+		tex:SetPoint("TOPLEFT", 1, -1)
+		tex:SetPoint("BOTTOMRIGHT", -1, 1)
+		tex:SetTexture(goal.icon)
+		tex:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+		W.Tooltip(icon, goal.label)
+		holder.icons[i] = icon
+	end
+	function holder:SetGoals(mask)
+		local x = 0
+		for i, goal in ipairs(C.GOALS) do
+			local icon = self.icons[i]
+			icon:SetShown(C.HasBit(mask or 0, goal.bit))
+			if icon:IsShown() then
+				icon:ClearAllPoints()
+				icon:SetPoint("LEFT", x, 0)
+				x = x + size + 4
+			end
+		end
 	end
 	return holder
 end

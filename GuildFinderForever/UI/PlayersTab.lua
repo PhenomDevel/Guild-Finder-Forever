@@ -18,16 +18,28 @@ local ROW_HEIGHT = 30
 local EXPANDED_HEIGHT = 112
 local TOOLBAR_HEIGHT = 34
 
+-- value(result) is what a click on the column header sorts by; numeric
+-- columns start descending.
 local COLUMNS = {
 	{ key = "icon", x = 10, width = 22 },
-	{ key = "name", x = 42, width = 140, label = L.COL_NAME },
-	{ key = "class", x = 186, width = 130, label = L.COL_CLASS_LEVEL },
-	{ key = "roles", x = 320, width = 70, label = L.COL_ROLES },
-	{ key = "lang", x = 394, width = 40, label = L.COL_LANGUAGE_SHORT },
-	{ key = "goals", x = 438, width = 150, label = L.COL_GOALS },
-	{ key = "strip", x = 592, width = 100, label = L.COL_EVENINGS },
-	{ key = "match", x = 700, width = 56, label = L.COL_MATCH },
+	{ key = "name", x = 42, width = 130, label = L.COL_NAME, value = function(r) return Ads.OwnerName(r.ad.o):lower() end },
+	{ key = "class", x = 176, width = 100, label = L.COL_CLASS, value = function(r) return C.ClassName(r.ad.c) end },
+	{ key = "level", numeric = true, x = 280, width = 40, label = L.COL_LEVEL, value = function(r) return r.ad.lv or 0 end },
+	{ key = "roles", numeric = true, x = 324, width = 64, label = L.COL_ROLES, value = function(r) return C.CountBits(r.ad.r or 0) end },
+	{ key = "lang", x = 392, width = 46, label = L.COL_LANGUAGE_SHORT, value = function(r) return r.ad.l or "" end },
+	{ key = "goals", numeric = true, x = 442, width = 96, label = L.COL_GOALS, value = function(r) return C.CountBits(r.ad.g or 0) end },
+	{ key = "strip", numeric = true, x = 542, width = 100, label = L.COL_EVENINGS, value = function(r) return C.CountBits(r.ad.t or 0) end },
+	{ key = "match", numeric = true, x = 650, width = 56, label = L.COL_MATCH, value = function(r) return r.score or -1 end },
 }
+local ARROW_UP = "|TInterface\\Buttons\\Arrow-Up-Up:0|t"
+
+local function Column(key)
+	for _, column in ipairs(COLUMNS) do
+		if column.key == key then
+			return column
+		end
+	end
+end
 
 local function RolesText(mask)
 	local parts = {}
@@ -153,13 +165,6 @@ local function BuildRow(tab, row)
 		end
 	end)
 
-	local function Column(key)
-		for _, column in ipairs(COLUMNS) do
-			if column.key == key then
-				return column
-			end
-		end
-	end
 	local function Cell(key, font, color)
 		local column = Column(key)
 		local text = W.Text(hit, font or "GameFontHighlight", color)
@@ -172,10 +177,12 @@ local function BuildRow(tab, row)
 	row.icon:SetPoint("LEFT", Column("icon").x, 0)
 	row.name = Cell("name", "GameFontNormal")
 	row.class = Cell("class", "GameFontHighlight", W.MUTED)
+	row.level = Cell("level", "GameFontHighlight")
 	row.roles = W.RoleIcons(hit, 16)
 	row.roles:SetPoint("LEFT", Column("roles").x, 0)
 	row.lang = Cell("lang")
-	row.goals = Cell("goals")
+	row.goals = W.GoalIcons(hit, 18)
+	row.goals:SetPoint("LEFT", Column("goals").x, 0)
 	row.strip = W.WeekStrip(hit, 12)
 	row.strip:SetPoint("LEFT", Column("strip").x, 0)
 	row.match = Cell("match", "GameFontNormal")
@@ -229,7 +236,8 @@ local function FillRow(tab, row, result)
 
 	row.icon:SetClass(ad.c)
 	row.name:SetText("|c" .. W.ClassColorHex(ad.c) .. Ads.OwnerName(ad.o) .. "|r")
-	row.class:SetText(C.ClassName(ad.c) .. " · " .. ad.lv)
+	row.class:SetText(C.ClassName(ad.c))
+	row.level:SetText(ad.lv)
 	row.roles:SetRoles(ad.r)
 	local langs = C.AdLanguages(ad)
 	if #langs > 2 then
@@ -237,7 +245,7 @@ local function FillRow(tab, row, result)
 	else
 		row.lang:SetText(table.concat(langs, "/"):upper())
 	end
-	row.goals:SetText(C.GoalsText(ad.g))
+	row.goals:SetGoals(ad.g)
 	row.strip:SetMask(ad.t)
 	if result.score then
 		row.match:SetText(result.score .. " %")
@@ -253,7 +261,8 @@ local function FillRow(tab, row, result)
 		local width = row.tags:SetGoals(ad.g)
 		row.note:ClearAllPoints()
 		row.note:SetPoint("LEFT", row.tags, "LEFT", math.max(0, width) + 10, 0)
-		local note = L.UPDATED_AGO:format(W.Duration(GetServerTime() - ad.v))
+		row.note:SetPoint("RIGHT", row.text, "RIGHT", 0, 0)
+		local note = Filters.LanguagesText(ad) .. " · " .. L.UPDATED_AGO:format(W.Duration(GetServerTime() - ad.v))
 		if (ad.r or 0) > 0 then
 			note = RolesText(ad.r) .. " · " .. note
 		end
@@ -269,13 +278,65 @@ local function BuildList(tab, panel)
 	local headerBg = header:CreateTexture(nil, "BACKGROUND")
 	headerBg:SetAllPoints()
 	headerBg:SetColorTexture(0.12, 0.1, 0.06, 1)
+	-- Clickable headers: first click sorts (text ascending, numbers
+	-- descending), the next one reverses; the arrow marks the column.
+	local headers = {}
+	local function UpdateHeaders()
+		for _, entry in ipairs(headers) do
+			local sort = tab.sort
+			local arrow = ""
+			if sort and sort.key == entry.column.key then
+				arrow = " " .. (sort.desc and W.ARROW_DOWN or ARROW_UP)
+			end
+			entry.text:SetText(entry.column.label .. arrow)
+		end
+	end
 	for _, column in ipairs(COLUMNS) do
 		if column.label then
-			local text = W.Text(header, "GameFontNormalSmall", W.GOLD)
-			text:SetPoint("LEFT", column.x, 0)
+			local button = CreateFrame("Button", nil, header)
+			button:SetPoint("LEFT", column.x, 0)
+			button:SetSize(column.width, 24)
+			button:SetHighlightTexture("Interface\\Buttons\\WHITE8x8")
+			button:GetHighlightTexture():SetVertexColor(1, 0.82, 0, 0.08)
+			local text = W.Text(button, "GameFontNormalSmall", W.GOLD)
+			text:SetPoint("LEFT")
 			text:SetWidth(column.width)
-			text:SetText(column.label)
+			text:SetWordWrap(false)
+			button:SetScript("OnClick", function()
+				local sort = tab.sort
+				if sort and sort.key == column.key then
+					sort.desc = not sort.desc
+				else
+					tab.sort = { key = column.key, desc = column.numeric == true }
+				end
+				UpdateHeaders()
+				tab:SetResults(tab.results or {})
+			end)
+			headers[#headers + 1] = { column = column, text = text }
 		end
+	end
+	UpdateHeaders()
+
+	-- Stable sort by the chosen column; ties keep the filter's order.
+	local function Sort(results)
+		local sort = tab.sort
+		local column = sort and Column(sort.key)
+		if not column then
+			return
+		end
+		for i, result in ipairs(results) do
+			result.order = i
+		end
+		table.sort(results, function(a, b)
+			local va, vb = column.value(a), column.value(b)
+			if va ~= vb then
+				if sort.desc then
+					return va > vb
+				end
+				return va < vb
+			end
+			return a.order < b.order
+		end)
 	end
 
 	local scrollBox = CreateFrame("Frame", nil, panel, "WowScrollBoxList")
@@ -307,6 +368,7 @@ local function BuildList(tab, panel)
 		for _ in Store.Each(KIND) do
 			count = count + 1
 		end
+		Sort(results)
 		for i, result in ipairs(results) do
 			result.index = i
 		end
@@ -338,6 +400,9 @@ local function Build(content)
 	function tab:Select(id)
 		self.selectedId = self.selectedId ~= id and id or nil
 		self:SetResults(self.results or {})
+		if self.selectedId then
+			Verify.Ping(Store.Get(self.selectedId))
+		end
 	end
 
 	function tab:Refresh()
