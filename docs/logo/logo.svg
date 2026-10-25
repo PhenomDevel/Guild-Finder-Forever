@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<defs>
+<radialGradient id="bg" cx="40%" cy="40%" r="80%"><stop offset="0" stop-color="#3b2a5e"/><stop offset="1" stop-color="#0d0818"/></radialGradient>
+<linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe9a3"/><stop offset=".5" stop-color="#e0a93a"/><stop offset="1" stop-color="#8a5a12"/></linearGradient>
+<radialGradient id="lens" cx="40%" cy="35%" r="75%"><stop offset="0" stop-color="#1d5d86"/><stop offset="1" stop-color="#071a2c"/></radialGradient>
+<linearGradient id="field" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3f7fd0"/><stop offset="1" stop-color="#173c7a"/></linearGradient>
+<linearGradient id="wood" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8a5428"/><stop offset="1" stop-color="#3a1f0c"/></linearGradient>
+</defs>
+<rect width="512" height="512" fill="url(#bg)"/>
+<line x1="330" y1="330" x2="452" y2="452" stroke="#140a02" stroke-width="66" stroke-linecap="round"/>
+<line x1="330" y1="330" x2="452" y2="452" stroke="url(#wood)" stroke-width="48" stroke-linecap="round"/>
+<line x1="336" y1="336" x2="366" y2="366" stroke="url(#gold)" stroke-width="58" stroke-linecap="butt"/>
+<circle cx="220" cy="220" r="150" fill="url(#lens)"/>
+<path d="M150 136 Q 185 150 220 128 Q 255 150 290 136 L 290 222 C 290 280 256 312 220 330 C 184 312 150 280 150 222 Z" fill="url(#field)" stroke="url(#gold)" stroke-width="12" stroke-linejoin="round"/>
+<path d="M220 222 C 204 200 176 200 176 222 C 176 244 204 244 220 222 C 236 200 264 200 264 222 C 264 244 236 244 220 222 Z" fill="none" stroke="#ffe9a3" stroke-width="13"/>
+<circle cx="220" cy="220" r="150" fill="none" stroke="#140a02" stroke-width="44"/>
+<circle cx="220" cy="220" r="150" fill="none" stroke="url(#gold)" stroke-width="30"/>
+<path d="M118 180 A 108 108 0 0 1 180 112" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="14" stroke-linecap="round"/>
+</svg>
