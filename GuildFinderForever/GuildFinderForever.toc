@@ -12,6 +12,8 @@
 ## Version: @project-version@
 ## X-License: MIT
 ## X-Website: https://github.com/PhenomDevel/Guild-Finder-Forever
+## X-Curse-Project-ID: 1765174
+## X-Wago-ID: Q6aqwa6W
 ## Category: Social
 ## Category-deDE: Soziales
 ## Category-frFR: Social
