@@ -214,13 +214,12 @@ local function Create()
 	unfit:SetText(L.UNFIT)
 end
 
--- Class chip: class icon, name in the tooltip; a green ring marks your class.
+-- Class chip: class icon, name in the tooltip.
 local function ClassChip(parent)
-	local chip = CreateFrame("Frame", nil, parent, "BackdropTemplate")
+	local chip = CreateFrame("Frame", nil, parent)
 	chip:SetSize(CHIP_SIZE, CHIP_SIZE)
-	chip:SetBackdrop({ edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1 })
-	chip.icon = W.ClassIcon(chip, CHIP_SIZE - 4)
-	chip.icon:SetPoint("CENTER")
+	chip.icon = W.ClassIcon(chip, CHIP_SIZE)
+	chip.icon:SetAllPoints()
 	chip:EnableMouse(true)
 	chip:SetScript("OnEnter", function(self)
 		GameTooltip:SetOwner(self, "ANCHOR_TOP")
@@ -230,10 +229,9 @@ local function ClassChip(parent)
 	chip:SetScript("OnLeave", function()
 		GameTooltip:Hide()
 	end)
-	function chip:SetClass(class, mine)
+	function chip:SetClass(class)
 		self.class = class
 		self.icon:SetClass(class.key)
-		self:SetBackdropBorderColor(W.GREEN[1], W.GREEN[2], W.GREEN[3], mine and 1 or 0)
 	end
 	return chip
 end
@@ -241,8 +239,6 @@ end
 -- Wanted classes grouped by role, chips wrapping in the right column;
 -- returns the y below the list.
 local function LayoutNeeds(ad, top)
-	local _, myClass = UnitClass("player")
-	local fit, fitRoles = Filters.ClassFit(ad)
 	local needs = C.NeedsByRole(ad)
 	local y = top
 	for _, row in ipairs(dialog.needRows) do
@@ -255,7 +251,7 @@ local function LayoutNeeds(ad, top)
 				chip = ClassChip(dialog.side)
 				row.chips[i] = chip
 			end
-			chip:SetClass(class, fit == "fit" and class.key == myClass and C.HasBit(fitRoles, row.bit))
+			chip:SetClass(class)
 			if x > 0 and x + CHIP_SIZE > dialog.chipWidth then
 				x, lineY = 0, lineY - CHIP_SIZE - CHIP_GAP
 			end
@@ -391,19 +387,28 @@ local function Update()
 			end
 			row.label:Hide()
 		end
+		-- Raid ads: every class, in some roles (rows) or in all (text only).
+		local roles = ad.r or 0
 		local y = listTop
+		if raid then
+			local someRoles = roles > 0 and roles ~= C.ALL_ROLES
+			dialog.anyClass:SetText(someRoles and L.ANY_CLASS_ROLES or L.ANY_CLASS)
+			dialog.anyClass:Show()
+			y = y - 22
+			if not someRoles then
+				roles = 0
+			end
+		else
+			dialog.anyClass:SetText(L.ANY_ROLE)
+			dialog.anyClass:SetShown(roles == 0)
+		end
 		for _, row in ipairs(dialog.needRows) do
-			if C.HasBit(ad.r or 0, row.bit) then
+			if C.HasBit(roles, row.bit) then
 				row.label:ClearAllPoints()
 				row.label:SetPoint("TOPLEFT", 16, y)
 				row.label:Show()
 				y = y - 24
 			end
-		end
-		dialog.anyClass:SetShown(y == listTop or raid)
-		dialog.anyClass:SetText(raid and L.ANY_CLASS or L.ANY_ROLE)
-		if y ~= listTop and raid then
-			dialog.anyClass:SetPoint("TOPLEFT", 16, y)
 		end
 	end
 

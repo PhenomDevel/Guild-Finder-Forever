@@ -15,7 +15,7 @@ local Filters = ns.Filters
 
 local KIND = Ads.KIND_PLAYER
 local ROW_HEIGHT = 30
-local EXPANDED_HEIGHT = 112
+local EXPANDED_HEIGHT = 136
 local TOOLBAR_HEIGHT = 34
 
 -- value(result) is what a click on the column header sorts by; numeric
@@ -202,6 +202,11 @@ local function BuildRow(tab, row)
 	row.tags:SetPoint("BOTTOMLEFT", 42, 10)
 	row.note = W.Text(detail, "GameFontDisableSmall")
 	row.note:SetWordWrap(false)
+	-- Languages get their own line above the goals: an ad can name up to seven.
+	row.langs = W.Text(detail, "GameFontDisableSmall")
+	row.langs:SetPoint("BOTTOMLEFT", row.tags, "TOPLEFT", 0, 8)
+	row.langs:SetPoint("RIGHT", row.text, "RIGHT", 0, 0)
+	row.langs:SetWordWrap(false)
 
 	row.contact = W.Button(detail, L.CONTACT_SHORT, 168, function()
 		if row.result then
@@ -262,7 +267,8 @@ local function FillRow(tab, row, result)
 		row.note:ClearAllPoints()
 		row.note:SetPoint("LEFT", row.tags, "LEFT", math.max(0, width) + 10, 0)
 		row.note:SetPoint("RIGHT", row.text, "RIGHT", 0, 0)
-		local note = Filters.LanguagesText(ad) .. " · " .. L.UPDATED_AGO:format(W.Duration(GetServerTime() - ad.v))
+		row.langs:SetText(L.FILTER_LANGUAGE .. ": |cffffffff" .. Filters.LanguagesText(ad) .. "|r")
+		local note = L.UPDATED_AGO:format(W.Duration(GetServerTime() - ad.v))
 		if (ad.r or 0) > 0 then
 			note = RolesText(ad.r) .. " · " .. note
 		end

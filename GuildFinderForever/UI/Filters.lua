@@ -104,16 +104,22 @@ end
 
 -- Whether a raid guild ad wants the own class in a role the own player ad
 -- names (all roles of the class if it names none). Returns nil (no raid
--- needs), "fit" plus roles mask, or "no".
+-- ad), "fit" plus roles mask, or "no".
 function Filters.ClassFit(ad)
-	if not C.HasBit(ad.g or 0, C.GOAL_RAID) or (ad.cl or 0) == 0 then
+	if not C.HasBit(ad.g or 0, C.GOAL_RAID) then
 		return nil
 	end
 	local _, classFile, classId = UnitClass("player")
 	if not classId then
 		return nil
 	end
-	local wanted = C.WantedRoles(ad, { id = classId, key = classFile })
+	-- No class list: every class is welcome in the ad's general roles.
+	local wanted
+	if (ad.cl or 0) > 0 then
+		wanted = C.WantedRoles(ad, { id = classId, key = classFile })
+	else
+		wanted = (ad.r or 0) > 0 and ad.r or C.ClassRoles(classFile)
+	end
 	local mine = MyAds.GetPlayerDraft().roles or 0
 	if mine == 0 then
 		mine = C.ClassRoles(classFile)

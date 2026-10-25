@@ -31,9 +31,14 @@
   level columns, sortable by any column, languages in the row details.
 - Background ping verifies an ad's poster (addon whisper `P`/`Q`); `/who`
   results now reach the addon (`SetWhoToUi`).
+- Raid guilds without a class list ("all classes welcome") now also show
+  whether your class and roles fit.
+- Raid guilds without a class list: "any class as" plus the wanted role
+  icons when only some roles are wanted, no role icons when all are.
+- Player list: languages on their own line in the row details.
 - New ads start with all play times ticked; new "always" preset for play times.
 - Raid cards: number of wanted classes per role instead of class icons, names
-  in the card tooltip (which also says whether the poster is checked); the
+  in the card tooltip; the poster check shows only in the details; the
   schedule gets the full width. Guild details list wanted classes as
   compact class icons (name on hover), so long lists fit.
 - Welcome dialog on first start: the addon is community driven and starts

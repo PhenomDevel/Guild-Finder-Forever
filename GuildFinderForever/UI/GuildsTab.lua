@@ -19,7 +19,6 @@ local CARD_HEIGHT = 156
 local RAID_TOP = -56 -- raid box below name and meta
 local RAID_PAD = 8
 local CARD_GAP = 8
-local VERIFIED_ICON = "|TInterface\\RaidFrame\\ReadyCheck-Ready:14|t"
 
 local function GuildCount()
 	local count = 0
@@ -77,34 +76,26 @@ end
 local NEED_Y = -30 -- second line of the raid box
 local GROUP_GAP = 12
 
--- Card tooltip: whether the poster is checked (the check mark next to the
--- name) and, for raid guilds, the wanted classes per role, own class marked.
+-- Card tooltip of raid guilds: the wanted classes per role, own class marked.
 local function ShowCardTooltip(card)
 	local ad = card.result and card.result.ad
-	if not ad then
+	if not (ad and C.HasBit(ad.g or 0, C.GOAL_RAID) and (ad.cl or 0) > 0) then
 		return
 	end
 	GameTooltip:SetOwner(card, "ANCHOR_RIGHT")
 	GameTooltip:SetText(ad.n, W.GOLD[1], W.GOLD[2], W.GOLD[3])
-	local check = Store.GetCheck(ad.i)
-	if check and check.verified then
-		GameTooltip:AddLine(VERIFIED_ICON .. " " .. L.VERIFIED_MEMBER:format(Ads.OwnerName(ad.o)), W.GREEN[1], W.GREEN[2], W.GREEN[3])
-	end
-	if C.HasBit(ad.g or 0, C.GOAL_RAID) and (ad.cl or 0) > 0 then
-		local _, myClass = UnitClass("player")
-		local needs = C.NeedsByRole(ad)
-		GameTooltip:AddLine(" ")
-		GameTooltip:AddLine(L.RAID_NEEDS, 1, 1, 1)
-		for _, role in ipairs(C.ROLES) do
-			local names = {}
-			for _, class in ipairs(needs[role.bit]) do
-				local name = "|c" .. W.ClassColorHex(class.key) .. class.label .. "|r"
-				names[#names + 1] = class.key == myClass and (W.CHECK .. name) or name
-			end
-			if #names > 0 then
-				GameTooltip:AddLine(role.label .. " (" .. #names .. ")", W.GOLD[1], W.GOLD[2], W.GOLD[3])
-				GameTooltip:AddLine(table.concat(names, ", "), 1, 1, 1, true)
-			end
+	local _, myClass = UnitClass("player")
+	local needs = C.NeedsByRole(ad)
+	GameTooltip:AddLine(L.RAID_NEEDS, 1, 1, 1)
+	for _, role in ipairs(C.ROLES) do
+		local names = {}
+		for _, class in ipairs(needs[role.bit]) do
+			local name = "|c" .. W.ClassColorHex(class.key) .. class.label .. "|r"
+			names[#names + 1] = class.key == myClass and (W.CHECK .. name) or name
+		end
+		if #names > 0 then
+			GameTooltip:AddLine(role.label .. " (" .. #names .. ")", W.GOLD[1], W.GOLD[2], W.GOLD[3])
+			GameTooltip:AddLine(table.concat(names, ", "), 1, 1, 1, true)
 		end
 	end
 	GameTooltip:Show()
@@ -185,22 +176,34 @@ local function BuildCard(tab, row)
 
 	-- Second line of the raid box: role icon and class count per role, or
 	-- "any class" when the guild names none.
+	-- Without a class list: "any class as" plus the wanted roles' icons, or
+	-- only "all classes welcome" when every role is wanted.
 	function card:LayoutNeeds(ad)
 		local needs = (ad.cl or 0) > 0 and C.NeedsByRole(ad)
-		self.needsLabel:SetText(needs and L.NEEDS_LABEL or (L.NEEDS_LABEL .. " |cff9d9d9d" .. L.ANY_CLASS .. "|r"))
+		local roles = not needs and ad.r or 0
+		local someRoles = roles > 0 and roles ~= C.ALL_ROLES
+		local label = L.NEEDS_LABEL
+		if not needs then
+			label = label .. " |cff9d9d9d" .. (someRoles and L.ANY_CLASS_AS or L.ANY_CLASS) .. "|r"
+		end
+		self.needsLabel:SetText(label)
 		local x = RAID_PAD + self.needsLabel:GetStringWidth() + 6
 		for i, role in ipairs(C.ROLES) do
 			local count = needs and #needs[role.bit] or 0
+			local shown = count > 0 or (someRoles and C.HasBit(roles, role.bit))
 			local icon, text = self.roleIcons[i], self.roleCounts[i]
-			icon:SetShown(count > 0)
+			icon:SetShown(shown)
 			text:SetShown(count > 0)
-			if count > 0 then
+			if shown then
 				icon:ClearAllPoints()
 				icon:SetPoint("TOPLEFT", x, NEED_Y)
+				x = x + 16 + GROUP_GAP / 2
+			end
+			if count > 0 then
 				text:ClearAllPoints()
 				text:SetPoint("LEFT", icon, "RIGHT", 3, 0)
 				text:SetText(count)
-				x = x + 16 + 3 + text:GetStringWidth() + GROUP_GAP
+				x = x + 3 + text:GetStringWidth() + GROUP_GAP / 2
 			end
 		end
 	end
@@ -219,8 +222,7 @@ local function BuildCard(tab, row)
 		if faction then
 			self.stripe:SetColorTexture(faction.color[1], faction.color[2], faction.color[3], 1)
 		end
-		local check = Store.GetCheck(ad.i)
-		self.name:SetText(ad.n .. (check and check.verified and (" " .. VERIFIED_ICON) or ""))
+		self.name:SetText(ad.n)
 		local meta = { W.FactionText(ad.f, Filters.FactionName(ad.f)), Filters.LanguagesText(ad) }
 		if ad.gm then
 			meta[#meta + 1] = L.MEMBERS:format(ad.gm)
