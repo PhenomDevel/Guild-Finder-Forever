@@ -33,7 +33,7 @@
   results now reach the addon (`SetWhoToUi`).
 - New ads start with all play times ticked; new "always" preset for play times.
 - Raid cards: number of wanted classes per role instead of class icons, names
-  in the card tooltip (which also says whether the poster is checked); the
+  in the card tooltip; the poster check shows only in the details; the
   schedule gets the full width. Guild details list wanted classes as
   compact class icons (name on hover), so long lists fit.
 - Welcome dialog on first start: the addon is community driven and starts

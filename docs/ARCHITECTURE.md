@@ -123,7 +123,7 @@ Layout follows the v2 sketches. Files:
 - `GuildsTab.lua`: banner with the own ad status, search + chips + sort, two
   column card grid (raid ads show style, days, time, the number of wanted
   classes per role and whether the own class fits; the tooltip names the
-  classes and the poster check); first-run screen until "Create my ad" / "Just look
+  classes; the poster check is in the details only); first-run screen until "Create my ad" / "Just look
   around".
 - `GuildDialog.lua`: details over the dimmed window – left: text, goals,
   time grid with the own times highlighted; right: raid style, days and

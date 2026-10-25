@@ -59,7 +59,7 @@ Open the window with `/gff`, the minimap button or the addon compartment.
   roles, wanted classes, raid days and language).
 - Raid guilds show their style, raid days, time and how many classes they
   want per role on the card, plus whether your class fits. Hover a card for
-  the class names and whether the poster is checked (✓ next to the name).
+  the class names.
 - Search box and filter chips: faction, language, goals, raid style, "wants
   my class", "my times", and on Forever "same ruleset".
 - Details dialog with the guild's online times next to yours. For raiding
