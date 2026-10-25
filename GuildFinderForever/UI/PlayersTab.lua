@@ -231,7 +231,12 @@ local function FillRow(tab, row, result)
 	row.name:SetText("|c" .. W.ClassColorHex(ad.c) .. Ads.OwnerName(ad.o) .. "|r")
 	row.class:SetText(C.ClassName(ad.c) .. " · " .. ad.lv)
 	row.roles:SetRoles(ad.r)
-	row.lang:SetText(ad.l and ad.l:upper() or "?")
+	local langs = C.AdLanguages(ad)
+	if #langs > 2 then
+		row.lang:SetText(langs[1]:upper() .. " +" .. (#langs - 1))
+	else
+		row.lang:SetText(table.concat(langs, "/"):upper())
+	end
 	row.goals:SetText(C.GoalsText(ad.g))
 	row.strip:SetMask(ad.t)
 	if result.score then

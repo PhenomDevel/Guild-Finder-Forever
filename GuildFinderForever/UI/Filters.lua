@@ -79,6 +79,7 @@ function Filters.Profile(kind)
 	end
 	return {
 		goals = draft.goals or 0, times = draft.times or 0, roles = draft.roles or 0, lang = draft.lang,
+		moreLangs = draft.moreLangs,
 		classes = kind == Ads.KIND_PLAYER and draft.classes or 0, classId = classId,
 		classRoles = kind == Ads.KIND_PLAYER and draft.classRoles or nil,
 	}
@@ -131,6 +132,15 @@ end
 
 function Filters.FactionName(code)
 	return code == "H" and L.FACTION_HORDE or L.FACTION_ALLIANCE
+end
+
+-- "Deutsch, English" for all languages of an ad.
+function Filters.LanguagesText(ad)
+	local names = {}
+	for i, key in ipairs(C.AdLanguages(ad)) do
+		names[i] = Filters.LanguageName(key)
+	end
+	return table.concat(names, ", ")
 end
 
 function Filters.LanguageName(key)
@@ -354,14 +364,14 @@ function Filters.SortButton(parent, kind, changed)
 					return Filters.Get(kind).sort == sort.value
 				end, function()
 					Filters.Get(kind).sort = sort.value
-					chip:SetLabel(Label() .. " |cffffd100▾|r")
+					chip:SetLabel(Label() .. " " .. W.ARROW_DOWN)
 					changed()
 				end)
 			end
 		end)
 	end)
 	function chip:Update()
-		self:SetLabel(Label() .. " |cffffd100▾|r")
+		self:SetLabel(Label() .. " " .. W.ARROW_DOWN)
 	end
 	chip:Update()
 	return chip

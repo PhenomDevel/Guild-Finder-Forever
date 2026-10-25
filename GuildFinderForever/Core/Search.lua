@@ -22,7 +22,7 @@ local function Matches(ad, filter, profile, myMode)
 	if filter.factions and not filter.factions[ad.f] then
 		return false
 	end
-	if filter.lang and ad.l ~= filter.lang then
+	if filter.lang and not C.SpeaksLanguage(ad, filter.lang) then
 		return false
 	end
 	if filter.goals and filter.goals > 0 and C.CommonBits(filter.goals, ad.g) == 0 then
@@ -117,9 +117,15 @@ function Search.Score(ad, filter, profile)
 			Add(C.WantsClass(wanted, classId, ad.r) and 1 or 0, 2)
 		end
 	end
-	local lang = filter.lang or profile.lang
-	if lang then
-		Add(ad.l == lang and 1 or 0, 1)
+	-- Language: the filter's, else any of the own ad's languages.
+	if filter.lang then
+		Add(C.SpeaksLanguage(ad, filter.lang) and 1 or 0, 1)
+	elseif profile.lang then
+		local shared = false
+		for _, key in ipairs(C.AdLanguages({ l = profile.lang, la = profile.moreLangs })) do
+			shared = shared or C.SpeaksLanguage(ad, key)
+		end
+		Add(shared and 1 or 0, 1)
 	end
 	if weight == 0 then
 		return nil

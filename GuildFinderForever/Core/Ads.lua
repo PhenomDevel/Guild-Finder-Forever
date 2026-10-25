@@ -134,6 +134,7 @@ local function Common(ad, form)
 	ad.o = ns:GetPlayerFullName()
 	ad.f = Ads.GetFactionCode()
 	ad.l = form.lang
+	ad.la = form.moreLangs
 	ad.g = form.goals
 	ad.t = form.times
 	ad.x = form.text
@@ -148,7 +149,8 @@ function Ads.BuildPlayerAd(form)
 		k = Ads.KIND_PLAYER,
 		c = classFile,
 		lv = UnitLevel("player"),
-		r = form.roles,
+		-- No role picked: every role the class can fill, so role filters still find it.
+		r = (form.roles or 0) > 0 and form.roles or C.ClassRoles(classFile),
 	}, form)
 	ad.i = Ads.PlayerAdId(ad.o)
 	return Ads.Sanitize(ad)
@@ -252,6 +254,23 @@ end
 
 -- Returns a validated copy holding only known fields, or nil. Never trusts
 -- the input table itself.
+
+-- Further languages (la): known-shape keys only, without the main one and
+-- duplicates; nil when none are left.
+function Ads.CleanLanguages(value, main)
+	if type(value) ~= "string" then
+		return nil
+	end
+	local seen, keys = { [main or ""] = true }, {}
+	for key in value:gmatch("%l%l") do
+		if not seen[key] and #keys < C.MAX_MORE_LANGS then
+			seen[key] = true
+			keys[#keys + 1] = key
+		end
+	end
+	return #keys > 0 and table.concat(keys) or nil
+end
+
 function Ads.Sanitize(raw)
 	if type(raw) ~= "table" then
 		return nil
@@ -273,6 +292,7 @@ function Ads.Sanitize(raw)
 	ad.f = (raw.f == "A" or raw.f == "H") and raw.f or nil
 	-- Any two-letter key, so ads in languages added later still pass.
 	ad.l = type(raw.l) == "string" and raw.l:match("^%l%l$") or nil
+	ad.la = Ads.CleanLanguages(raw.la, ad.l)
 	ad.g = Int(raw.g, 0, C.ALL_GOALS) or 0
 	ad.t = Int(raw.t, 0, C.ALL_TIMES) or 0
 	ad.x = Ads.CleanText(raw.x)

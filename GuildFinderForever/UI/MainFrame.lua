@@ -67,8 +67,12 @@ function UI.UpdateStatus()
 		parts[#parts + 1] = "|TInterface\\COMMON\\Indicator-Red:14|t" .. L.STATUS_DISCONNECTED
 	end
 	parts[#parts + 1] = "|cffffd100" .. ns.Ads.GetScopeText() .. "|r"
-	local live = Store.Count()
-	parts[#parts + 1] = L.STATUS_CACHED:format(live)
+	-- The addon channel is per faction: say so, the other one never shows up live.
+	local faction = ns.Ads.GetFactionCode()
+	if faction then
+		parts[#parts + 1] = L.STATUS_FACTION_ONLY:format(W.FactionText(faction, ns.Filters.FactionName(faction)))
+	end
+	parts[#parts + 1] = L.STATUS_CACHED:format(Store.CountByKind())
 	if status.matchText then
 		parts[#parts + 1] = "|cffffffff" .. status.matchText .. "|r"
 	end
@@ -83,9 +87,21 @@ function UI.UpdateStatus()
 	end
 end
 
+-- Tabs as wide as their label: the template's own sizing truncates longer
+-- (translated) labels. Runs again after selection changes the font.
+local TAB_SIDES, TAB_MIN = 40, 80
+local function FitTab(tab)
+	local text = tab:GetFontString()
+	text:SetWidth(0)
+	tab:SetWidth(math.max(TAB_MIN, text:GetStringWidth() + TAB_SIDES))
+end
+
 local function SelectTab(index)
 	ns.db.settings.tab = index
 	PanelTemplates_SetTab(frame, index)
+	for _, tab in ipairs(frame.Tabs) do
+		FitTab(tab)
+	end
 	for i, def in ipairs(tabDefs) do
 		local content = frame.contents[i]
 		if i == index then
@@ -181,6 +197,8 @@ local function Create()
 		tab:SetScript("OnClick", function(self)
 			SelectTab(self:GetID())
 		end)
+		tab:HookScript("OnShow", FitTab)
+		FitTab(tab)
 		frame.Tabs[i] = tab
 	end
 	PanelTemplates_SetNumTabs(frame, #tabDefs)

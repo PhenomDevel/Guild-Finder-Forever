@@ -99,6 +99,19 @@ function Store.Count()
 	return live, total
 end
 
+-- Live guild and player ads (test ads included).
+function Store.CountByKind()
+	local guilds, players = 0, 0
+	for _, ad in Store.Each() do
+		if ad.k == Ads.KIND_GUILD then
+			guilds = guilds + 1
+		else
+			players = players + 1
+		end
+	end
+	return guilds, players
+end
+
 -- Stores ad if it is newer than the cached version. Returns true when the
 -- cache changed. ad must come from Ads.Sanitize.
 function Store.Put(ad)

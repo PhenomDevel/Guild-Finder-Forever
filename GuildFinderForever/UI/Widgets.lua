@@ -10,6 +10,9 @@ local C = ns.Constants
 local Serializer = ns.Serializer
 
 W.GOLD = { 1, 0.82, 0 }
+-- Texture markup for symbols the game fonts lack (✓, ▾); size follows the font.
+W.CHECK = "|TInterface\\RaidFrame\\ReadyCheck-Ready:0|t"
+W.ARROW_DOWN = "|TInterface\\Buttons\\Arrow-Down-Up:0|t"
 W.TEXT = { 0.9, 0.9, 0.9 }
 W.WHITE = { 1, 1, 1 }
 W.MUTED = { 0.62, 0.62, 0.62 }
@@ -223,7 +226,7 @@ function W.Stepper(parent, min, max, get, set)
 			frame:Refresh()
 		end)
 	end
-	Button("−", -1, -1)
+	Button("-", -1, -1)
 	Button("+", 1, 1)
 	function frame:Refresh()
 		local current = get()
@@ -516,8 +519,12 @@ function W.ClassIcon(parent, size)
 	tex:SetPoint("TOPLEFT", 1, -1)
 	tex:SetPoint("BOTTOMRIGHT", -1, 1)
 	function frame:SetClass(classFile)
+		local atlas = classFile and ("classicon-" .. classFile:lower())
 		local coords = CLASS_ICON_TCOORDS and CLASS_ICON_TCOORDS[classFile]
-		if coords then
+		if atlas and HasAtlas(atlas) then
+			tex:SetTexCoord(0, 1, 0, 1)
+			tex:SetAtlas(atlas)
+		elseif coords then
 			tex:SetTexture("Interface\\GLUES\\CHARACTERCREATE\\UI-CHARACTERCREATE-CLASSES")
 			tex:SetTexCoord(coords[1] + 0.01, coords[2] - 0.01, coords[3] + 0.01, coords[4] - 0.01)
 		else
@@ -531,8 +538,8 @@ function W.ClassIcon(parent, size)
 	return frame
 end
 
--- Guild emblem: guilds share no tabard data, so the name picks one of a
--- few shield icons and a border colour.
+-- Guild emblem without faction: guilds share no tabard data, so the name
+-- picks one of a few shield icons and a border colour.
 local EMBLEM_ICONS = {
 	"Interface\\Icons\\INV_Shield_01", "Interface\\Icons\\INV_Shield_02", "Interface\\Icons\\INV_Shield_03",
 	"Interface\\Icons\\INV_Shield_04", "Interface\\Icons\\INV_Shield_05", "Interface\\Icons\\INV_Shield_06",
@@ -543,10 +550,10 @@ local EMBLEM_COLORS = {
 	{ 0.36, 0.29, 0.11 }, { 0.1, 0.32, 0.32 },
 }
 
--- Faction colour and the small crest the friends list uses.
+-- Faction colour, emblem background and logo (the battleground timer's).
 W.FACTION = {
-	A = { color = { 0.25, 0.55, 1 }, hex = "ff3f8cff", icon = "Interface\\FriendsFrame\\PlusManz-Alliance" },
-	H = { color = { 0.9, 0.2, 0.15 }, hex = "ffe63326", icon = "Interface\\FriendsFrame\\PlusManz-Horde" },
+	A = { color = { 0.25, 0.55, 1 }, bg = { 0.06, 0.12, 0.26 }, hex = "ff3f8cff", logo = "Interface\\Timer\\Alliance-Logo" },
+	H = { color = { 0.9, 0.2, 0.15 }, bg = { 0.26, 0.06, 0.05 }, hex = "ffe63326", logo = "Interface\\Timer\\Horde-Logo" },
 }
 
 -- Faction name in its colour.
@@ -555,32 +562,32 @@ function W.FactionText(code, name)
 	return faction and ("|c" .. faction.hex .. name .. "|r") or name
 end
 
--- faction ("A"/"H", optional) colours the border and adds its crest in the
--- bottom right corner.
+-- Guild emblem: the faction logo ("A"/"H") on a dark faction-coloured
+-- field, or a shield icon picked by name when the faction is unknown.
 function W.GuildEmblem(parent, size)
 	local frame = CreateFrame("Frame", nil, parent, "BackdropTemplate")
 	frame:SetSize(size, size)
 	frame:SetBackdrop({ bgFile = WHITE8, edgeFile = WHITE8, edgeSize = 2 })
 	local tex = frame:CreateTexture(nil, "ARTWORK")
-	tex:SetPoint("TOPLEFT", 3, -3)
-	tex:SetPoint("BOTTOMRIGHT", -3, 3)
-	tex:SetTexCoord(0.08, 0.92, 0.08, 0.92)
-	local crest = frame:CreateTexture(nil, "OVERLAY")
-	crest:SetSize(math.floor(size * 0.5), math.floor(size * 0.5))
-	crest:SetPoint("CENTER", frame, "BOTTOMRIGHT", -2, 2)
 	function frame:SetGuild(name, faction)
-		local hash = Serializer.Hash(name or "")
-		tex:SetTexture(EMBLEM_ICONS[hash % #EMBLEM_ICONS + 1])
-		local color = EMBLEM_COLORS[math.floor(hash / 16) % #EMBLEM_COLORS + 1]
-		self:SetBackdropColor(color[1], color[2], color[3], 1)
 		local info = W.FACTION[faction]
+		tex:ClearAllPoints()
 		if info then
+			tex:SetPoint("TOPLEFT", 2, -2)
+			tex:SetPoint("BOTTOMRIGHT", -2, 2)
+			tex:SetTexture(info.logo)
+			tex:SetTexCoord(0, 1, 0, 1)
+			self:SetBackdropColor(info.bg[1], info.bg[2], info.bg[3], 1)
 			self:SetBackdropBorderColor(info.color[1], info.color[2], info.color[3], 1)
-			crest:SetTexture(info.icon)
-			crest:Show()
 		else
+			local hash = Serializer.Hash(name or "")
+			local color = EMBLEM_COLORS[math.floor(hash / 16) % #EMBLEM_COLORS + 1]
+			tex:SetPoint("TOPLEFT", 3, -3)
+			tex:SetPoint("BOTTOMRIGHT", -3, 3)
+			tex:SetTexture(EMBLEM_ICONS[hash % #EMBLEM_ICONS + 1])
+			tex:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+			self:SetBackdropColor(color[1], color[2], color[3], 1)
 			self:SetBackdropBorderColor(0.79, 0.635, 0.29, 1)
-			crest:Hide()
 		end
 	end
 	return frame

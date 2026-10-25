@@ -41,7 +41,8 @@ end
 function MyAds.GetGuildDraft()
 	local ad = MyAds.GetGuildAd()
 	if ad then
-		local draft = { roles = ad.r or 0, goals = ad.g or 0, times = ad.t or 0, text = ad.x or "", lang = ad.l }
+		local draft = { roles = ad.r or 0, goals = ad.g or 0, times = ad.t or 0, text = ad.x or "", lang = ad.l,
+			moreLangs = ad.la }
 		MyAds.CopyRaid(draft, ad)
 		return draft
 	end

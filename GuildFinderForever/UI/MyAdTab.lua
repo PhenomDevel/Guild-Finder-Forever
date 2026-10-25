@@ -38,7 +38,7 @@ end
 
 local function SameDraft(mode, draft, ad)
 	return ad ~= nil and draft.roles == (ad.r or 0) and draft.goals == ad.g and draft.times == ad.t
-		and draft.lang == ad.l and Ads.CleanText(draft.text) == ad.x
+		and draft.lang == ad.l and draft.moreLangs == ad.la and Ads.CleanText(draft.text) == ad.x
 		and (not HasRaid(mode, draft) or SameRaid(draft, ad))
 end
 
@@ -187,18 +187,56 @@ local function Build(content)
 	end
 	local langHeader = W.Header(secGoals, L.FILTER_LANGUAGE, "GameFontNormalLarge")
 	langHeader:SetPoint("TOPLEFT", 332, -2)
-	controls.lang = W.Dropdown(secGoals, 150, function()
-		local list = {}
+	-- Several languages: the first ticked (in list order) becomes the main
+	-- one (l), the others go to la. At least one stays ticked.
+	local function SetLanguages(draft, ticked)
+		local keys = {}
 		for _, lang in ipairs(C.LANGUAGES) do
-			list[#list + 1] = { value = lang.key, label = lang.label }
+			if ticked[lang.key] and #keys <= C.MAX_MORE_LANGS then
+				keys[#keys + 1] = lang.key
+			end
 		end
-		return list
-	end, function()
-		return Draft().lang
-	end, function(value)
-		Draft().lang = value
-		Changed()
+		draft.lang = keys[1]
+		draft.moreLangs = #keys > 1 and table.concat(keys, "", 2) or nil
+	end
+	local function Ticked(draft)
+		local ticked = {}
+		for _, key in ipairs(C.AdLanguages({ l = draft.lang, la = draft.moreLangs })) do
+			ticked[key] = true
+		end
+		return ticked
+	end
+	controls.lang = W.Menu(secGoals, 150, function(root)
+		if root.SetScrollMode then
+			root:SetScrollMode(20 * 20)
+		end
+		for _, lang in ipairs(C.LANGUAGES) do
+			root:CreateCheckbox(lang.label, function()
+				return Ticked(Draft())[lang.key] == true
+			end, function()
+				local draft = Draft()
+				local ticked = Ticked(draft)
+				local count = 0
+				for _ in pairs(ticked) do
+					count = count + 1
+				end
+				if ticked[lang.key] and count == 1 then
+					return
+				end
+				ticked[lang.key] = not ticked[lang.key] or nil
+				SetLanguages(draft, ticked)
+				Changed()
+			end)
+		end
 	end)
+	local refreshLang = controls.lang.Refresh
+	function controls.lang:Refresh()
+		refreshLang(self)
+		if self.OverrideText then
+			local draft = Draft()
+			self:OverrideText(Filters.LanguagesText({ l = draft.lang, la = draft.moreLangs }))
+		end
+	end
 	controls.lang:SetPoint("TOPLEFT", 332, -28)
 	secGoals:SetHeight(62)
 
@@ -448,7 +486,7 @@ local function Build(content)
 				cell.check = W.Text(cell, "GameFontNormalSmall")
 				cell.check:SetPoint("CENTER")
 				cell.check:SetTextColor(0.1, 0.07, 0.02)
-				cell.check:SetText("✓")
+				cell.check:SetText(W.CHECK)
 				cell.class, cell.bit = class, role.bit
 				function cell:SetOn(on)
 					self.check:SetShown(on)
@@ -641,6 +679,7 @@ local function Build(content)
 		if ad then
 			local draft = Draft()
 			draft.roles, draft.goals, draft.times, draft.lang, draft.text = ad.r or 0, ad.g, ad.t, ad.l, ad.x
+			draft.moreLangs = ad.la
 			if tab.mode == MODE_GUILD then
 				MyAds.CopyRaid(draft, ad)
 			end
@@ -740,6 +779,7 @@ local function Build(content)
 		local filter = { kind = otherKind, factions = { [faction] = true }, sameMode = true }
 		local profile = {
 			goals = draft.goals or 0, times = draft.times or 0, roles = draft.roles or 0, lang = draft.lang,
+			moreLangs = draft.moreLangs,
 			classes = HasRaid(self.mode, draft) and draft.classes or 0,
 			classRoles = HasRaid(self.mode, draft) and draft.classRoles or nil,
 			classId = self.mode == MODE_PLAYER and select(3, UnitClass("player")) or nil,
@@ -800,7 +840,7 @@ local function Build(content)
 			for i, chip in ipairs(controls.wizChips) do
 				local key = pages[i]
 				if key then
-					chip:SetLabel((SectionDone(key, draft) and "|cff1eff00✓|r " or (i .. "  ")) .. PAGE_LABELS[key])
+					chip:SetLabel((SectionDone(key, draft) and W.CHECK .. " " or (i .. "  ")) .. PAGE_LABELS[key])
 					chip:SetActive(i == self.page)
 				end
 			end
@@ -809,24 +849,35 @@ local function Build(content)
 
 	-- Player ad: four numbered sections on one page. Guild ad: one page per
 	-- step with the step bar on top and back/next below.
+	-- Shows exactly the given sections ({ key = y }). Sections that stay
+	-- visible are not hidden in between: that would take the focus from the
+	-- text field on every keystroke.
+	local function ShowSections(visible)
+		for key, section in pairs(controls.sections) do
+			if visible[key] then
+				Place(section, visible[key])
+			else
+				section:Hide()
+			end
+		end
+	end
+
 	function tab:UpdateLayout()
 		self:UpdateSteps()
 		local draft = Draft()
 		local sections = controls.sections
-		for _, section in pairs(sections) do
-			section:Hide()
-		end
 		local pages = Pages(self.mode, draft)
 		controls.wizBar:SetShown(pages ~= nil)
 		controls.wizLine:SetShown(pages ~= nil)
 		controls.footer:SetShown(pages ~= nil)
 		if not pages then
 			local order = { { "roles", -52 }, { "goals", -122 }, { "times", -192 }, { "text", -310 } }
+			local visible = {}
 			for i, entry in ipairs(order) do
-				local section = sections[entry[1]]
-				section:SetNumbered(i)
-				Place(section, entry[2])
+				sections[entry[1]]:SetNumbered(i)
+				visible[entry[1]] = entry[2]
 			end
+			ShowSections(visible)
 			return
 		end
 
@@ -842,18 +893,14 @@ local function Build(content)
 			end
 		end
 		local key = pages[self.page]
-		if key == "goals" then
-			sections.goals:SetNumbered(nil)
-			Place(sections.goals, PAGE_TOP)
-			-- Raid ads take the wanted roles from the needs table.
-			if not HasRaid(self.mode, draft) then
-				sections.roles:SetNumbered(nil)
-				Place(sections.roles, PAGE_TOP - 80)
-			end
-		else
-			sections[key]:SetNumbered(nil)
-			Place(sections[key], PAGE_TOP)
+		local visible = { [key] = PAGE_TOP }
+		sections[key]:SetNumbered(nil)
+		-- Raid ads take the wanted roles from the needs table.
+		if key == "goals" and not HasRaid(self.mode, draft) then
+			sections.roles:SetNumbered(nil)
+			visible.roles = PAGE_TOP - 80
 		end
+		ShowSections(visible)
 		controls.back:SetEnabled(self.page > 1)
 		controls.next:SetShown(self.page < #pages)
 		controls.pageText:SetText(L.WIZ_STEP:format(self.page, #pages))
