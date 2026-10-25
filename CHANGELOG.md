@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.1.1 (2026-10-25)
+
+- Maintenance release: internal cleanup (code structure, unused code removed). No functional changes.
+
 ## v0.1.0
 
 First release. Guild Finder Forever is community driven: it only knows the
