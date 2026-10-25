@@ -44,7 +44,9 @@ assume the old Classic Era API.
 
 ## Conventions
 - Lua 5.1, tabs for indentation, English code comments and docs.
-- In-game strings in enUS + deDE (`Locales/`).
+- In-game strings in `Locales/`: enUS (base) and deDE always; frFR, esES
+  (also esMX), itIT, ruRU and ptBR get every new UI string too. The probe
+  (`PROBE_*`) strings are enUS + deDE only. Missing keys fall back to enUS.
 - Commit messages: `[feature] …`, `[fix] …`, `[chore] …`.
 - `.luacheckrc` holds common globals only; declare others per file with
   `-- luacheck: read globals …`.

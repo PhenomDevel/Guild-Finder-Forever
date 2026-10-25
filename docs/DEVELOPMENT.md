@@ -6,7 +6,7 @@
 GuildFinderForever/          addon folder (the only thing that gets installed)
   GuildFinderForever.toc     load order, interface version, SavedVariables
   Libs/                      libraries (git-ignored, see below)
-  Locales/                   enUS (base) + deDE
+  Locales/                   enUS (base), deDE, frFR, esES, itIT, ruRU, ptBR
   Core/                      namespace, events, DB, channel, comm, slash commands,
                              serializer, ad model, cache, sync, search, /who check
   UI/                        window, tabs, widgets, minimap button, settings

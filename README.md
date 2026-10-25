@@ -33,6 +33,9 @@ Open the window with `/gff`, the minimap button or the addon compartment.
 
 On first start a short intro explains the addon.
 
+Languages: English, German, French, Spanish, Italian, Russian and
+Portuguese (Brazil) – the EU client languages.
+
 | Command | |
 |---------|-|
 | `/gff` | open/close the window |
