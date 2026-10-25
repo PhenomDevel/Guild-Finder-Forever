@@ -367,7 +367,7 @@ local function Build(content)
 			controls.cardClass:Hide()
 			controls.cardEmblem:Show()
 			local guild = Ads.GetGuild() or "?"
-			controls.cardEmblem:SetGuild(guild)
+			controls.cardEmblem:SetGuild(guild, Ads.GetFactionCode())
 			controls.cardName:SetText("|cffffd100" .. guild .. "|r")
 		else
 			controls.cardEmblem:Hide()

@@ -495,6 +495,20 @@ local EMBLEM_COLORS = {
 	{ 0.36, 0.29, 0.11 }, { 0.1, 0.32, 0.32 },
 }
 
+-- Faction colour and the small crest the friends list uses.
+W.FACTION = {
+	A = { color = { 0.25, 0.55, 1 }, hex = "ff3f8cff", icon = "Interface\\FriendsFrame\\PlusManz-Alliance" },
+	H = { color = { 0.9, 0.2, 0.15 }, hex = "ffe63326", icon = "Interface\\FriendsFrame\\PlusManz-Horde" },
+}
+
+-- Faction name in its colour.
+function W.FactionText(code, name)
+	local faction = W.FACTION[code]
+	return faction and ("|c" .. faction.hex .. name .. "|r") or name
+end
+
+-- faction ("A"/"H", optional) colours the border and adds its crest in the
+-- bottom right corner.
 function W.GuildEmblem(parent, size)
 	local frame = CreateFrame("Frame", nil, parent, "BackdropTemplate")
 	frame:SetSize(size, size)
@@ -503,12 +517,23 @@ function W.GuildEmblem(parent, size)
 	tex:SetPoint("TOPLEFT", 3, -3)
 	tex:SetPoint("BOTTOMRIGHT", -3, 3)
 	tex:SetTexCoord(0.08, 0.92, 0.08, 0.92)
-	function frame:SetGuild(name)
+	local crest = frame:CreateTexture(nil, "OVERLAY")
+	crest:SetSize(math.floor(size * 0.5), math.floor(size * 0.5))
+	crest:SetPoint("CENTER", frame, "BOTTOMRIGHT", -2, 2)
+	function frame:SetGuild(name, faction)
 		local hash = Serializer.Hash(name or "")
 		tex:SetTexture(EMBLEM_ICONS[hash % #EMBLEM_ICONS + 1])
 		local color = EMBLEM_COLORS[math.floor(hash / 16) % #EMBLEM_COLORS + 1]
 		self:SetBackdropColor(color[1], color[2], color[3], 1)
-		self:SetBackdropBorderColor(0.79, 0.635, 0.29, 1)
+		local info = W.FACTION[faction]
+		if info then
+			self:SetBackdropBorderColor(info.color[1], info.color[2], info.color[3], 1)
+			crest:SetTexture(info.icon)
+			crest:Show()
+		else
+			self:SetBackdropBorderColor(0.79, 0.635, 0.29, 1)
+			crest:Hide()
+		end
 	end
 	return frame
 end

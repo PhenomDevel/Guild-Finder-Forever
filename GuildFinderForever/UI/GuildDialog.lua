@@ -179,9 +179,9 @@ local function Update()
 		return
 	end
 	local poster = Ads.OwnerName(ad.o)
-	dialog.emblem:SetGuild(ad.n)
+	dialog.emblem:SetGuild(ad.n, ad.f)
 	dialog.name:SetText("<" .. ad.n .. ">")
-	local meta = { Filters.FactionName(ad.f), Filters.LanguageName(ad.l) }
+	local meta = { W.FactionText(ad.f, Filters.FactionName(ad.f)), Filters.LanguageName(ad.l) }
 	if ad.gm then
 		meta[#meta + 1] = L.MEMBERS:format(ad.gm)
 	end

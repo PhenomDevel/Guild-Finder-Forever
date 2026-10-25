@@ -96,7 +96,8 @@ templates (`SearchBoxTemplate`, `WowStyle1DropdownTemplate` + `MenuUtil`,
 command `/gff`, minimap button, addon compartment entry and a settings page.
 Layout follows the v2 sketches. Files:
 
-- `Widgets.lua`: chips, tags, role/class icons, guild emblem (icon and
+- `Widgets.lua`: chips, tags, role/class icons, guild emblem with faction
+  crest and border (icon and
   colour picked from a hash of the name – guilds share no tabard data), week
   strip, match bar, time grid, step circles.
 - `Filters.lua`: saved filter state per tab, the chip bar of active filters
