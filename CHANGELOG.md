@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.1.2 (2026-10-28)
+
+- Packaging fix for CurseForge: the zip no longer contains LibDeflate's extra files (second .toc, docs, examples). No functional changes.
+
 ## v0.1.1 (2026-10-25)
 
 - Maintenance release: internal cleanup (code structure, unused code removed). No functional changes.
