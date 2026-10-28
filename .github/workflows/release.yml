@@ -94,9 +94,9 @@ jobs:
       - name: Package and release
         uses: BigWigsMods/packager@v2
         env:
-          CF_API_KEY: ${{ secrets.CF_API_KEY }}
+          CF_API_TOKEN: ${{ secrets.CF_API_KEY }}
           WAGO_API_TOKEN: ${{ secrets.WAGO_API_TOKEN }}
-          GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
+          GH_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Report failure to Discord
         if: failure() && env.DISCORD_WEBHOOK_URL != ''
