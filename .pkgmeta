@@ -23,6 +23,16 @@ ignore:
   - tools
   - GuildFinderForever/Dev
   - GuildFinderForever/Probe
+  # The LibDeflate external is the whole GitHub repo; keep only what the
+  # client loads. Its second .toc (UTF-8 BOM) and HTML docs may trip
+  # CurseForge's file processor ("General error processing file").
+  - GuildFinderForever/Libs/LibDeflate/LibDeflate.toc
+  - GuildFinderForever/Libs/LibDeflate/lib.xml
+  - GuildFinderForever/Libs/LibDeflate/libdeflate-1.0.2-1.rockspec
+  - GuildFinderForever/Libs/LibDeflate/docs
+  - GuildFinderForever/Libs/LibDeflate/examples
+  - GuildFinderForever/Libs/LibDeflate/README.md
+  - GuildFinderForever/Libs/LibDeflate/changelog.md
 
 manual-changelog:
   filename: CHANGELOG.md
