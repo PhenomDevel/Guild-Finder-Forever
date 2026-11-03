@@ -202,6 +202,7 @@ L.PREVIEW_MATCHES_GUILDS = "Correspond actuellement à |cffffffff%d guildes|r da
 L.PREVIEW_MATCHES_PLAYERS = "Correspond actuellement à |cffffffff%d joueurs|r dans le cache, dont |cff1eff00%d très bien|r."
 L.INFO_ACTIVE = "Mise à jour il y a %s · expire dans %s"
 L.NOTE_RENEW = "Renouvelée automatiquement à chaque connexion."
+L.NOTE_TRIAL = "Les comptes d'essai ne peuvent pas envoyer de messages d'addon dans Forever : personne ne recevrait ton annonce. Tu peux quand même parcourir les annonces des autres."
 L.DISCARD = "Annuler"
 
 -- Minimap
@@ -264,6 +265,7 @@ L.STATUS_CACHED = "%d annonces de guilde · %d de joueurs"
 L.STATUS_MATCHES_GUILDS = "%d guildes correspondent"
 L.STATUS_MATCHES_PLAYERS = "%d joueurs correspondent"
 L.STATUS_LOCKDOWN = "envoi en pause (rencontre)"
+L.STATUS_TRIAL = "envoi impossible (compte d'essai)"
 L.STATUS_SYNC = "Dernière synchro il y a %s"
 L.STATUS_NO_SYNC = "Pas encore de synchro"
 

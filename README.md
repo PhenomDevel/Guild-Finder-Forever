@@ -75,6 +75,8 @@ What changed: [CHANGELOG.md](https://github.com/PhenomDevel/Guild-Finder-Forever
 - The other faction isn't reached live: the addon channel is separate per
   faction.
 - Nothing is sent during raid encounters; messages go out afterwards.
+- Trial accounts can't post ads on Forever (Blizzard blocks their addon
+  messages); browsing the ads of others still works.
 - Bugs and ideas: [GitHub issues](https://github.com/PhenomDevel/Guild-Finder-Forever/issues)
 - If you like the addon, star it on GitHub or leave a tip on
   [Streamlabs](https://streamlabs.com/phenombutbetter/tip).

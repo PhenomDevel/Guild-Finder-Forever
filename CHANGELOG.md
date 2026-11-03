@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Trial accounts on Forever can't send addon messages, so posting an ad is disabled there and the window says why. Browsing ads still works.
+
 ## v0.1.2 (2026-10-28)
 
 - Packaging fix for CurseForge: the zip no longer contains LibDeflate's extra files (second .toc, docs, examples). No functional changes.

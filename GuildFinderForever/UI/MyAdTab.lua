@@ -730,7 +730,7 @@ local function Build(content)
 	function tab:UpdatePublish()
 		local ad = PublishedAd()
 		local draft = Draft()
-		local canEdit = self.mode == MODE_PLAYER or Ads.CanInvite()
+		local canEdit = (self.mode == MODE_PLAYER or Ads.CanInvite()) and not ns.Comm.IsRestricted()
 		if ad then
 			local dirty = not SameDraft(self.mode, draft, ad)
 			if dirty then
@@ -754,7 +754,11 @@ local function Build(content)
 			controls.withdraw:SetEnabled(canEdit)
 		else
 			SetBadge(L.STATUS_NOT_PUBLISHED, W.MUTED)
-			controls.info:SetText(L.INFO_NOT_PUBLISHED .. "\n" .. (self.mode == MODE_GUILD and L.NOTE_GUILD_AD or L.NOTE_RENEW))
+			local note = self.mode == MODE_GUILD and L.NOTE_GUILD_AD or L.NOTE_RENEW
+			if ns.Comm.IsRestricted() then
+				note = "|cffff4040" .. L.NOTE_TRIAL .. "|r"
+			end
+			controls.info:SetText(L.INFO_NOT_PUBLISHED .. "\n" .. note)
 			controls.publish:SetText(L.PUBLISH)
 			controls.publish:SetEnabled(canEdit)
 			controls.discard:SetEnabled(false)

@@ -202,6 +202,7 @@ L.PREVIEW_MATCHES_GUILDS = "Al momento adatto a |cffffffff%d gilde|r nella cache
 L.PREVIEW_MATCHES_PLAYERS = "Al momento adatto a |cffffffff%d giocatori|r nella cache, |cff1eff00%d molto|r."
 L.INFO_ACTIVE = "Aggiornato %s fa · scade tra %s"
 L.NOTE_RENEW = "Rinnovato automaticamente a ogni accesso."
+L.NOTE_TRIAL = "Gli account di prova non possono inviare messaggi addon in Forever, quindi nessuno riceverebbe il tuo annuncio. Puoi comunque consultare gli annunci degli altri."
 L.DISCARD = "Scarta"
 
 -- Minimap
@@ -264,6 +265,7 @@ L.STATUS_CACHED = "%d annunci di gilda · %d di giocatori"
 L.STATUS_MATCHES_GUILDS = "%d gilde adatte"
 L.STATUS_MATCHES_PLAYERS = "%d giocatori adatti"
 L.STATUS_LOCKDOWN = "invio in pausa (scontro)"
+L.STATUS_TRIAL = "invio non possibile (account di prova)"
 L.STATUS_SYNC = "Ultima sincronizzazione %s fa"
 L.STATUS_NO_SYNC = "Nessuna sincronizzazione"
 
