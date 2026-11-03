@@ -1,7 +1,8 @@
 # Changelog
 
-## Unreleased
+## v1.0.0 (2026-11-03)
 
+- First stable release, for the launch of WoW: Forever.
 - Trial accounts on Forever can't send addon messages, so posting an ad is disabled there and the window says why. Browsing ads still works.
 
 ## v0.1.2 (2026-10-28)
