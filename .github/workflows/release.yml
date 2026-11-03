@@ -91,8 +91,12 @@ jobs:
 
       # Uploads are skipped for a site without project ID in the .toc
       # (X-Curse-Project-ID, X-Wago-ID) or without its secret.
+      # -n: zip name and upload label without the packager's game type
+      # suffix (e.g. "-forever"), so every release is just "vX.Y.Z".
       - name: Package and release
         uses: BigWigsMods/packager@v2
+        with:
+          args: -n {package-name}-{project-version}{nolib}:{project-version}{nolib}
         env:
           CF_API_TOKEN: ${{ secrets.CF_API_KEY }}
           WAGO_API_TOKEN: ${{ secrets.WAGO_API_TOKEN }}
