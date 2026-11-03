@@ -202,6 +202,7 @@ L.PREVIEW_MATCHES_GUILDS = "Passt aktuell zu |cffffffff%d Gilden|r im Cache, dav
 L.PREVIEW_MATCHES_PLAYERS = "Passt aktuell zu |cffffffff%d Spielern|r im Cache, davon |cff1eff00%d sehr gut|r."
 L.INFO_ACTIVE = "Aktualisiert vor %s · läuft ab in %s"
 L.NOTE_RENEW = "Wird bei jedem Login automatisch verlängert."
+L.NOTE_TRIAL = "Testaccounts können in Forever keine Addon-Nachrichten senden, deine Anzeige würde also niemand erhalten. Die Anzeigen anderer kannst du trotzdem durchsuchen."
 L.DISCARD = "Verwerfen"
 
 -- Minimap
@@ -264,6 +265,7 @@ L.STATUS_CACHED = "%d Gildenanzeigen · %d Spieleranzeigen"
 L.STATUS_MATCHES_GUILDS = "%d Gilden passen"
 L.STATUS_MATCHES_PLAYERS = "%d Spieler passen"
 L.STATUS_LOCKDOWN = "Senden pausiert (Bosskampf)"
+L.STATUS_TRIAL = "Senden nicht möglich (Testaccount)"
 L.STATUS_SYNC = "Zuletzt synchronisiert vor %s"
 L.STATUS_NO_SYNC = "Noch kein Sync"
 

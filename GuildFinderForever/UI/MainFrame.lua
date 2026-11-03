@@ -77,7 +77,9 @@ function UI.UpdateStatus()
 	if status.matchText then
 		parts[#parts + 1] = "|cffffffff" .. status.matchText .. "|r"
 	end
-	if ns.Comm.InLockdown() then
+	if ns.Comm.IsRestricted() then
+		parts[#parts + 1] = "|cffff4040" .. L.STATUS_TRIAL .. "|r"
+	elseif ns.Comm.InLockdown() then
 		parts[#parts + 1] = "|cffffd100" .. L.STATUS_LOCKDOWN .. "|r"
 	end
 	frame.statusLeft:SetText(table.concat(parts, "    "))

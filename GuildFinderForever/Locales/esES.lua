@@ -203,6 +203,7 @@ L.PREVIEW_MATCHES_GUILDS = "Encaja ahora con |cffffffff%d hermandades|r en la ca
 L.PREVIEW_MATCHES_PLAYERS = "Encaja ahora con |cffffffff%d jugadores|r en la caché, |cff1eff00%d muy bien|r."
 L.INFO_ACTIVE = "Actualizado hace %s · caduca en %s"
 L.NOTE_RENEW = "Se renueva automáticamente cada vez que inicias sesión."
+L.NOTE_TRIAL = "Las cuentas de prueba no pueden enviar mensajes de addon en Forever, así que nadie recibiría tu anuncio. Aun así puedes ver los anuncios de los demás."
 L.DISCARD = "Descartar"
 
 -- Minimap
@@ -265,6 +266,7 @@ L.STATUS_CACHED = "%d anuncios de hermandad · %d de jugadores"
 L.STATUS_MATCHES_GUILDS = "%d hermandades encajan"
 L.STATUS_MATCHES_PLAYERS = "%d jugadores encajan"
 L.STATUS_LOCKDOWN = "envío en pausa (encuentro)"
+L.STATUS_TRIAL = "no se puede enviar (cuenta de prueba)"
 L.STATUS_SYNC = "Última sincronización hace %s"
 L.STATUS_NO_SYNC = "Sin sincronizar aún"
 

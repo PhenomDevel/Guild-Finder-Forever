@@ -202,6 +202,7 @@ L.PREVIEW_MATCHES_GUILDS = "Compatível agora com |cffffffff%d guildas|r no cach
 L.PREVIEW_MATCHES_PLAYERS = "Compatível agora com |cffffffff%d jogadores|r no cache, |cff1eff00%d muito bem|r."
 L.INFO_ACTIVE = "Atualizado há %s · expira em %s"
 L.NOTE_RENEW = "Renovado automaticamente sempre que você entra no jogo."
+L.NOTE_TRIAL = "Contas de avaliação não podem enviar mensagens de addon no Forever, então ninguém receberia seu anúncio. Você ainda pode ver os anúncios dos outros."
 L.DISCARD = "Descartar"
 
 -- Minimap
@@ -264,6 +265,7 @@ L.STATUS_CACHED = "%d anúncios de guilda · %d de jogadores"
 L.STATUS_MATCHES_GUILDS = "%d guildas compatíveis"
 L.STATUS_MATCHES_PLAYERS = "%d jogadores compatíveis"
 L.STATUS_LOCKDOWN = "envio pausado (encontro)"
+L.STATUS_TRIAL = "envio indisponível (conta de avaliação)"
 L.STATUS_SYNC = "Última sincronização há %s"
 L.STATUS_NO_SYNC = "Ainda sem sincronização"
 

@@ -206,6 +206,7 @@ L.PREVIEW_MATCHES_GUILDS = "Currently matches |cffffffff%d guilds|r in the cache
 L.PREVIEW_MATCHES_PLAYERS = "Currently matches |cffffffff%d players|r in the cache, |cff1eff00%d|r of them very well."
 L.INFO_ACTIVE = "Updated %s ago · expires in %s"
 L.NOTE_RENEW = "Renewed automatically whenever you log in."
+L.NOTE_TRIAL = "Trial accounts can't send addon messages in Forever, so nobody would receive your ad. You can still browse the ads of others."
 L.DISCARD = "Discard"
 
 -- Minimap
@@ -268,6 +269,7 @@ L.STATUS_CACHED = "%d guild ads · %d player ads"
 L.STATUS_MATCHES_GUILDS = "%d guilds match"
 L.STATUS_MATCHES_PLAYERS = "%d players match"
 L.STATUS_LOCKDOWN = "sending paused (encounter)"
+L.STATUS_TRIAL = "sending not possible (trial account)"
 L.STATUS_SYNC = "Last synced %s ago"
 L.STATUS_NO_SYNC = "No sync yet"
 

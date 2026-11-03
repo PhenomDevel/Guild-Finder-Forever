@@ -1,4 +1,4 @@
--- luacheck: read globals UnitName
+-- luacheck: read globals UnitName IsTrialAccount IsVeteranTrialAccount
 local _, ns = ...
 
 -- Transport for all addon traffic: compress + encode with LibDeflate, send via
@@ -31,6 +31,15 @@ function Comm.InLockdown()
 	return check ~= nil and check() and true or false
 end
 
+-- Forever doesn't let (veteran) trial accounts send addon messages at all;
+-- receiving still works.
+function Comm.IsRestricted()
+	if not ns.Ads.IsForever() then
+		return false
+	end
+	return (IsTrialAccount and IsTrialAccount()) or (IsVeteranTrialAccount and IsVeteranTrialAccount()) or false
+end
+
 function Comm.CanSend()
 	return ns.Channel.GetNumber() ~= nil and not Comm.InLockdown()
 end
@@ -60,8 +69,11 @@ end
 -- Sends text to everyone in the channel. prio: ChatThrottleLib priority
 -- ("BULK", "NORMAL", "ALERT"). callback(sentBytes, totalBytes, didSend)
 -- runs per transmitted chunk. Returns the encoded size and whether the
--- message was held for later.
+-- message was held for later; nothing on a restricted account.
 function Comm.Send(text, prio, callback)
+	if Comm.IsRestricted() then
+		return
+	end
 	local data = LibDeflate:EncodeForWoWAddonChannel(LibDeflate:CompressDeflate(text))
 	local entry = { data = data, prio = prio or "NORMAL", callback = callback }
 	if not queue[1] and Comm.CanSend() then
@@ -80,9 +92,9 @@ function Comm.Send(text, prio, callback)
 end
 
 -- Sends text to one player (whisper). Not queued: returns false when it
--- can't go out right now (lockdown).
+-- can't go out right now (lockdown, restricted account).
 function Comm.SendWhisper(target, text)
-	if Comm.InLockdown() then
+	if Comm.InLockdown() or Comm.IsRestricted() then
 		return false
 	end
 	local data = LibDeflate:EncodeForWoWAddonChannel(LibDeflate:CompressDeflate(text))
