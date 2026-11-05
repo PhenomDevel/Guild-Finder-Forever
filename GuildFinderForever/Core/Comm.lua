@@ -1,4 +1,4 @@
--- luacheck: read globals UnitName IsTrialAccount IsVeteranTrialAccount
+-- luacheck: read globals IsTrialAccount IsVeteranTrialAccount
 local _, ns = ...
 
 -- Transport for all addon traffic: compress + encode with LibDeflate, send via
@@ -110,7 +110,7 @@ function Comm.RegisterHandler(handler)
 end
 
 local function IsSelf(sender)
-	return sender == ns:GetPlayerFullName() or sender == UnitName("player")
+	return sender == ns:GetPlayerFullName()
 end
 
 function Comm:OnCommReceived(_, data, distribution, sender)
@@ -120,7 +120,11 @@ function Comm:OnCommReceived(_, data, distribution, sender)
 	if issecretvalue and (issecretvalue(data) or issecretvalue(sender)) then
 		return
 	end
-	if type(data) ~= "string" or type(sender) ~= "string" or #data > Comm.MAX_MESSAGE_SIZE or (IsSelf(sender) and not Comm.loopback) then
+	if type(data) ~= "string" or type(sender) ~= "string" or #data > Comm.MAX_MESSAGE_SIZE then
+		return
+	end
+	sender = ns:NormalizeName(sender)
+	if IsSelf(sender) and not Comm.loopback then
 		return
 	end
 	local decoded = LibDeflate:DecodeForWoWAddonChannel(data)
