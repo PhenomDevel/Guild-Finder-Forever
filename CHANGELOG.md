@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v1.0.3 (2026-11-05)
 
 - Forever: guild ads can be posted again (the addon mistook the surname for the realm, so the ad failed with "Please pick a language"). Player ads now show the full name; an ad posted under the wrong name is withdrawn automatically.
 
