@@ -85,24 +85,36 @@ end
 -- Player
 --------------------------------------------------------------------------------
 
--- Own realm, normalized. Forever leaves the realm out of UnitFullName and
--- of addon message senders, but GetNormalizedRealmName still has it.
+-- Own realm, normalized ("CAMWOWEU4Realm1PvE" on Forever).
 local function OwnRealm()
-	local _, realm = UnitFullName("player")
-	if type(realm) ~= "string" or realm == "" then
-		realm = GetNormalizedRealmName()
-	end
+	local realm = GetNormalizedRealmName()
 	if type(realm) == "string" and realm ~= "" then
 		return realm
 	end
 end
 
--- "Name-Realm", the format ads store owners in. Nil before the realm is
--- known (early in the loading process). Forever names are "First Surname".
-function ns:GetPlayerFullName()
-	local name = UnitFullName("player")
+-- Character name as the server writes it in chat and addon messages.
+-- Forever names are "First Surname": UnitFullName returns them as name and
+-- realm ("Phenom", "Shira"), so a "realm" that isn't ours is the surname.
+-- Also returns the surname, if any.
+function ns:GetPlayerName()
+	local name, second = UnitFullName("player")
+	if type(name) ~= "string" or name == "" then
+		return nil
+	end
 	local realm = OwnRealm()
-	if type(name) == "string" and name ~= "" and realm then
+	if type(second) == "string" and second ~= "" and realm and second ~= realm then
+		return name .. " " .. second, second
+	end
+	return name
+end
+
+-- "Name-Realm", the format ads store owners in. Nil before the realm is
+-- known (early in the loading process).
+function ns:GetPlayerFullName()
+	local name = ns:GetPlayerName()
+	local realm = OwnRealm()
+	if name and realm then
 		return name .. "-" .. realm
 	end
 end

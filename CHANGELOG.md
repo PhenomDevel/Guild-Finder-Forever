@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Forever: guild ads can be posted again (the addon mistook the surname for the realm, so the ad failed with "Please pick a language"). Player ads now show the full name; an ad posted under the wrong name is withdrawn automatically.
+
 ## v1.0.2 (2026-11-05)
 
 - The close button (X) of the main window works again.
