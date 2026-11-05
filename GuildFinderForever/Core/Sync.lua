@@ -12,6 +12,9 @@ local _, ns = ...
 --   A ads        { a = { ad, ... } }   requested ads, own new ads, pushes.
 -- Everything is broadcast on the channel, so every listener can pick up
 -- ads it was missing from any A message.
+-- Whisper mode (ns.Comm, Forever): H goes to a few random peers, I/R and
+-- answers only to the peer concerned, and fresh ads are forwarded to a few
+-- other peers once (stored as new or newer), so they spread like gossip.
 local Sync = {}
 ns.Sync = Sync
 
@@ -35,6 +38,9 @@ local SERVE_WINDOW = 600
 -- Per-sender token bucket for incoming messages.
 local RATE_CAPACITY = 40
 local RATE_REFILL = 0.5 -- tokens per second
+-- Whisper mode: ads younger than this are forwarded on receipt; older ones
+-- arrive through the hello sync.
+local FORWARD_AGE = 15 * 60
 
 Sync.lastSync = nil
 Sync.stats = { received = 0, sent = 0, dropped = 0 }
@@ -86,13 +92,14 @@ local function IsMe(name)
 	return type(name) == "string" and ns:NormalizeName(name) == ns:GetPlayerFullName()
 end
 
-local function Send(message, prio)
+-- options: see Comm.Send (target, except).
+local function Send(message, prio, options)
 	Sync.stats.sent = Sync.stats.sent + 1
-	Comm.Send(Serializer.Serialize(message), prio)
+	Comm.Send(Serializer.Serialize(message), prio, nil, options)
 end
 
 -- Ads are sent in chunks; prio "NORMAL" for own changes, "BULK" for sync.
-local function SendAds(list, prio)
+local function SendAds(list, prio, options)
 	for first = 1, #list, ADS_PER_MESSAGE do
 		local chunk = {}
 		for i = first, math.min(first + ADS_PER_MESSAGE - 1, #list) do
@@ -105,7 +112,7 @@ local function SendAds(list, prio)
 			end
 			Debug(L.DEBUG_SEND_ADS, #chunk, table.concat(names, ", "))
 		end
-		Send({ y = "A", a = chunk }, prio or "BULK")
+		Send({ y = "A", a = chunk }, prio or "BULK", options)
 	end
 end
 
@@ -217,11 +224,11 @@ local function SendInventory(nonce, target, theirs)
 		for i = #list, allowed + 1, -1 do
 			list[i] = nil
 		end
-		SendAds(list, "BULK")
+		SendAds(list, "BULK", { target = target })
 	end
 	for _, g in ipairs(groups) do
 		Debug(L.DEBUG_SEND_INVENTORY, target, math.floor(#g.e / 2))
-		Send({ y = "I", n = nonce, to = target, b = ours, k = g.k, e = g.e }, "BULK")
+		Send({ y = "I", n = nonce, to = target, b = ours, k = g.k, e = g.e }, "BULK", { target = target })
 	end
 end
 
@@ -294,7 +301,7 @@ local function OnInventory(message, sender)
 			ids[#ids + 1] = missing[i]
 		end
 		Debug(L.DEBUG_SEND_REQUEST, sender, #ids)
-		Send({ y = "R", to = sender, ids = ids }, "BULK")
+		Send({ y = "R", to = sender, ids = ids }, "BULK", { target = sender })
 	end
 
 	-- What we have that they lack or hold in an older version, in the
@@ -314,7 +321,7 @@ local function OnInventory(message, sender)
 			end
 		end
 	end
-	SendAds(push, "BULK")
+	SendAds(push, "BULK", { target = sender })
 	Sync.lastSync = GetServerTime()
 end
 
@@ -334,7 +341,7 @@ local function OnRequest(message, sender)
 	for i = #list, allowed + 1, -1 do
 		list[i] = nil
 	end
-	SendAds(list, "BULK")
+	SendAds(list, "BULK", { target = sender })
 end
 
 local function OnAds(message, sender)
@@ -346,6 +353,8 @@ local function OnAds(message, sender)
 	-- Debug: one line per ad the sender posted itself, totals for the rest.
 	local totals = { new = 0, updated = 0, known = 0, invalid = 0 }
 	local details = {}
+	local forward = {}
+	local now = GetServerTime()
 	for i = 1, count do
 		local ad = Ads.Sanitize(message.a[i])
 		if not ad then
@@ -366,6 +375,9 @@ local function OnAds(message, sender)
 			end
 			if stored then
 				changed = true
+				if now - ad.v < FORWARD_AGE then
+					forward[#forward + 1] = ad
+				end
 				if ad.o == sender and not ad.d then
 					-- First-hand: the sender posted this version. isNew: not
 					-- known before (no renewal or edit).
@@ -381,12 +393,15 @@ local function OnAds(message, sender)
 	if changed then
 		Sync.lastSync = GetServerTime()
 	end
+	if forward[1] and Comm.UsesWhisper() then
+		SendAds(forward, "BULK", { except = sender })
+	end
 end
 
 local HANDLERS = { H = OnHello, I = OnInventory, R = OnRequest, A = OnAds }
 
 Comm.RegisterHandler(function(text, sender, distribution)
-	if not ns.db or distribution ~= "CHANNEL" then
+	if not ns.db or (distribution ~= "CHANNEL" and not Comm.UsesWhisper()) then
 		return
 	end
 	if not Allow(sender) then
@@ -396,6 +411,10 @@ Comm.RegisterHandler(function(text, sender, distribution)
 	end
 	local message = Serializer.Deserialize(text)
 	local handler = type(message) == "table" and HANDLERS[message.y]
+	-- Verify's pings share the whisper path.
+	if not handler and distribution == "WHISPER" and type(message) == "table" and (message.y == "P" or message.y == "Q") then
+		return
+	end
 	if not handler then
 		Sync.stats.dropped = Sync.stats.dropped + 1
 		Debug(L.DEBUG_DROP_INVALID, sender)
@@ -415,17 +434,55 @@ function Sync.Publish(ad)
 	SendAds({ ad }, "NORMAL")
 end
 
+-- Whisper mode: the first hello waits for the member list.
+local helloWaiting = false
+
+local function HelloSoon()
+	if Comm.UsesWhisper() and ns.Channel.GetNumPeers() == 0 then
+		helloWaiting = true
+		return
+	end
+	helloWaiting = false
+	C_Timer.After(HELLO_DELAY_MIN + math.random() * (HELLO_DELAY_MAX - HELLO_DELAY_MIN), Sync.SendHello)
+end
+
 local helloTicker
 ns.RegisterCallback(Sync, "GFF_CHANNEL_READY", function(_, number)
 	Debug(L.DEBUG_CHANNEL, number or 0)
-	C_Timer.After(HELLO_DELAY_MIN + math.random() * (HELLO_DELAY_MAX - HELLO_DELAY_MIN), Sync.SendHello)
+	if Comm.UsesWhisper() then
+		ns.Channel.RequestMembers(true)
+	end
+	HelloSoon()
 	if not helloTicker then
 		helloTicker = C_Timer.NewTicker(HELLO_INTERVAL, function()
 			Store.Prune()
+			if Comm.UsesWhisper() then
+				ns.Channel.RequestMembers()
+			end
 			Sync.SendHello()
 		end)
 	end
 	ns:Fire("GFF_SYNC_STARTED")
+end)
+
+local peersTimer
+ns.RegisterCallback(Sync, "GFF_PEERS_CHANGED", function(_, count)
+	if helloWaiting and count > 0 then
+		HelloSoon()
+	end
+	-- One debug line per batch (the member list adds many at once).
+	if Debugging() and not peersTimer then
+		peersTimer = C_Timer.NewTimer(2, function()
+			peersTimer = nil
+			Debug(L.DEBUG_PEERS, ns.Channel.GetNumPeers())
+		end)
+	end
+end)
+
+-- The channel turned out to drop addon messages (outside Forever).
+ns.RegisterCallback(Sync, "GFF_COMM_WHISPER_MODE", function()
+	ns.Channel.RequestMembers(true)
+	HelloSoon()
 end)
 
 ns.RegisterCallback(Sync, "GFF_COMM_HELD", function(_, count)

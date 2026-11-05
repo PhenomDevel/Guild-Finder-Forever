@@ -15,6 +15,18 @@ running the addon and are cached locally.
   nothing is sent; `ns.Comm` holds the messages and sends them afterwards.
   A multi-part message interrupted by a starting lockdown is lost; the sync
   repairs that later.
+- **Whisper mode (Forever):** Forever's server drops addon messages to any
+  chat channel, our own included (`SendAddonMessage` returns success, then a
+  `NOT_ALLOWED_IN_CHANNEL` channel notice follows). Joining still works, so
+  the channel only serves to find the other addon users: its member list
+  (`ListChannelByName`, `CHAT_MSG_CHANNEL_LIST`, filtered from chat), join
+  and leave events, and everyone who whispers us (`ns.Channel` peers).
+  Broadcasts go as addon whispers to 5 random peers; targeted sync messages
+  go only to their target. Forever starts in whisper mode; elsewhere a
+  `NOT_ALLOWED_IN_CHANNEL` notice switches to it. Members who went offline
+  are dropped on the server's "No player named …" reply (hidden).
+- Forever names are "First Surname" and the server leaves the realm out;
+  peers are whispered without the own realm.
 
 ## Data model (`Core/Ads.lua`, `Core/Store.lua`)
 
@@ -67,8 +79,11 @@ strings, no code execution, depth and size limits), compressed and encoded by
 | `P` ping | nonce | whisper to an ad's poster (background check) |
 | `Q` pong | nonce, guild, class | whispered answer to a ping (max one per asker per 2 s) |
 
-`P`/`Q` go as addon whispers; Sync ignores whisper traffic and Verify
-ignores channel traffic.
+`P`/`Q` go as addon whispers; Verify ignores channel traffic. Sync ignores
+whisper traffic except in whisper mode, where `H` goes to random peers,
+`I`/`R` and their answers only to the peer concerned, and every ad stored as
+new or newer whose version is less than 15 min old is forwarded once to
+other random peers (gossip; stops where it is already known).
 
 1. Every id falls into one of 16 buckets. A bucket summary is the
    order-independent sum of `hash(id .. version)` over its entries, so two

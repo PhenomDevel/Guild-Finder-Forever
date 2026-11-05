@@ -1,4 +1,4 @@
--- luacheck: read globals IsTrialAccount IsVeteranTrialAccount
+-- luacheck: read globals IsTrialAccount IsVeteranTrialAccount GetNormalizedRealmName
 local _, ns = ...
 
 -- Transport for all addon traffic: compress + encode with LibDeflate, send via
@@ -6,6 +6,10 @@ local _, ns = ...
 -- joined or chat messaging is locked down (encounters etc.) and sent
 -- afterwards in order. ChatThrottleLib would drop them instead: it only
 -- retries on AddonMessageThrottle, not on lockdown.
+-- Whisper mode: Forever's server drops addon messages to any chat channel
+-- (NOT_ALLOWED_IN_CHANNEL). There a broadcast goes as addon whispers to a
+-- few random channel members (ns.Channel peers) and the sync protocol
+-- forwards fresh ads (gossip).
 local Comm = {}
 ns.Comm = Comm
 
@@ -21,6 +25,12 @@ Comm.loopback = false
 
 local MAX_QUEUE = 100
 local FLUSH_INTERVAL = 1
+-- Peers one broadcast is whispered to.
+Comm.FANOUT = 5
+
+-- Set when the server rejected a channel message; Forever starts in
+-- whisper mode right away.
+local channelBlocked = false
 
 local queue = {}
 local ticker
@@ -40,8 +50,27 @@ function Comm.IsRestricted()
 	return (IsTrialAccount and IsTrialAccount()) or (IsVeteranTrialAccount and IsVeteranTrialAccount()) or false
 end
 
+function Comm.UsesWhisper()
+	return channelBlocked or ns.Ads.IsForever()
+end
+
 function Comm.CanSend()
-	return ns.Channel.GetNumber() ~= nil and not Comm.InLockdown()
+	if Comm.InLockdown() then
+		return false
+	end
+	if Comm.UsesWhisper() then
+		return ns.Channel.GetNumPeers() > 0
+	end
+	return ns.Channel.GetNumber() ~= nil
+end
+
+-- Same-realm names without the realm: Forever only accepts "First Surname".
+local function WhisperTarget(name)
+	local realm = GetNormalizedRealmName()
+	if type(realm) == "string" and realm ~= "" and name:sub(-#realm - 1) == "-" .. realm then
+		return name:sub(1, -#realm - 2)
+	end
+	return name
 end
 
 function Comm.GetQueueLength()
@@ -50,9 +79,17 @@ end
 
 local function Transmit(entry)
 	local callback = entry.callback
-	Comm:SendCommMessage(Comm.PREFIX, entry.data, "CHANNEL", ns.Channel.GetNumber(), entry.prio, callback and function(_, sent, total, didSend)
+	local progress = callback and function(_, sent, total, didSend)
 		callback(sent, total, didSend)
-	end)
+	end
+	if not Comm.UsesWhisper() then
+		Comm:SendCommMessage(Comm.PREFIX, entry.data, "CHANNEL", ns.Channel.GetNumber(), entry.prio, progress)
+		return
+	end
+	local targets = entry.target and { entry.target } or ns.Channel.PickPeers(Comm.FANOUT, entry.except)
+	for i, target in ipairs(targets) do
+		Comm:SendCommMessage(Comm.PREFIX, entry.data, "WHISPER", WhisperTarget(target), entry.prio, i == 1 and progress or nil)
+	end
 end
 
 local function Flush()
@@ -70,13 +107,17 @@ end
 -- ("BULK", "NORMAL", "ALERT"). callback(sentBytes, totalBytes, didSend)
 -- runs per transmitted chunk. Returns the encoded size and whether the
 -- message was held for later; nothing on a restricted account.
-function Comm.Send(text, prio, callback)
+-- options (whisper mode only): target = one recipient instead of random
+-- peers, except = peer to leave out (the one a forwarded ad came from).
+-- In channel mode everything is broadcast, so others can overhear answers.
+function Comm.Send(text, prio, callback, options)
 	if Comm.IsRestricted() then
 		return
 	end
 	local data = LibDeflate:EncodeForWoWAddonChannel(LibDeflate:CompressDeflate(text))
-	local entry = { data = data, prio = prio or "NORMAL", callback = callback }
-	if not queue[1] and Comm.CanSend() then
+	local entry = { data = data, prio = prio or "NORMAL", callback = callback,
+		target = options and options.target, except = options and options.except }
+	if not queue[1] and (Comm.CanSend() or entry.target and Comm.UsesWhisper() and not Comm.InLockdown()) then
 		Transmit(entry)
 		return #data, false
 	end
@@ -98,7 +139,7 @@ function Comm.SendWhisper(target, text)
 		return false
 	end
 	local data = LibDeflate:EncodeForWoWAddonChannel(LibDeflate:CompressDeflate(text))
-	Comm:SendCommMessage(Comm.PREFIX, data, "WHISPER", target, "ALERT")
+	Comm:SendCommMessage(Comm.PREFIX, data, "WHISPER", WhisperTarget(target), "ALERT")
 	return true
 end
 
@@ -127,6 +168,10 @@ function Comm:OnCommReceived(_, data, distribution, sender)
 	if IsSelf(sender) and not Comm.loopback then
 		return
 	end
+	-- Whoever whispers us runs the addon: a peer for future broadcasts.
+	if distribution == "WHISPER" and Comm.UsesWhisper() then
+		ns.Channel.AddPeer(sender)
+	end
 	local decoded = LibDeflate:DecodeForWoWAddonChannel(data)
 	local text = decoded and LibDeflate:DecompressDeflate(decoded)
 	if type(text) ~= "string" then
@@ -141,3 +186,16 @@ end
 Comm:RegisterComm(Comm.PREFIX)
 
 ns.RegisterCallback(Comm, "GFF_CHANNEL_READY", Flush)
+ns.RegisterCallback(Comm, "GFF_PEERS_CHANGED", function()
+	if queue[1] and not ticker then
+		ticker = C_Timer.NewTicker(FLUSH_INTERVAL, Flush)
+	end
+end)
+
+ns.RegisterCallback(Comm, "GFF_CHANNEL_BLOCKED", function()
+	if channelBlocked or ns.Ads.IsForever() then
+		return
+	end
+	channelBlocked = true
+	ns:Fire("GFF_COMM_WHISPER_MODE")
+end)

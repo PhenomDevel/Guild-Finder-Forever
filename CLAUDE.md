@@ -37,7 +37,8 @@ assume the old Classic Era API.
   minimap button are our own. Ask Kevin before adding one.
 
 ## Networking rules
-- All traffic goes through `ns.Comm` (hidden channel, LibDeflate, AceComm).
+- All traffic goes through `ns.Comm` (hidden channel, LibDeflate, AceComm;
+  on Forever addon whispers to channel members, see `docs/ARCHITECTURE.md`).
   Never call `SendAddonMessage` elsewhere, except in `Probe/`.
 - Nothing is sent while `C_ChatInfo.InChatMessagingLockdown()` is true;
   `ns.Comm` queues and sends afterwards. ChatThrottleLib drops (does not
