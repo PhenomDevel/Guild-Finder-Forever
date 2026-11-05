@@ -89,15 +89,15 @@ function Filters.Run(kind)
 	local filter = Filters.Get(kind)
 	local results = Search.Run(filter, Filters.Profile(kind))
 	if filter.sort == "new" then
-		table.sort(results, function(a, b)
+		table.sort(results, Search.OwnFirst(function(a, b)
 			return a.ad.v > b.ad.v
-		end)
+		end))
 	elseif filter.sort == "name" then
-		table.sort(results, function(a, b)
+		table.sort(results, Search.OwnFirst(function(a, b)
 			local na = (a.ad.n or Ads.OwnerName(a.ad.o)):lower()
 			local nb = (b.ad.n or Ads.OwnerName(b.ad.o)):lower()
 			return na < nb
-		end)
+		end))
 	end
 	return results
 end

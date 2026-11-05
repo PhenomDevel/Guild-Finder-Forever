@@ -206,6 +206,7 @@ local function Create()
 	end)
 	hide:SetPoint("LEFT", dialog.contact, "RIGHT", 10, 0)
 	W.Tooltip(hide, L.HIDE, L.HIDE_TIP)
+	dialog.hide = hide
 	local block = W.LinkButton(dialog, L.BLOCK_GUILD, function()
 		local ad = current and Store.Get(current.id)
 		if ad then
@@ -218,6 +219,7 @@ local function Create()
 	local unfit = W.Text(dialog, "GameFontDisableSmall")
 	unfit:SetPoint("RIGHT", block, "LEFT", -6, 0)
 	unfit:SetText(L.UNFIT)
+	dialog.block, dialog.unfit = block, unfit
 end
 
 -- Class chip: class icon, name in the tooltip.
@@ -314,7 +316,11 @@ local function Update()
 	dialog.age:SetText(L.AD_META:format(W.Duration(GetServerTime() - ad.v), W.Duration(Ads.ExpiresIn(ad))))
 
 	local score = current.score
-	if score then
+	if current.own then
+		dialog.score:SetText(L.OWN_GUILD)
+		W.Color(dialog.score, W.GOLD)
+		dialog.scoreLabel:Hide()
+	elseif score then
 		local color = W.ScoreColor(score)
 		dialog.score:SetText(score .. " %")
 		W.Color(dialog.score, color)
@@ -423,17 +429,21 @@ local function Update()
 	end
 	dialog.contact:SetText(L.CONTACT_NAME:format(poster))
 	dialog.contact:SetWidth(math.max(150, dialog.contact:GetFontString():GetStringWidth() + 30))
+	-- No contacting, hiding or blocking your own guild.
+	for _, button in ipairs({ dialog.contact, dialog.hide, dialog.block, dialog.unfit }) do
+		button:SetShown(not current.own)
+	end
 end
 
--- onClose runs when the dialog closes (any way).
-function GuildDialog.Open(ad, score, onClose)
+-- own marks the own guild's ad; onClose runs when the dialog closes (any way).
+function GuildDialog.Open(ad, score, own, onClose)
 	if not overlay then
 		Create()
 	end
 	if current and current.onClose and current.id ~= ad.i then
 		current.onClose()
 	end
-	current = { id = ad.i, score = score, onClose = onClose }
+	current = { id = ad.i, score = score, own = own, onClose = onClose }
 	overlay:Show()
 	Update()
 	Verify.Ping(ad)

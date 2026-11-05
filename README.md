@@ -45,6 +45,8 @@ What changed: [CHANGELOG.md](https://github.com/PhenomDevel/Guild-Finder-Forever
   wanted classes per role, plus whether your class fits.
 - **Find players:** a compact, sortable list with role, level and class
   filters.
+- **See your own ads:** your player ad and your guild's ad are pinned to the
+  top of the lists, so you see them the way others do.
 - **My ad:** a player ad per character or a guild ad per guild (by members
   who may invite), done in under a minute with a live preview. Ads are
   renewed on login and expire after 14 days without one.
