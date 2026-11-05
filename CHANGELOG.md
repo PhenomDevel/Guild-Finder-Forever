@@ -3,6 +3,7 @@
 ## Unreleased
 
 - The close button (X) of the main window works again.
+- `/chatlist GuildFinderForever` shows the channel's members again; only the addon's own background requests are hidden.
 
 ## v1.0.1 (2026-11-05)
 
