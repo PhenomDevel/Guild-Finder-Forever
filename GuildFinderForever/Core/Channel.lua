@@ -90,6 +90,11 @@ local FILTER_EVENTS = {
 	"CHAT_MSG_CHANNEL_LIST",
 }
 
+-- Member lists are only hidden shortly after the addon asked for one, so a
+-- manual /chatlist still shows.
+local LIST_HIDE_TIME = 5
+local hideListUntil = 0
+
 -- Whether chat event arguments 4 (display name "5. Name") and 9 (base name)
 -- belong to our channel.
 local function IsOurs(channelName, baseName)
@@ -103,11 +108,14 @@ local function IsOurs(channelName, baseName)
 		or channelName:lower():match("^%d+%.%s*(.-)$") == lowerName)
 end
 
-local function Filter(_, _, ...)
+local function Filter(_, event, ...)
 	if not Channel.hidden then
 		return false
 	end
 	local channelName, baseName = select(4, ...), select(9, ...)
+	if event == "CHAT_MSG_CHANNEL_LIST" and GetTime() > hideListUntil then
+		return false
+	end
 	return IsOurs(channelName, baseName)
 end
 
@@ -294,6 +302,7 @@ function Channel.RequestMembers(force)
 		return
 	end
 	lastRoster = now
+	hideListUntil = now + LIST_HIDE_TIME
 	ListChannelByName(Channel.NAME)
 end
 
