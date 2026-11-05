@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- The close button (X) of the main window works again.
+
 ## v1.0.1 (2026-11-05)
 
 - Forever: posting ads works with Forever's character names (first name and surname, no realm), and your own ads and messages are recognized again.

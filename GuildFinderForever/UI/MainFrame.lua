@@ -175,6 +175,14 @@ local function Create()
 	if frame.SetPortraitToAsset then
 		frame:SetPortraitToAsset(PORTRAIT)
 	end
+	-- The template's close button goes through HideUIPanel, which doesn't
+	-- hide this (unmanaged) frame on Forever/Midnight; hide it directly.
+	local closeButton = frame.CloseButton or _G[FRAME_NAME .. "CloseButton"]
+	if closeButton then
+		closeButton:SetScript("OnClick", function()
+			frame:Hide()
+		end)
+	end
 	-- Escape closes the window.
 	tinsert(UISpecialFrames, FRAME_NAME)
 	RestorePosition()
