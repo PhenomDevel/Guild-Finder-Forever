@@ -230,12 +230,15 @@ local function BuildCard(tab, row)
 		meta[#meta + 1] = L.AGO:format(W.Duration(GetServerTime() - ad.v))
 		self.meta:SetText(table.concat(meta, " · "))
 
-		if result.score then
+		if result.own then
+			self.score:SetText(L.OWN_GUILD)
+			W.Color(self.score, W.GOLD)
+		elseif result.score then
 			self.score:SetText(result.score .. " %")
 			W.Color(self.score, W.ScoreColor(result.score))
 		end
-		self.score:SetShown(result.score ~= nil)
-		self.scoreLabel:SetShown(result.score ~= nil)
+		self.score:SetShown(result.own or result.score ~= nil)
+		self.scoreLabel:SetShown(not result.own and result.score ~= nil)
 
 		local raid = C.HasBit(ad.g or 0, C.GOAL_RAID)
 		self.raid:SetShown(raid)
@@ -460,7 +463,7 @@ local function Build(content)
 	function tab:Open(result)
 		self.selectedId = result.ad.i
 		self:RepaintCards()
-		ns.GuildDialog.Open(result.ad, result.score, function()
+		ns.GuildDialog.Open(result.ad, result.score, result.own, function()
 			self.selectedId = nil
 			self:RepaintCards()
 		end)

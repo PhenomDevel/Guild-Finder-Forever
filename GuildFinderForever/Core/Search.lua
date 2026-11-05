@@ -142,23 +142,37 @@ function Search.Accepts(ad, filter, profile)
 	return Matches(ad, filter, profile, Search.MyMode())
 end
 
+-- Wraps a sort comparator so own ads stay on top.
+function Search.OwnFirst(less)
+	return function(a, b)
+		if (a.own or false) ~= (b.own or false) then
+			return a.own == true
+		end
+		return less(a, b)
+	end
+end
+
 -- Returns the matching ads, best score first, each as
--- { ad = ad, score = n|nil }.
+-- { ad = ad, score = n|nil, own = true|nil }. Own ads (player ad, own
+-- guild's ad) bypass the filters and carry no score, so the poster can
+-- check how the ad looks to others.
 function Search.Run(filter, profile)
 	local results = {}
 	local myMode = Search.MyMode()
 	local own = { [Ads.GetOwnPlayerAdId() or ""] = true, [Ads.GetOwnGuildAdId() or ""] = true }
 	for id, ad in Store.Each(filter.kind) do
-		if not own[id] and not Store.IsFiltered(ad) and Matches(ad, filter, profile, myMode) then
+		if own[id] then
+			results[#results + 1] = { ad = ad, own = true }
+		elseif not Store.IsFiltered(ad) and Matches(ad, filter, profile, myMode) then
 			results[#results + 1] = { ad = ad, score = Search.Score(ad, filter, profile) }
 		end
 	end
-	table.sort(results, function(a, b)
+	table.sort(results, Search.OwnFirst(function(a, b)
 		local sa, sb = a.score or -1, b.score or -1
 		if sa ~= sb then
 			return sa > sb
 		end
 		return a.ad.v > b.ad.v
-	end)
+	end))
 	return results
 end

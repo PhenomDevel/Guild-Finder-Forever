@@ -274,7 +274,10 @@ local function FillRow(tab, row, result)
 	if row.strip then
 		row.strip:SetMask(ad.t)
 	end
-	if result.score then
+	if result.own then
+		row.match:SetText(L.OWN_AD_SHORT)
+		W.Color(row.match, W.GOLD)
+	elseif result.score then
 		row.match:SetText(result.score .. " %")
 		W.Color(row.match, W.ScoreColor(result.score))
 	else
@@ -283,6 +286,10 @@ local function FillRow(tab, row, result)
 	end
 
 	row.detail:SetShown(selected)
+	-- No whispering, hiding or blocking yourself.
+	row.contact:SetShown(not result.own)
+	row.hide:SetShown(not result.own)
+	row.block:SetShown(not result.own)
 	if selected then
 		row.text:SetText(ad.x ~= "" and ad.x or ("|cff9d9d9d" .. L.NO_TEXT .. "|r"))
 		local width = row.tags:SetGoals(ad.g)
@@ -355,7 +362,7 @@ local function BuildList(tab, panel)
 		for i, result in ipairs(results) do
 			result.order = i
 		end
-		table.sort(results, function(a, b)
+		table.sort(results, ns.Search.OwnFirst(function(a, b)
 			local va, vb = column.value(a), column.value(b)
 			if va ~= vb then
 				if sort.desc then
@@ -364,7 +371,7 @@ local function BuildList(tab, panel)
 				return va < vb
 			end
 			return a.order < b.order
-		end)
+		end))
 	end
 
 	local scrollBox = CreateFrame("Frame", nil, panel, "WowScrollBoxList")
