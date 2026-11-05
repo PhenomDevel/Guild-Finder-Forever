@@ -229,8 +229,7 @@ local ROSTER_INTERVAL = 5 * 60
 local lastRoster = 0
 
 local function IsSelf(name)
-	local full = UnitFullName("player")
-	return name == full or name == UnitName("player") or name == ns:GetPlayerFullName()
+	return name == ns:GetPlayerName() or name == UnitName("player") or name == ns:GetPlayerFullName()
 end
 
 -- Peers are keyed by whisper target: same-realm names without the realm,

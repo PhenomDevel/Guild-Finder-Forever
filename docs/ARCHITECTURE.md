@@ -25,8 +25,10 @@ running the addon and are cached locally.
   go only to their target. Forever starts in whisper mode; elsewhere a
   `NOT_ALLOWED_IN_CHANNEL` notice switches to it. Members who went offline
   are dropped on the server's "No player named …" reply (hidden).
-- Forever names are "First Surname" and the server leaves the realm out;
-  peers are whispered without the own realm.
+- Forever names are "First Surname" and the server leaves the realm out of
+  senders; `UnitFullName("player")` returns first name and surname as name
+  and realm. `ns:GetPlayerName()` rebuilds "First Surname", the realm comes
+  from `GetNormalizedRealmName()`. Peers are whispered without the own realm.
 
 ## Data model (`Core/Ads.lua`, `Core/Store.lua`)
 

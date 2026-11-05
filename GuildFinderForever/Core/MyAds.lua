@@ -162,8 +162,23 @@ local function CheckGuildAds()
 	end
 end
 
+-- v1.0.1/v1.0.2 posted Forever player ads as "First-Surname" (surname taken
+-- for the realm); withdraws such an ad, the current one has another id.
+local function WithdrawMisnamedAd()
+	local first = UnitFullName("player")
+	local _, surname = ns:GetPlayerName()
+	if not (first and surname) then
+		return
+	end
+	local ad = Store.Get(Ads.PlayerAdId(first .. "-" .. surname))
+	if ad and not ad.d and not Ads.IsExpired(ad) then
+		Withdraw(ad)
+	end
+end
+
 ns.RegisterCallback(MyAds, "GFF_SYNC_STARTED", function()
 	C_Timer.After(GUILD_CHECK_DELAY, function()
+		WithdrawMisnamedAd()
 		CheckGuildAds()
 		RenewPlayer(RENEW_AGE)
 		RenewGuild()
