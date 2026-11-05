@@ -1,4 +1,3 @@
--- luacheck: read globals UnitName
 local _, ns = ...
 
 -- Ad exchange between clients over ns.Comm. Messages are serialized tables
@@ -84,7 +83,7 @@ local function Visibility(ad)
 end
 
 local function IsMe(name)
-	return type(name) == "string" and (name == ns:GetPlayerFullName() or name == UnitName("player"))
+	return type(name) == "string" and ns:NormalizeName(name) == ns:GetPlayerFullName()
 end
 
 local function Send(message, prio)

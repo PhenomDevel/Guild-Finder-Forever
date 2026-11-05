@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Forever: posting ads works with Forever's character names (first name and surname, no realm), and your own ads and messages are recognized again.
+
 ## v1.0.0 (2026-11-03)
 
 - First stable release, for the launch of WoW: Forever.
