@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v1.0.1 (2026-11-05)
 
 - Forever: posting ads works with Forever's character names (first name and surname, no realm), and your own ads and messages are recognized again.
 - Forever: ads are exchanged again. Forever's servers block addon messages in chat channels, so the addon now finds other users through its channel's member list and syncs with them by addon whispers.
