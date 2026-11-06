@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v1.1.0 (2026-11-06)
 
 - Your own player ad and your guild's ad now show up at the top of the "Find players" and "Find guilds" lists (marked "You" / "Your guild"), so you can see how others see them.
 
