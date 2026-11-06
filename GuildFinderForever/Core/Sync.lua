@@ -93,13 +93,13 @@ local function IsMe(name)
 end
 
 -- options: see Comm.Send (target, except).
-local function Send(message, prio, options)
+local function Send(message, options)
 	Sync.stats.sent = Sync.stats.sent + 1
-	Comm.Send(Serializer.Serialize(message), prio, nil, options)
+	Comm.Send(Serializer.Serialize(message), nil, options)
 end
 
--- Ads are sent in chunks; prio "NORMAL" for own changes, "BULK" for sync.
-local function SendAds(list, prio, options)
+-- Ads are sent in chunks.
+local function SendAds(list, options)
 	for first = 1, #list, ADS_PER_MESSAGE do
 		local chunk = {}
 		for i = first, math.min(first + ADS_PER_MESSAGE - 1, #list) do
@@ -112,7 +112,7 @@ local function SendAds(list, prio, options)
 			end
 			Debug(L.DEBUG_SEND_ADS, #chunk, table.concat(names, ", "))
 		end
-		Send({ y = "A", a = chunk }, prio or "BULK", options)
+		Send({ y = "A", a = chunk }, options)
 	end
 end
 
@@ -164,7 +164,7 @@ end
 -- usual fan-out.
 function Sync.SendHello(target)
 	Debug(L.DEBUG_SEND_HELLO, (Store.Count()))
-	Send({ y = "H", n = NewNonce(), b = Store.GetBuckets() }, nil, target and { target = target } or nil)
+	Send({ y = "H", n = NewNonce(), b = Store.GetBuckets() }, target and { target = target } or nil)
 end
 
 local function ValidBuckets(b)
@@ -226,11 +226,11 @@ local function SendInventory(nonce, target, theirs)
 		for i = #list, allowed + 1, -1 do
 			list[i] = nil
 		end
-		SendAds(list, "BULK", { target = target })
+		SendAds(list, { target = target })
 	end
 	for _, g in ipairs(groups) do
 		Debug(L.DEBUG_SEND_INVENTORY, target, math.floor(#g.e / 2))
-		Send({ y = "I", n = nonce, to = target, b = ours, k = g.k, e = g.e }, "BULK", { target = target })
+		Send({ y = "I", n = nonce, to = target, b = ours, k = g.k, e = g.e }, { target = target })
 	end
 end
 
@@ -303,7 +303,7 @@ local function OnInventory(message, sender)
 			ids[#ids + 1] = missing[i]
 		end
 		Debug(L.DEBUG_SEND_REQUEST, sender, #ids)
-		Send({ y = "R", to = sender, ids = ids }, "BULK", { target = sender })
+		Send({ y = "R", to = sender, ids = ids }, { target = sender })
 	end
 
 	-- What we have that they lack or hold in an older version, in the
@@ -323,7 +323,7 @@ local function OnInventory(message, sender)
 			end
 		end
 	end
-	SendAds(push, "BULK", { target = sender })
+	SendAds(push, { target = sender })
 	Sync.lastSync = GetServerTime()
 end
 
@@ -343,7 +343,7 @@ local function OnRequest(message, sender)
 	for i = #list, allowed + 1, -1 do
 		list[i] = nil
 	end
-	SendAds(list, "BULK", { target = sender })
+	SendAds(list, { target = sender })
 end
 
 local function OnAds(message, sender)
@@ -396,7 +396,7 @@ local function OnAds(message, sender)
 		Sync.lastSync = GetServerTime()
 	end
 	if forward[1] and Comm.UsesWhisper() then
-		SendAds(forward, "BULK", { except = sender })
+		SendAds(forward, { except = sender })
 	end
 end
 
@@ -433,7 +433,7 @@ end)
 -- Stores and broadcasts an own ad or tombstone.
 function Sync.Publish(ad)
 	Store.Put(ad)
-	SendAds({ ad }, "NORMAL")
+	SendAds({ ad })
 end
 
 -- Whisper mode: the first hello waits for the first known member.

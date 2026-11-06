@@ -390,7 +390,7 @@ AddCommand("big", "big [KB]", L.PROBE_HELP_BIG, function(args)
 	-- Includes the time the message was held, if it was.
 	local started = GetTime()
 	local failed = false
-	local size, held = ns.Comm.Send(text, "BULK", function(sent, total, didSend)
+	local size, held = ns.Comm.Send(text, function(sent, total, didSend)
 		if not failed and not didSend then
 			failed = true
 			Log(L.PROBE_BIG_CHUNK_FAILED, id, sent, total)

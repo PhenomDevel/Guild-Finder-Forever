@@ -106,8 +106,10 @@ other random peers (gossip; stops where it is already known).
    listener picks up ads it is missing from any `A` message.
 
 Limits: incoming messages per sender (token bucket, 40, +1 per 2 s), 400 ads
-served per requester per 10 min, 100 ids per request. Sync traffic uses
-ChatThrottleLib priority `BULK`, own changes `NORMAL`.
+served per requester per 10 min, 100 ids per request. All sync traffic
+shares one ChatThrottleLib priority: AceComm reassembles multipart messages
+per prefix + distribution + sender, so two priorities interleaving their
+parts to the same receiver corrupt both messages.
 
 Known limitation: nothing is signed. A client can forge ads or tombstones
 for others; owners overwrite forgeries by renewing, and the `/who` check
