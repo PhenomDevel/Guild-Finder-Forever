@@ -1,4 +1,4 @@
--- luacheck: read globals JoinTemporaryChannel JoinChannelByName LeaveChannelByName ListChannelByName GetChannelName GetChannelList UnitName GetNormalizedRealmName ERR_CHAT_PLAYER_NOT_FOUND_S ChatFrameUtil ChatFrame_AddMessageEventFilter ChatFrame_AddChannel ChatFrame_RemoveChannel Constants NUM_CHAT_WINDOWS
+-- luacheck: read globals JoinTemporaryChannel JoinChannelByName LeaveChannelByName GetChannelName GetChannelList UnitName GetNormalizedRealmName ERR_CHAT_PLAYER_NOT_FOUND_S ChatFrameUtil ChatFrame_AddMessageEventFilter ChatFrame_AddChannel ChatFrame_RemoveChannel Constants NUM_CHAT_WINDOWS
 local _, ns = ...
 
 -- The hidden chat channel all ads travel through. It is joined after login,
@@ -87,13 +87,7 @@ local FILTER_EVENTS = {
 	"CHAT_MSG_CHANNEL_NOTICE_USER",
 	"CHAT_MSG_CHANNEL_JOIN",
 	"CHAT_MSG_CHANNEL_LEAVE",
-	"CHAT_MSG_CHANNEL_LIST",
 }
-
--- Member lists are only hidden shortly after the addon asked for one, so a
--- manual /chatlist still shows.
-local LIST_HIDE_TIME = 5
-local hideListUntil = 0
 
 -- Whether chat event arguments 4 (display name "5. Name") and 9 (base name)
 -- belong to our channel.
@@ -108,14 +102,11 @@ local function IsOurs(channelName, baseName)
 		or channelName:lower():match("^%d+%.%s*(.-)$") == lowerName)
 end
 
-local function Filter(_, event, ...)
+local function Filter(_, _, ...)
 	if not Channel.hidden then
 		return false
 	end
 	local channelName, baseName = select(4, ...), select(9, ...)
-	if event == "CHAT_MSG_CHANNEL_LIST" and GetTime() > hideListUntil then
-		return false
-	end
 	return IsOurs(channelName, baseName)
 end
 
@@ -219,14 +210,21 @@ end)
 -- Members
 --------------------------------------------------------------------------------
 -- Where addon messages to the channel are dropped, the channel only serves
--- to find the other addon users: its member list (/chatlist) plus join and
--- leave events. ns.Comm whispers them instead.
+-- to find the other addon users: join and leave events, senders of our
+-- whispers, members remembered from earlier sessions and member lists the
+-- player requests with /chatlist. The addon can't request the list itself:
+-- ListChannelByName is protected (ADDON_ACTION_BLOCKED). ns.Comm whispers
+-- the members instead.
 
 -- [name as the server lists it, whisper target] = true
 local peers = {}
 local numPeers = 0
-local ROSTER_INTERVAL = 5 * 60
-local lastRoster = 0
+-- Remembered members per realm: GuildFinderForeverDB.knownPeers[realm][name]
+-- = GetServerTime() last seen; the newest REMEMBER_MAX, at most
+-- REMEMBER_DAYS old.
+ns.dbDefaults.knownPeers = {}
+local REMEMBER_MAX = 60
+local REMEMBER_DAYS = 14
 
 local function IsSelf(name)
 	return name == ns:GetPlayerName() or name == UnitName("player") or name == ns:GetPlayerFullName()
@@ -242,17 +240,66 @@ local function PeerKey(name)
 	return name
 end
 
+local function Known()
+	local realm = GetNormalizedRealmName()
+	local all = ns.db and ns.db.knownPeers
+	if type(all) ~= "table" or type(realm) ~= "string" or realm == "" then
+		return nil
+	end
+	if type(all[realm]) ~= "table" then
+		all[realm] = {}
+	end
+	return all[realm]
+end
+
+local function TrimKnown(known)
+	local limit = GetServerTime() - REMEMBER_DAYS * 86400
+	local list = {}
+	for name, seen in pairs(known) do
+		if type(name) ~= "string" or type(seen) ~= "number" or seen < limit or #name > 64 then
+			known[name] = nil
+		else
+			list[#list + 1] = name
+		end
+	end
+	if #list > REMEMBER_MAX then
+		table.sort(list, function(a, b)
+			return known[a] > known[b]
+		end)
+		for i = REMEMBER_MAX + 1, #list do
+			known[list[i]] = nil
+		end
+	end
+end
+
+local function Remember(name)
+	local known = Known()
+	if known then
+		local isNew = known[name] == nil
+		known[name] = GetServerTime()
+		if isNew then
+			TrimKnown(known)
+		end
+	end
+end
+
+-- Returns true if name was not a member yet.
 function Channel.AddPeer(name)
 	if type(name) ~= "string" or name == "" or (issecretvalue and issecretvalue(name)) then
-		return
+		return false
 	end
 	name = PeerKey(name)
-	if IsSelf(name) or peers[name] then
-		return
+	if IsSelf(name) then
+		return false
+	end
+	Remember(name)
+	if peers[name] then
+		return false
 	end
 	peers[name] = true
 	numPeers = numPeers + 1
 	ns:Fire("GFF_PEERS_CHANGED", numPeers)
+	return true
 end
 
 function Channel.RemovePeer(name)
@@ -260,9 +307,34 @@ function Channel.RemovePeer(name)
 		return
 	end
 	name = PeerKey(name)
+	local known = Known()
+	if known then
+		known[name] = nil
+	end
 	if peers[name] then
 		peers[name] = nil
 		numPeers = numPeers - 1
+		ns:Fire("GFF_PEERS_CHANGED", numPeers)
+	end
+end
+
+-- Adds the members remembered from earlier sessions; whispers to those who
+-- are offline bounce and remove them again.
+function Channel.LoadKnownPeers()
+	local known = Known()
+	if not known then
+		return
+	end
+	TrimKnown(known)
+	local added = 0
+	for name in pairs(known) do
+		if not peers[name] and not IsSelf(name) then
+			peers[name] = true
+			added = added + 1
+		end
+	end
+	if added > 0 then
+		numPeers = numPeers + added
 		ns:Fire("GFF_PEERS_CHANGED", numPeers)
 	end
 end
@@ -290,23 +362,8 @@ function Channel.PickPeers(count, except)
 	return list
 end
 
--- Asks the server for the member list (answered with CHAT_MSG_CHANNEL_LIST,
--- hidden by the chat filter). Throttled unless forced.
-function Channel.RequestMembers(force)
-	if not ListChannelByName or not Channel.GetNumber() then
-		return
-	end
-	local now = GetTime()
-	if not force and now - lastRoster < ROSTER_INTERVAL then
-		return
-	end
-	lastRoster = now
-	hideListUntil = now + LIST_HIDE_TIME
-	ListChannelByName(Channel.NAME)
-end
-
--- The list arrives as "Name One, *Owner Name, @Moderator", possibly split
--- over several events for large channels.
+-- A member list the player requested with /chatlist: "Name One, *Owner
+-- Name, @Moderator", possibly split over several events for large channels.
 ns:RegisterEvent("CHAT_MSG_CHANNEL_LIST", function(_, text, _, _, channelName, ...)
 	local baseName = select(5, ...)
 	if not IsOurs(channelName, baseName) or type(text) ~= "string" or (issecretvalue and issecretvalue(text)) then
@@ -321,6 +378,9 @@ end)
 ns:RegisterEvent("CHAT_MSG_CHANNEL_JOIN", function(_, _, name, _, channelName, ...)
 	if IsOurs(channelName, select(5, ...)) then
 		Channel.AddPeer(name)
+		if type(name) == "string" and not (issecretvalue and issecretvalue(name)) and not IsSelf(PeerKey(name)) then
+			ns:Fire("GFF_PEER_JOINED", PeerKey(name))
+		end
 	end
 end)
 
