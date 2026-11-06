@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## v1.1.2 (2026-11-06)
+
+- No changes for players: development builds no longer print a chat message at every boss pull.
+
 ## v1.1.1 (2026-11-06)
 
 - Forever: no more "GuildFinderForever tried to call the protected function ListChannelByName()" errors. Other Guild Finder users are now found when they join the channel, and players from earlier sessions are remembered. `/chatlist GuildFinderForever` shows the members again.
