@@ -48,10 +48,12 @@ local function SafeString(value)
 	return tostring(value)
 end
 
--- Every probe event is printed and kept in the saved log, so the results of
--- all accounts can be compared afterwards (WTF\…\SavedVariables).
--- Missing fields of malformed messages are logged as "?".
-local function Log(text, ...)
+-- Every probe event is kept in the saved log, so the results of all accounts
+-- can be compared afterwards (WTF\…\SavedVariables). Results of probe
+-- commands are printed too; background events (encounters, lockdown, queue)
+-- go to the log only so they don't spam the chat. Missing fields of
+-- malformed messages are logged as "?".
+local function Record(quiet, text, ...)
 	local count = select("#", ...)
 	if count > 0 then
 		local args = { ... }
@@ -69,7 +71,17 @@ local function Log(text, ...)
 			table.remove(log, 1)
 		end
 	end
-	ns:Print(text)
+	if not quiet then
+		ns:Print(text)
+	end
+end
+
+local function Log(text, ...)
+	Record(false, text, ...)
+end
+
+local function LogQuiet(text, ...)
+	Record(true, text, ...)
 end
 
 local function ReverseLookup(enum, value)
@@ -538,23 +550,23 @@ ns.RegisterCallback(Probe, "GFF_CHANNEL_NOTICE", function(_, notice)
 end)
 
 ns.RegisterCallback(Probe, "GFF_COMM_HELD", function(_, length)
-	Log(L.PROBE_COMM_HELD, length)
+	LogQuiet(L.PROBE_COMM_HELD, length)
 end)
 
 ns.RegisterCallback(Probe, "GFF_COMM_FLUSHED", function()
-	Log(L.PROBE_COMM_FLUSHED)
+	LogQuiet(L.PROBE_COMM_FLUSHED)
 end)
 
 ns.RegisterCallback(Probe, "GFF_COMM_INVALID", function(_, sender)
-	Log(L.PROBE_COMM_INVALID, sender)
+	LogQuiet(L.PROBE_COMM_INVALID, sender)
 end)
 
 ns:RegisterEvent("ENCOUNTER_START", function(_, _, encounterName)
-	Log(L.PROBE_ENCOUNTER_START, SafeString(encounterName), YesNo(ns.Comm.InLockdown()))
+	LogQuiet(L.PROBE_ENCOUNTER_START, SafeString(encounterName), YesNo(ns.Comm.InLockdown()))
 end)
 
 ns:RegisterEvent("ENCOUNTER_END", function(_, _, encounterName)
-	Log(L.PROBE_ENCOUNTER_END, SafeString(encounterName), YesNo(ns.Comm.InLockdown()))
+	LogQuiet(L.PROBE_ENCOUNTER_END, SafeString(encounterName), YesNo(ns.Comm.InLockdown()))
 end)
 
 -- Lockdown has no event we rely on; poll and log transitions.
@@ -563,7 +575,7 @@ C_Timer.NewTicker(1, function()
 	local lockdown = ns.Comm.InLockdown()
 	if lockdown ~= wasLockdown then
 		wasLockdown = lockdown
-		Log(lockdown and L.PROBE_LOCKDOWN_START or L.PROBE_LOCKDOWN_END)
+		LogQuiet(lockdown and L.PROBE_LOCKDOWN_START or L.PROBE_LOCKDOWN_END)
 	end
 end)
 
