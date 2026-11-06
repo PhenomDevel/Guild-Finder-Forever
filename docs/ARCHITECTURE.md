@@ -18,9 +18,14 @@ running the addon and are cached locally.
 - **Whisper mode (Forever):** Forever's server drops addon messages to any
   chat channel, our own included (`SendAddonMessage` returns success, then a
   `NOT_ALLOWED_IN_CHANNEL` channel notice follows). Joining still works, so
-  the channel only serves to find the other addon users: its member list
-  (`ListChannelByName`, `CHAT_MSG_CHANNEL_LIST`, filtered from chat), join
-  and leave events, and everyone who whispers us (`ns.Channel` peers).
+  the channel only serves to find the other addon users: join and leave
+  events, everyone who whispers us, members remembered from earlier
+  sessions (`GuildFinderForeverDB.knownPeers`, per realm, newest 60, 14
+  days) and member lists the player requests with `/chatlist`
+  (`ns.Channel` peers). The addon can't request the list itself:
+  `ListChannelByName` is protected (`ADDON_ACTION_BLOCKED`, Forever
+  2026-11-06). When someone joins, about 3 members greet them with a
+  whispered hello, so the newcomer learns about them.
   Broadcasts go as addon whispers to 5 random peers; targeted sync messages
   go only to their target. Forever starts in whisper mode; elsewhere a
   `NOT_ALLOWED_IN_CHANNEL` notice switches to it. Members who went offline

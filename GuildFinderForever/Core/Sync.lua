@@ -160,9 +160,11 @@ local function NewNonce()
 	return ("%x%04x"):format(GetServerTime() % 0x10000000, math.random(0, 0xffff))
 end
 
-function Sync.SendHello()
+-- target: one member to greet (whisper mode); default: everyone / the
+-- usual fan-out.
+function Sync.SendHello(target)
 	Debug(L.DEBUG_SEND_HELLO, (Store.Count()))
-	Send({ y = "H", n = NewNonce(), b = Store.GetBuckets() })
+	Send({ y = "H", n = NewNonce(), b = Store.GetBuckets() }, nil, target and { target = target } or nil)
 end
 
 local function ValidBuckets(b)
@@ -434,7 +436,7 @@ function Sync.Publish(ad)
 	SendAds({ ad }, "NORMAL")
 end
 
--- Whisper mode: the first hello waits for the member list.
+-- Whisper mode: the first hello waits for the first known member.
 local helloWaiting = false
 
 local function HelloSoon()
@@ -450,15 +452,12 @@ local helloTicker
 ns.RegisterCallback(Sync, "GFF_CHANNEL_READY", function(_, number)
 	Debug(L.DEBUG_CHANNEL, number or 0)
 	if Comm.UsesWhisper() then
-		ns.Channel.RequestMembers(true)
+		ns.Channel.LoadKnownPeers()
 	end
 	HelloSoon()
 	if not helloTicker then
 		helloTicker = C_Timer.NewTicker(HELLO_INTERVAL, function()
 			Store.Prune()
-			if Comm.UsesWhisper() then
-				ns.Channel.RequestMembers()
-			end
 			Sync.SendHello()
 		end)
 	end
@@ -481,8 +480,21 @@ end)
 
 -- The channel turned out to drop addon messages (outside Forever).
 ns.RegisterCallback(Sync, "GFF_COMM_WHISPER_MODE", function()
-	ns.Channel.RequestMembers(true)
+	ns.Channel.LoadKnownPeers()
 	HelloSoon()
+end)
+
+-- Whisper mode: someone joined. About WELCOME_PEERS members greet them with
+-- a hello, so the newcomer learns about them and gets their ads.
+local WELCOME_PEERS = 3
+local WELCOME_DELAY_MIN, WELCOME_DELAY_MAX = 2, 8
+ns.RegisterCallback(Sync, "GFF_PEER_JOINED", function(_, name)
+	if not Comm.UsesWhisper() or math.random() > WELCOME_PEERS / math.max(1, ns.Channel.GetNumPeers()) then
+		return
+	end
+	C_Timer.After(WELCOME_DELAY_MIN + math.random() * (WELCOME_DELAY_MAX - WELCOME_DELAY_MIN), function()
+		Sync.SendHello(name)
+	end)
 end)
 
 ns.RegisterCallback(Sync, "GFF_COMM_HELD", function(_, count)
