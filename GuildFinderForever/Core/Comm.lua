@@ -23,6 +23,14 @@ Comm.MAX_MESSAGE_SIZE = 32 * 1024
 -- messages back to the sender, so this allows testing with a single account.
 Comm.loopback = false
 
+-- One ChatThrottleLib priority for everything. CTL keeps a separate queue
+-- per priority and interleaves them, but AceComm reassembles multipart
+-- messages per prefix + distribution + sender only: two multipart messages
+-- to the same receiver in different priorities got mixed up and arrived
+-- undecodable. The only other sender, Comm.SendWhisper, stays ALERT: its
+-- pings are single-part, which AceComm passes through without the spool.
+local PRIO = "NORMAL"
+
 local MAX_QUEUE = 100
 local FLUSH_INTERVAL = 1
 -- Peers one broadcast is whispered to.
@@ -83,12 +91,12 @@ local function Transmit(entry)
 		callback(sent, total, didSend)
 	end
 	if not Comm.UsesWhisper() then
-		Comm:SendCommMessage(Comm.PREFIX, entry.data, "CHANNEL", ns.Channel.GetNumber(), entry.prio, progress)
+		Comm:SendCommMessage(Comm.PREFIX, entry.data, "CHANNEL", ns.Channel.GetNumber(), PRIO, progress)
 		return
 	end
 	local targets = entry.target and { entry.target } or ns.Channel.PickPeers(Comm.FANOUT, entry.except)
 	for i, target in ipairs(targets) do
-		Comm:SendCommMessage(Comm.PREFIX, entry.data, "WHISPER", WhisperTarget(target), entry.prio, i == 1 and progress or nil)
+		Comm:SendCommMessage(Comm.PREFIX, entry.data, "WHISPER", WhisperTarget(target), PRIO, i == 1 and progress or nil)
 	end
 end
 
@@ -103,19 +111,18 @@ local function Flush()
 	end
 end
 
--- Sends text to everyone in the channel. prio: ChatThrottleLib priority
--- ("BULK", "NORMAL", "ALERT"). callback(sentBytes, totalBytes, didSend)
+-- Sends text to everyone in the channel. callback(sentBytes, totalBytes, didSend)
 -- runs per transmitted chunk. Returns the encoded size and whether the
 -- message was held for later; nothing on a restricted account.
 -- options (whisper mode only): target = one recipient instead of random
 -- peers, except = peer to leave out (the one a forwarded ad came from).
 -- In channel mode everything is broadcast, so others can overhear answers.
-function Comm.Send(text, prio, callback, options)
+function Comm.Send(text, callback, options)
 	if Comm.IsRestricted() then
 		return
 	end
 	local data = LibDeflate:EncodeForWoWAddonChannel(LibDeflate:CompressDeflate(text))
-	local entry = { data = data, prio = prio or "NORMAL", callback = callback,
+	local entry = { data = data, callback = callback,
 		target = options and options.target, except = options and options.except }
 	if not queue[1] and (Comm.CanSend() or entry.target and Comm.UsesWhisper() and not Comm.InLockdown()) then
 		Transmit(entry)

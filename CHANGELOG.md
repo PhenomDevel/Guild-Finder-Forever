@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fewer lost ads: when the addon sent two longer messages to the same player at once, their parts could get mixed up and the receiver could not read either of them.
+
 ## v1.1.2 (2026-11-06)
 
 - No changes for players: development builds no longer print a chat message at every boss pull.
