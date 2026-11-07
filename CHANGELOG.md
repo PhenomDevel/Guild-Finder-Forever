@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Find players: the online dot is bigger, and "Whisper" is greyed out while the player is offline (its tooltip says why).
+
 - Find players: a green or grey dot on the class icon shows whether the player is online right now (also in the opened entry). The addon asks the listed players in the background while the list is open.
 - Forever: whispering a player from another realm now works. "Whisper" used to address them as "Name-Realm", which the game rejects with "No player named ... is currently playing".
 

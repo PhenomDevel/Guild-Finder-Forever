@@ -1,4 +1,4 @@
--- luacheck: read globals CreateScrollBoxListLinearView ScrollUtil CreateDataProvider
+-- luacheck: read globals CreateScrollBoxListLinearView ScrollUtil CreateDataProvider GameTooltip
 local _, ns = ...
 
 -- "Find players" tab: role/level/class filters in a toolbar, a dense
@@ -67,6 +67,10 @@ end
 local function UpdatePresence(row)
 	local ad = row.result and row.result.ad
 	local online = ad and Presence.IsOnline(ad.o)
+	row.contact:SetEnabled(online ~= false)
+	if GameTooltip:IsOwned(row.contact) then
+		row.contact:GetScript("OnEnter")(row.contact)
+	end
 	if online == nil then
 		row.status:Hide()
 	else
@@ -218,8 +222,9 @@ local function BuildRow(tab, row)
 	row.icon = W.ClassIcon(hit, 22)
 	row.icon:SetPoint("LEFT", Column("icon").x, 0)
 	row.status = row.icon:CreateTexture(nil, "OVERLAY")
-	row.status:SetSize(12, 12)
-	row.status:SetPoint("CENTER", row.icon, "BOTTOMRIGHT", -1, 1)
+	-- The status textures have a wide transparent border: ~13 px dot.
+	row.status:SetSize(20, 20)
+	row.status:SetPoint("CENTER", row.icon, "BOTTOMRIGHT", -2, 2)
 	row.status:Hide()
 	row.name = Cell("name", "GameFontNormal")
 	row.class = Cell("class", "GameFontHighlight", W.MUTED)
@@ -262,7 +267,21 @@ local function BuildRow(tab, row)
 		end
 	end)
 	row.contact:SetPoint("TOPRIGHT", -12, -6)
-	W.Tooltip(row.contact, L.CONTACT, L.CONTACT_TIP)
+	-- Disabled while the poster is known to be offline; the tooltip says why.
+	row.contact:SetMotionScriptsWhileDisabled(true)
+	row.contact:SetScript("OnEnter", function(self)
+		GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+		GameTooltip:SetText(L.CONTACT, 1, 1, 1)
+		local text = L.CONTACT_TIP
+		if not self:IsEnabled() and row.result then
+			text = L.CONTACT_OFFLINE_TIP:format(Ads.OwnerName(row.result.ad.o))
+		end
+		GameTooltip:AddLine(text, nil, nil, nil, true)
+		GameTooltip:Show()
+	end)
+	row.contact:SetScript("OnLeave", function()
+		GameTooltip:Hide()
+	end)
 	row.hide = W.Button(detail, L.HIDE, 82, function()
 		if row.result then
 			Store.SetHidden(row.result.ad.i, true)
