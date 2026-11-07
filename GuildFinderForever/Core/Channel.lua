@@ -293,6 +293,7 @@ function Channel.AddPeer(name)
 		return false
 	end
 	Remember(name)
+	ns:Fire("GFF_PEER_SEEN", name)
 	if peers[name] then
 		return false
 	end
@@ -307,6 +308,7 @@ function Channel.RemovePeer(name)
 		return
 	end
 	name = PeerKey(name)
+	ns:Fire("GFF_PEER_LEFT", name)
 	local known = Known()
 	if known then
 		known[name] = nil

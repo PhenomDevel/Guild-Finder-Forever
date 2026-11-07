@@ -58,6 +58,7 @@ Core\Sync.lua
 Core\MyAds.lua
 Core\Search.lua
 Core\Verify.lua
+Core\Presence.lua
 
 # UI
 UI\Widgets.lua
