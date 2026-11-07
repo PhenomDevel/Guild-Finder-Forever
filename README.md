@@ -44,7 +44,7 @@ What changed: [CHANGELOG.md](https://github.com/PhenomDevel/Guild-Finder-Forever
 - **Raid details:** raid style, raid days and time, raids per week and the
   wanted classes per role, plus whether your class fits.
 - **Find players:** a compact, sortable list with role, level and class
-  filters.
+  filters. A dot on the class icon shows whether the player is online.
 - **See your own ads:** your player ad and your guild's ad are pinned to the
   top of the lists, so you see them the way others do.
 - **My ad:** a player ad per character or a guild ad per guild (by members

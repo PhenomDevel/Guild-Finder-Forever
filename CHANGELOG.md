@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Find players: a green or grey dot on the class icon shows whether the player is online right now (also in the opened entry). The addon asks the listed players in the background while the list is open.
+
 ## v1.1.3 (2026-11-06)
 
 - Fewer lost ads: when the addon sent two longer messages to the same player at once, their parts could get mixed up and the receiver could not read either of them.

@@ -12,6 +12,7 @@ local Ads = ns.Ads
 local Store = ns.Store
 local Verify = ns.Verify
 local Filters = ns.Filters
+local Presence = ns.Presence
 
 local KIND = Ads.KIND_PLAYER
 local ROW_HEIGHT = 30
@@ -50,6 +51,9 @@ if not C.SHOW_TIMES then
 	end
 end
 local ARROW_UP = "|TInterface\\Buttons\\Arrow-Up-Up:0|t"
+local STATUS_ONLINE = "Interface\\FriendsFrame\\StatusIcon-Online"
+local STATUS_OFFLINE = "Interface\\FriendsFrame\\StatusIcon-Offline"
+local REWATCH_INTERVAL = 60
 
 local function Column(key)
 	for _, column in ipairs(COLUMNS) do
@@ -57,6 +61,26 @@ local function Column(key)
 			return column
 		end
 	end
+end
+
+-- Dot on the class icon: online, offline or nothing while unknown.
+local function UpdatePresence(row)
+	local ad = row.result and row.result.ad
+	local online = ad and Presence.IsOnline(ad.o)
+	if online == nil then
+		row.status:Hide()
+	else
+		row.status:SetTexture(online and STATUS_ONLINE or STATUS_OFFLINE)
+		row.status:Show()
+	end
+end
+
+local function PresenceText(ad)
+	local online = Presence.IsOnline(ad.o)
+	if online == nil then
+		return nil
+	end
+	return online and ("|cff40ff40" .. L.PRESENCE_ONLINE .. "|r") or L.PRESENCE_OFFLINE
 end
 
 local function RolesText(mask)
@@ -193,6 +217,10 @@ local function BuildRow(tab, row)
 	end
 	row.icon = W.ClassIcon(hit, 22)
 	row.icon:SetPoint("LEFT", Column("icon").x, 0)
+	row.status = row.icon:CreateTexture(nil, "OVERLAY")
+	row.status:SetSize(12, 12)
+	row.status:SetPoint("CENTER", row.icon, "BOTTOMRIGHT", -1, 1)
+	row.status:Hide()
 	row.name = Cell("name", "GameFontNormal")
 	row.class = Cell("class", "GameFontHighlight", W.MUTED)
 	row.level = Cell("level", "GameFontHighlight")
@@ -260,6 +288,7 @@ local function FillRow(tab, row, result)
 	row.selectedTop:SetShown(selected)
 
 	row.icon:SetClass(ad.c)
+	UpdatePresence(row)
 	row.name:SetText("|c" .. W.ClassColorHex(ad.c) .. Ads.OwnerName(ad.o) .. "|r")
 	row.class:SetText(C.ClassName(ad.c))
 	row.level:SetText(ad.lv)
@@ -300,6 +329,10 @@ local function FillRow(tab, row, result)
 		local note = L.UPDATED_AGO:format(W.Duration(GetServerTime() - ad.v))
 		if (ad.r or 0) > 0 then
 			note = RolesText(ad.r) .. " · " .. note
+		end
+		local presence = not result.own and PresenceText(ad)
+		if presence then
+			note = presence .. " · " .. note
 		end
 		row.note:SetText(note)
 	end
@@ -393,6 +426,50 @@ local function BuildList(tab, panel)
 	end)
 	ScrollUtil.InitScrollBoxListWithScrollBar(scrollBox, scrollBar, view)
 
+	-- Only while the tab is shown: pings every listed poster, top first;
+	-- once a minute again for those whose status expired.
+	local rewatch
+	function tab:WatchPresence()
+		if not panel:IsVisible() then
+			return
+		end
+		rewatch = rewatch or C_Timer.NewTicker(REWATCH_INTERVAL, function()
+			tab:UpdatePresence()
+			tab:WatchPresence()
+		end)
+		local owners = {}
+		for _, result in ipairs(self.results or {}) do
+			if not result.own then
+				owners[#owners + 1] = result.ad.o
+			end
+		end
+		Presence.Watch(owners)
+	end
+
+	function tab:UpdatePresence()
+		scrollBox:ForEachFrame(function(row)
+			if row.result then
+				FillRow(self, row, row.result)
+			end
+		end)
+	end
+
+	panel:SetScript("OnShow", function()
+		tab:WatchPresence()
+	end)
+	panel:SetScript("OnHide", function()
+		if rewatch then
+			rewatch:Cancel()
+			rewatch = nil
+		end
+		Presence.StopWatching()
+	end)
+	ns.RegisterCallback(tab, "GFF_PRESENCE_CHANGED", function()
+		if panel:IsVisible() then
+			tab:UpdatePresence()
+		end
+	end)
+
 	local empty = W.Text(panel, "GameFontDisable")
 	empty:SetPoint("CENTER")
 	empty:SetJustifyH("CENTER")
@@ -409,6 +486,7 @@ local function BuildList(tab, panel)
 		end
 		self.results = results
 		scrollBox:SetDataProvider(CreateDataProvider(results), true)
+		self:WatchPresence()
 		empty:SetShown(#results == 0)
 		empty:SetText(count == 0 and L.NO_PLAYER_ADS_YET or L.NO_RESULTS)
 	end
