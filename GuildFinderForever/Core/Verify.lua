@@ -33,15 +33,6 @@ local function OpenWhisper(name)
 	end
 end
 
--- Whisper target: same-realm names without the realm.
-local function WhisperName(owner)
-	local realm = Ads.OwnerRealm(owner)
-	if realm and realm == Ads.GetRealm() then
-		return Ads.OwnerName(owner)
-	end
-	return owner
-end
-
 local function Finish(result)
 	local ad = current and current.ad
 	current = nil
@@ -52,7 +43,7 @@ end
 
 -- Must run from a click: /who needs a hardware event.
 function Verify.Contact(ad)
-	OpenWhisper(WhisperName(ad.o))
+	OpenWhisper(ns:WhisperTarget(ad.o))
 	if not (C_FriendList and C_FriendList.SendWho) then
 		return
 	end
@@ -135,7 +126,7 @@ function Verify.Ping(ad)
 		return
 	end
 	local nonce = math.random(1, 2 ^ 30)
-	local target = WhisperName(ad.o)
+	local target = ns:WhisperTarget(ad.o)
 	if not Comm.SendWhisper(target, Serializer.Serialize({ y = "P", n = nonce })) then
 		return
 	end

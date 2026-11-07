@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Forever: whispering a player from another realm now works. "Whisper" used to address them as "Name-Realm", which the game rejects with "No player named ... is currently playing".
+
 ## v1.1.3 (2026-11-06)
 
 - Fewer lost ads: when the addon sent two longer messages to the same player at once, their parts could get mixed up and the receiver could not read either of them.
