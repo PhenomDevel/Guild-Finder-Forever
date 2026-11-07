@@ -1,4 +1,4 @@
--- luacheck: read globals IsTrialAccount IsVeteranTrialAccount GetNormalizedRealmName
+-- luacheck: read globals IsTrialAccount IsVeteranTrialAccount
 local _, ns = ...
 
 -- Transport for all addon traffic: compress + encode with LibDeflate, send via
@@ -72,15 +72,6 @@ function Comm.CanSend()
 	return ns.Channel.GetNumber() ~= nil
 end
 
--- Same-realm names without the realm: Forever only accepts "First Surname".
-local function WhisperTarget(name)
-	local realm = GetNormalizedRealmName()
-	if type(realm) == "string" and realm ~= "" and name:sub(-#realm - 1) == "-" .. realm then
-		return name:sub(1, -#realm - 2)
-	end
-	return name
-end
-
 function Comm.GetQueueLength()
 	return #queue
 end
@@ -96,7 +87,7 @@ local function Transmit(entry)
 	end
 	local targets = entry.target and { entry.target } or ns.Channel.PickPeers(Comm.FANOUT, entry.except)
 	for i, target in ipairs(targets) do
-		Comm:SendCommMessage(Comm.PREFIX, entry.data, "WHISPER", WhisperTarget(target), PRIO, i == 1 and progress or nil)
+		Comm:SendCommMessage(Comm.PREFIX, entry.data, "WHISPER", ns:WhisperTarget(target), PRIO, i == 1 and progress or nil)
 	end
 end
 
@@ -146,7 +137,7 @@ function Comm.SendWhisper(target, text)
 		return false
 	end
 	local data = LibDeflate:EncodeForWoWAddonChannel(LibDeflate:CompressDeflate(text))
-	Comm:SendCommMessage(Comm.PREFIX, data, "WHISPER", WhisperTarget(target), "ALERT")
+	Comm:SendCommMessage(Comm.PREFIX, data, "WHISPER", ns:WhisperTarget(target), "ALERT")
 	return true
 end
 

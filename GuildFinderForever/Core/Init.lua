@@ -119,6 +119,23 @@ function ns:GetPlayerFullName()
 	end
 end
 
+-- Name to whisper "Name-Realm" by. Forever's chat only accepts "First
+-- Surname" (any realm suffix gives "No player named ..."), elsewhere only
+-- the own realm is dropped.
+function ns:WhisperTarget(name)
+	if type(name) ~= "string" then
+		return name
+	end
+	if ns.Ads.IsForever() then
+		return name:match("^([^%-]+)") or name
+	end
+	local realm = OwnRealm()
+	if realm and name:sub(-#realm - 1) == "-" .. realm then
+		return name:sub(1, -#realm - 2)
+	end
+	return name
+end
+
 -- Adds the own realm to a name without one (senders on Forever).
 function ns:NormalizeName(name)
 	if type(name) ~= "string" or name:find("-", 1, true) then
