@@ -13,6 +13,10 @@ externals:
     tag: 1.0.2-release
     # GitHub repo, so name the CurseForge project for the embedded-library relation.
     curse-slug: libdeflate
+  GuildFinderForever/Libs/LibDataBroker-1.1:
+    url: https://github.com/tekkub/libdatabroker-1-1
+    curse-slug: libdatabroker-1-1
+  GuildFinderForever/Libs/LibDBIcon-1.0: https://repos.curseforge.com/wow/libdbicon-1-0/trunk/LibDBIcon-1.0
 
 # The addon lives in a subfolder; move it to the zip root.
 move-folders:
@@ -35,6 +39,7 @@ ignore:
   - GuildFinderForever/Libs/LibDeflate/examples
   - GuildFinderForever/Libs/LibDeflate/README.md
   - GuildFinderForever/Libs/LibDeflate/changelog.md
+  - GuildFinderForever/Libs/LibDataBroker-1.1/README.textile
 
 manual-changelog:
   filename: CHANGELOG.md
