@@ -10,6 +10,8 @@ local _, ns = ...
 --                random delay, cancelled if an equal cache answered first.
 --   R request    { to = inventory sender, ids = { ... } }
 --   A ads        { a = { ad, ... } }   requested ads, own new ads, pushes.
+-- Every message also carries v = the sender's addon version (since v1.3.2;
+-- older clients ignore it), only used to explain dropped messages.
 -- Everything is broadcast on the channel, so every listener can pick up
 -- ads it was missing from any A message.
 -- Whisper mode (ns.Comm, Forever): H goes to a few random peers, I/R and
@@ -41,6 +43,14 @@ local RATE_REFILL = 0.5 -- tokens per second
 -- Whisper mode: ads younger than this are forwarded on receipt; older ones
 -- arrive through the hello sync.
 local FORWARD_AGE = 15 * 60
+
+-- Clients up to this version send no v field.
+local LAST_UNTAGGED_VERSION = "v1.3.1"
+local OWN_VERSION = type(ns.version) == "string" and ns.version:match("^v?%d+%.%d+%.%d+%S*$") and ns.version or nil
+local MAX_VERSION_LENGTH = 24
+
+-- [sender] = addon version from their last readable message (this session)
+local peerVersions = {}
 
 Sync.lastSync = nil
 Sync.stats = { received = 0, sent = 0, dropped = 0 }
@@ -94,6 +104,7 @@ end
 
 -- options: see Comm.Send (target, except).
 local function Send(message, options)
+	message.v = OWN_VERSION
 	Sync.stats.sent = Sync.stats.sent + 1
 	Comm.Send(Serializer.Serialize(message), nil, options)
 end
@@ -402,6 +413,68 @@ end
 
 local HANDLERS = { H = OnHello, I = OnInventory, R = OnRequest, A = OnAds }
 
+local function ParseVersion(text)
+	local major, minor, patch = text:match("^v?(%d+)%.(%d+)%.(%d+)")
+	if major then
+		return { tonumber(major), tonumber(minor), tonumber(patch) }
+	end
+end
+
+-- -1, 0 or 1; nil when either isn't a release version.
+local function CompareVersions(a, b)
+	local x, y = a and ParseVersion(a), b and ParseVersion(b)
+	if not (x and y) then
+		return nil
+	end
+	for i = 1, 3 do
+		if x[i] ~= y[i] then
+			return x[i] < y[i] and -1 or 1
+		end
+	end
+	return 0
+end
+
+-- Received text shown in chat: escape codes stay literal.
+local function Escape(text)
+	return (tostring(text):gsub("|", "||"))
+end
+
+local function VersionNote(sender)
+	local theirs = peerVersions[sender] and Escape(peerVersions[sender])
+	if not theirs then
+		return L.DEBUG_PEER_VERSION_UNKNOWN:format(LAST_UNTAGGED_VERSION)
+	end
+	local order = CompareVersions(peerVersions[sender], OWN_VERSION)
+	if order == -1 then
+		return L.DEBUG_PEER_VERSION_OLDER:format(theirs)
+	elseif order == 1 then
+		return L.DEBUG_PEER_VERSION_NEWER:format(theirs)
+	end
+	return L.DEBUG_PEER_VERSION:format(theirs)
+end
+
+-- reason: Comm's ("size", "encoding", "compression"), "format" (not a
+-- serialized table) or "type" (unknown message type, detail = its y).
+local function DropInvalid(sender, reason, detail)
+	Sync.stats.dropped = Sync.stats.dropped + 1
+	if not Debugging() then
+		return
+	end
+	local text
+	if reason == "size" then
+		text = L.DEBUG_DROP_SIZE:format(detail or 0)
+	elseif reason == "encoding" then
+		text = L.DEBUG_DROP_ENCODING:format(detail or 0)
+	elseif reason == "compression" then
+		text = L.DEBUG_DROP_COMPRESSION:format(detail or 0)
+	elseif reason == "type" then
+		text = L.DEBUG_DROP_TYPE:format(Escape(tostring(detail):sub(1, 16)))
+	else
+		text = L.DEBUG_DROP_FORMAT
+	end
+	Debug(L.DEBUG_DROP_INVALID, sender, text, VersionNote(sender))
+end
+
 Comm.RegisterHandler(function(text, sender, distribution)
 	if not ns.db or (distribution ~= "CHANNEL" and not Comm.UsesWhisper()) then
 		return
@@ -412,14 +485,20 @@ Comm.RegisterHandler(function(text, sender, distribution)
 		return
 	end
 	local message = Serializer.Deserialize(text)
-	local handler = type(message) == "table" and HANDLERS[message.y]
+	if type(message) ~= "table" then
+		DropInvalid(sender, "format")
+		return
+	end
+	if type(message.v) == "string" and #message.v <= MAX_VERSION_LENGTH then
+		peerVersions[sender] = message.v
+	end
+	local handler = HANDLERS[message.y]
 	-- Verify's pings share the whisper path.
-	if not handler and distribution == "WHISPER" and type(message) == "table" and (message.y == "P" or message.y == "Q") then
+	if not handler and distribution == "WHISPER" and (message.y == "P" or message.y == "Q") then
 		return
 	end
 	if not handler then
-		Sync.stats.dropped = Sync.stats.dropped + 1
-		Debug(L.DEBUG_DROP_INVALID, sender)
+		DropInvalid(sender, "type", message.y)
 		return
 	end
 	Sync.stats.received = Sync.stats.received + 1
@@ -501,6 +580,10 @@ ns.RegisterCallback(Sync, "GFF_COMM_HELD", function(_, count)
 	Debug(L.DEBUG_HELD, count)
 end)
 
-ns.RegisterCallback(Sync, "GFF_COMM_INVALID", function(_, sender)
-	Debug(L.DEBUG_DROP_INVALID, sender)
+ns.RegisterCallback(Sync, "GFF_COMM_SEND_FAILED", function(_, target, sent, total)
+	Debug(L.DEBUG_SEND_FAILED, target or L.DEBUG_CHANNEL_TARGET, sent or 0, total or 0)
+end)
+
+ns.RegisterCallback(Sync, "GFF_COMM_INVALID", function(_, sender, reason, bytes)
+	DropInvalid(sender, reason, bytes)
 end)
