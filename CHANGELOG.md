@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.3.1 (2026-11-08)
+
 - My ad: texts and goal tags no longer run out of the preview and publish boxes or overlap each other; long goal lists wrap into a second row.
 
 ## v1.3.0 (2026-11-08)
