@@ -2,8 +2,9 @@
 
 ## Unreleased
 
+## v1.3.0 (2026-11-08)
+
 - Minimap button: now a standard LibDBIcon button, so minimap addons (SexyMap, Leatrix Plus, button collectors …) hide it until you hover the minimap, like other addons' buttons. Position and the show/hide setting are kept.
-- Minimap button: hides and shows with the other addon buttons when a minimap addon (SexyMap, Leatrix Plus, button collectors …) fades them out until you hover the minimap.
 - Find guilds: a green or grey dot on the guild emblem shows whether the player who posted the ad is online right now, the one "Whisper" in the guild details reaches. The details show the same dot on the button, and "Whisper" is greyed out while the poster is offline instead of ending in "No player named ...".
 
 ## v1.2.0 (2026-11-07)
