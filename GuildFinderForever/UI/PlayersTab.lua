@@ -51,8 +51,6 @@ if not C.SHOW_TIMES then
 	end
 end
 local ARROW_UP = "|TInterface\\Buttons\\Arrow-Up-Up:0|t"
-local STATUS_ONLINE = "Interface\\FriendsFrame\\StatusIcon-Online"
-local STATUS_OFFLINE = "Interface\\FriendsFrame\\StatusIcon-Offline"
 local REWATCH_INTERVAL = 60
 
 local function Column(key)
@@ -71,12 +69,7 @@ local function UpdatePresence(row)
 	if GameTooltip:IsOwned(row.contact) then
 		row.contact:GetScript("OnEnter")(row.contact)
 	end
-	if online == nil then
-		row.status:Hide()
-	else
-		row.status:SetTexture(online and STATUS_ONLINE or STATUS_OFFLINE)
-		row.status:Show()
-	end
+	row.status:SetOnline(online)
 end
 
 local function PresenceText(ad)
@@ -221,11 +214,7 @@ local function BuildRow(tab, row)
 	end
 	row.icon = W.ClassIcon(hit, 22)
 	row.icon:SetPoint("LEFT", Column("icon").x, 0)
-	row.status = row.icon:CreateTexture(nil, "OVERLAY")
-	-- The status textures have a wide transparent border: ~13 px dot.
-	row.status:SetSize(20, 20)
-	row.status:SetPoint("CENTER", row.icon, "BOTTOMRIGHT", -2, 2)
-	row.status:Hide()
+	row.status = W.StatusDot(row.icon)
 	row.name = Cell("name", "GameFontNormal")
 	row.class = Cell("class", "GameFontHighlight", W.MUTED)
 	row.level = Cell("level", "GameFontHighlight")
@@ -462,7 +451,7 @@ local function BuildList(tab, panel)
 				owners[#owners + 1] = result.ad.o
 			end
 		end
-		Presence.Watch(owners)
+		Presence.Watch(owners, tab)
 	end
 
 	function tab:UpdatePresence()
@@ -481,7 +470,7 @@ local function BuildList(tab, panel)
 			rewatch:Cancel()
 			rewatch = nil
 		end
-		Presence.StopWatching()
+		Presence.StopWatching(tab)
 	end)
 	ns.RegisterCallback(tab, "GFF_PRESENCE_CHANGED", function()
 		if panel:IsVisible() then

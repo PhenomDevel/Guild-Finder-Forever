@@ -13,6 +13,8 @@ W.GOLD = { 1, 0.82, 0 }
 -- Texture markup for symbols the game fonts lack (✓, ▾); size follows the font.
 W.CHECK = "|TInterface\\RaidFrame\\ReadyCheck-Ready:0|t"
 W.ARROW_DOWN = "|TInterface\\Buttons\\Arrow-Down-Up:0|t"
+W.STATUS_ONLINE = "Interface\\FriendsFrame\\StatusIcon-Online"
+W.STATUS_OFFLINE = "Interface\\FriendsFrame\\StatusIcon-Offline"
 W.TEXT = { 0.9, 0.9, 0.9 }
 W.WHITE = { 1, 1, 1 }
 W.MUTED = { 0.62, 0.62, 0.62 }
@@ -614,6 +616,25 @@ end
 
 -- Guild emblem: the faction logo ("A"/"H") on a dark faction-coloured
 -- field, or a shield icon picked by name when the faction is unknown.
+-- Online dot on the bottom right corner of an icon frame:
+-- :SetOnline(true|false), nil hides it.
+function W.StatusDot(icon)
+	local dot = icon:CreateTexture(nil, "OVERLAY")
+	-- The status textures have a wide transparent border: ~13 px dot.
+	dot:SetSize(20, 20)
+	dot:SetPoint("CENTER", icon, "BOTTOMRIGHT", -2, 2)
+	dot:Hide()
+	function dot:SetOnline(online)
+		if online == nil then
+			self:Hide()
+		else
+			self:SetTexture(online and W.STATUS_ONLINE or W.STATUS_OFFLINE)
+			self:Show()
+		end
+	end
+	return dot
+end
+
 function W.GuildEmblem(parent, size)
 	local frame = CreateFrame("Frame", nil, parent, "BackdropTemplate")
 	frame:SetSize(size, size)

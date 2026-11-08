@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Find guilds: a green or grey dot on the guild emblem shows whether the player who posted the ad is online right now, the one "Whisper" in the guild details reaches. The details show the same dot on the button, and "Whisper" is greyed out while the poster is offline instead of ending in "No player named ...".
+
 ## v1.2.0 (2026-11-07)
 
 - Find players: a green or grey dot on the class icon shows whether the player is online right now (also in the opened entry). The addon asks the listed players in the background while the list is open. "Whisper" is greyed out while the player is offline; its tooltip says why.

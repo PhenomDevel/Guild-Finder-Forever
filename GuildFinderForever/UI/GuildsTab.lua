@@ -12,6 +12,7 @@ local Ads = ns.Ads
 local Store = ns.Store
 local MyAds = ns.MyAds
 local Filters = ns.Filters
+local Presence = ns.Presence
 
 local KIND = Ads.KIND_GUILD
 local BANNER_HEIGHT = 30
@@ -19,6 +20,7 @@ local CARD_HEIGHT = 156
 local RAID_TOP = -56 -- raid box below name and meta
 local RAID_PAD = 8
 local CARD_GAP = 8
+local REWATCH_INTERVAL = 60
 
 local function GuildCount()
 	local count = 0
@@ -116,6 +118,8 @@ local function BuildCard(tab, row)
 	card.stripe:SetWidth(3)
 	card.emblem = W.GuildEmblem(card, 40)
 	card.emblem:SetPoint("TOPLEFT", 12, -10)
+	-- Online status of the poster, the one "Whisper" in the details reaches.
+	card.status = W.StatusDot(card.emblem)
 
 	card.score = W.Text(card, "GameFontNormalLarge")
 	card.score:SetPoint("TOPRIGHT", -10, -10)
@@ -208,6 +212,15 @@ local function BuildCard(tab, row)
 		end
 	end
 
+	function card:UpdatePresence()
+		local result = self.result
+		local online
+		if result and not result.own then
+			online = Presence.IsOnline(result.ad.o)
+		end
+		self.status:SetOnline(online)
+	end
+
 	function card:SetResult(result)
 		self.result = result
 		if not result then
@@ -217,6 +230,7 @@ local function BuildCard(tab, row)
 		local ad = result.ad
 		self:Show()
 		self.emblem:SetGuild(ad.n, ad.f)
+		self:UpdatePresence()
 		local faction = W.FACTION[ad.f]
 		self.stripe:SetShown(faction ~= nil)
 		if faction then
@@ -326,12 +340,59 @@ local function BuildGrid(tab, panel)
 	empty:SetJustifyH("CENTER")
 	empty:SetWidth(420)
 
+	-- Only while the tab is shown: pings every listed poster, top first;
+	-- once a minute again for those whose status expired.
+	local rewatch
+	function tab:WatchPresence()
+		if not panel:IsVisible() then
+			return
+		end
+		rewatch = rewatch or C_Timer.NewTicker(REWATCH_INTERVAL, function()
+			tab:UpdatePresence()
+			tab:WatchPresence()
+		end)
+		local owners = {}
+		for _, result in ipairs(self.results or {}) do
+			if not result.own then
+				owners[#owners + 1] = result.ad.o
+			end
+		end
+		Presence.Watch(owners, tab)
+	end
+
+	function tab:UpdatePresence()
+		scrollBox:ForEachFrame(function(row)
+			if row.cards then
+				row.cards[1]:UpdatePresence()
+				row.cards[2]:UpdatePresence()
+			end
+		end)
+	end
+
+	panel:SetScript("OnShow", function()
+		tab:WatchPresence()
+	end)
+	panel:SetScript("OnHide", function()
+		if rewatch then
+			rewatch:Cancel()
+			rewatch = nil
+		end
+		Presence.StopWatching(tab)
+	end)
+	ns.RegisterCallback(tab, "GFF_PRESENCE_CHANGED", function()
+		if panel:IsVisible() then
+			tab:UpdatePresence()
+		end
+	end)
+
 	function tab:SetResults(results)
+		self.results = results
 		local rows = {}
 		for i = 1, #results, 2 do
 			rows[#rows + 1] = { results[i], results[i + 1] }
 		end
 		scrollBox:SetDataProvider(CreateDataProvider(rows), true)
+		self:WatchPresence()
 		empty:SetShown(#results == 0)
 		empty:SetText(GuildCount() == 0 and L.NO_ADS_YET or L.NO_RESULTS)
 	end

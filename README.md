@@ -41,6 +41,7 @@ What changed: [CHANGELOG.md](https://github.com/PhenomDevel/Guild-Finder-Forever
 - **Find guilds:** guild cards sorted by how well a guild fits your own ad
   (goals, roles, wanted classes, language). Filters for faction, language,
   goals, raid style, "wants my class" and, on Forever, "same ruleset".
+  A dot on the guild emblem shows whether the ad's poster is online.
 - **Raid details:** raid style, raid days and time, raids per week and the
   wanted classes per role, plus whether your class fits.
 - **Find players:** a compact, sortable list with role, level and class
