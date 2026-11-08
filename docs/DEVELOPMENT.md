@@ -31,9 +31,12 @@ tools/                       fetch-libs.sh (libraries for local development)
 | CallbackHandler-1.0 | Ace3 | Internal messages, required by AceComm |
 | AceComm-3.0 + ChatThrottleLib | Ace3 | Splitting/reassembling long messages, bandwidth throttling |
 | LibDeflate | [SafeteeWoW/LibDeflate](https://github.com/SafeteeWoW/LibDeflate) `1.0.2-release` | Compression, addon-channel safe encoding |
+| LibDataBroker-1.1 | [tekkub/libdatabroker-1-1](https://github.com/tekkub/libdatabroker-1-1) | Launcher data object, required by LibDBIcon |
+| LibDBIcon-1.0 | CurseForge SVN trunk | Minimap button that minimap addons can hide, fade or collect |
 
 Release builds get them from the `.pkgmeta` externals (Ace3 from the CurseForge
-SVN trunk, LibDeflate from GitHub). They are not committed; for local
+SVN trunk, LibDBIcon from the CurseForge SVN trunk, LibDeflate and
+LibDataBroker from GitHub). They are not committed; for local
 development run
 
 ```bash
@@ -41,7 +44,8 @@ tools/fetch-libs.sh
 ```
 
 (Git Bash on Windows). It fills `GuildFinderForever/Libs/` from the Ace3 GitHub
-repository and the pinned LibDeflate tag. Run it again to update.
+repository, the pinned LibDeflate tag, LibDataBroker's GitHub repository and
+LibDBIcon's SVN trunk. Run it again to update.
 
 ## Local setup
 
