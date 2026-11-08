@@ -76,18 +76,32 @@ function Comm.GetQueueLength()
 	return #queue
 end
 
-local function Transmit(entry)
-	local callback = entry.callback
-	local progress = callback and function(_, sent, total, didSend)
-		callback(sent, total, didSend)
+-- A part the server rejects for anything but throttling is dropped by
+-- ChatThrottleLib while the rest still goes out, so the receiver can't
+-- decompress the message: reported once per message and recipient as
+-- GFF_COMM_SEND_FAILED(target, sentBytes, totalBytes); target nil = channel.
+local function Progress(callback, target)
+	local failed = false
+	return function(_, sent, total, didSend)
+		if didSend == false and not failed then
+			failed = true
+			ns:Fire("GFF_COMM_SEND_FAILED", target, sent, total)
+		end
+		if callback then
+			callback(sent, total, didSend)
+		end
 	end
+end
+
+local function Transmit(entry)
 	if not Comm.UsesWhisper() then
-		Comm:SendCommMessage(Comm.PREFIX, entry.data, "CHANNEL", ns.Channel.GetNumber(), PRIO, progress)
+		Comm:SendCommMessage(Comm.PREFIX, entry.data, "CHANNEL", ns.Channel.GetNumber(), PRIO, Progress(entry.callback))
 		return
 	end
 	local targets = entry.target and { entry.target } or ns.Channel.PickPeers(Comm.FANOUT, entry.except)
 	for i, target in ipairs(targets) do
-		Comm:SendCommMessage(Comm.PREFIX, entry.data, "WHISPER", ns:WhisperTarget(target), PRIO, i == 1 and progress or nil)
+		Comm:SendCommMessage(Comm.PREFIX, entry.data, "WHISPER", ns:WhisperTarget(target), PRIO,
+			Progress(i == 1 and entry.callback or nil, target))
 	end
 end
 
@@ -143,7 +157,9 @@ end
 
 -- handler(text, sender, distribution) receives every valid message of other
 -- players (and own ones while Comm.loopback is set); distribution is
--- "CHANNEL" or "WHISPER".
+-- "CHANNEL" or "WHISPER". Messages that fail here fire
+-- GFF_COMM_INVALID(sender, reason, bytes) with reason "size", "encoding" or
+-- "compression".
 function Comm.RegisterHandler(handler)
 	handlers[#handlers + 1] = handler
 end
@@ -159,21 +175,31 @@ function Comm:OnCommReceived(_, data, distribution, sender)
 	if issecretvalue and (issecretvalue(data) or issecretvalue(sender)) then
 		return
 	end
-	if type(data) ~= "string" or type(sender) ~= "string" or #data > Comm.MAX_MESSAGE_SIZE then
+	if type(data) ~= "string" or type(sender) ~= "string" then
 		return
 	end
 	sender = ns:NormalizeName(sender)
 	if IsSelf(sender) and not Comm.loopback then
 		return
 	end
+	if #data > Comm.MAX_MESSAGE_SIZE then
+		ns:Fire("GFF_COMM_INVALID", sender, "size", #data)
+		return
+	end
 	-- Whoever whispers us runs the addon: a peer for future broadcasts.
 	if distribution == "WHISPER" and Comm.UsesWhisper() then
 		ns.Channel.AddPeer(sender)
 	end
+	-- AceComm joins multipart messages blindly: a lost or foreign part
+	-- usually still decodes but no longer decompresses.
 	local decoded = LibDeflate:DecodeForWoWAddonChannel(data)
-	local text = decoded and LibDeflate:DecompressDeflate(decoded)
+	if not decoded then
+		ns:Fire("GFF_COMM_INVALID", sender, "encoding", #data)
+		return
+	end
+	local text = LibDeflate:DecompressDeflate(decoded)
 	if type(text) ~= "string" then
-		ns:Fire("GFF_COMM_INVALID", sender)
+		ns:Fire("GFF_COMM_INVALID", sender, "compression", #data)
 		return
 	end
 	for i = 1, #handlers do
