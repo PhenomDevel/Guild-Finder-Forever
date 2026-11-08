@@ -600,6 +600,7 @@ local function Build(content)
 	local preview = W.Panel(content)
 	preview:SetPoint("TOPRIGHT")
 	preview:SetSize(SIDE_WIDTH, 214)
+	controls.preview = preview
 	controls.previewHeader = W.Header(preview, "", "GameFontNormalLarge")
 	controls.previewHeader:SetPoint("TOPLEFT", 14, -14)
 
@@ -633,7 +634,9 @@ local function Build(content)
 
 	controls.matches = W.Text(preview, "GameFontHighlightSmall", W.MUTED)
 	controls.matches:SetPoint("TOPLEFT", card, "BOTTOMLEFT", 2, -10)
-	controls.matches:SetPoint("RIGHT", preview, "RIGHT", -14, 0)
+	-- Fixed widths instead of RIGHT anchors, so GetStringHeight() is valid
+	-- before the first layout pass.
+	controls.matches:SetWidth(SIDE_WIDTH - 28)
 	controls.matches:SetSpacing(2)
 
 	--------------------------------------------------------------------------
@@ -641,9 +644,9 @@ local function Build(content)
 	--------------------------------------------------------------------------
 
 	local side = W.Panel(content)
+	side:SetPoint("TOPLEFT", preview, "BOTTOMLEFT", 0, -GAP)
 	side:SetPoint("TOPRIGHT", preview, "BOTTOMRIGHT", 0, -GAP)
-	side:SetPoint("BOTTOMLEFT", preview, "BOTTOMLEFT", 0, -GAP)
-	side:SetPoint("BOTTOM", content, "BOTTOM")
+	side:SetPoint("BOTTOMRIGHT", content, "BOTTOMRIGHT")
 
 	controls.badge = W.Panel(side)
 	controls.badge:SetHeight(22)
@@ -655,7 +658,7 @@ local function Build(content)
 
 	controls.info = W.Text(side, "GameFontHighlightSmall", W.MUTED)
 	controls.info:SetPoint("TOPLEFT", controls.badge, "BOTTOMLEFT", 0, -8)
-	controls.info:SetPoint("RIGHT", side, "RIGHT", -14, 0)
+	controls.info:SetWidth(SIDE_WIDTH - 28)
 	controls.info:SetSpacing(3)
 
 	local buttonWidth = SIDE_WIDTH - 28
@@ -711,7 +714,7 @@ local function Build(content)
 
 	controls.otherNote = W.Text(side, "GameFontDisableSmall")
 	controls.otherNote:SetPoint("BOTTOMLEFT", 14, 14)
-	controls.otherNote:SetPoint("RIGHT", side, "RIGHT", -14, 0)
+	controls.otherNote:SetWidth(SIDE_WIDTH - 28)
 	controls.otherNote:SetSpacing(2)
 
 	--------------------------------------------------------------------------
@@ -806,7 +809,10 @@ local function Build(content)
 		controls.cardText:SetPoint("RIGHT", controls.card, "RIGHT", -10, 0)
 		controls.cardText:SetMaxLines(hasMeta and 2 or 3)
 		controls.cardText:SetText(text ~= "" and text or ("|cff9d9d9d" .. L.NO_TEXT .. "|r"))
-		controls.cardTags:SetGoals(draft.goals)
+		-- Tags wrap inside the card (long labels in de/fr/ru); the card and
+		-- the preview panel grow with them and with the match line.
+		controls.cardTags:SetGoals(draft.goals, SIDE_WIDTH - 24 - 54 - 10)
+		controls.card:SetHeight(112 + controls.cardTags:GetHeight() - 18)
 		controls.cardStrip:SetMask(draft.times)
 
 		-- What the other side has on offer, scored against the draft.
@@ -829,6 +835,7 @@ local function Build(content)
 		end
 		local format = self.mode == MODE_GUILD and L.PREVIEW_MATCHES_PLAYERS or L.PREVIEW_MATCHES_GUILDS
 		controls.matches:SetText(format:format(#results, good))
+		controls.preview:SetHeight(40 + controls.card:GetHeight() + 10 + controls.matches:GetStringHeight() + 14)
 	end
 
 	-- Guild ads with the raid goal get two pages (the ad, the raid); all
