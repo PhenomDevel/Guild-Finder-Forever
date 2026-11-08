@@ -26,6 +26,7 @@ local states = {}
 local pending = {}
 local queue, queued = {}, {}
 local ticker, changedTimer
+local watcher -- who called Watch last
 
 -- Forever names have no realm part, retail ones are matched without it
 -- (like the /who check).
@@ -110,8 +111,10 @@ local function PingNext()
 end
 
 -- Asks the posters of owners (in that order) whose status is unknown;
--- replaces the previous list. Call again when the list changes.
-function Presence.Watch(owners)
+-- replaces the previous list, also another source's. Call again when the
+-- list changes.
+function Presence.Watch(owners, source)
+	watcher = source
 	wipe(queue)
 	wipe(queued)
 	for _, owner in ipairs(owners) do
@@ -128,7 +131,13 @@ function Presence.Watch(owners)
 	end
 end
 
-function Presence.StopWatching()
+-- Only stops source's list: a tab being hidden must not stop the list of
+-- the tab shown in its place (shown first).
+function Presence.StopWatching(source)
+	if source ~= watcher then
+		return
+	end
+	watcher = nil
 	wipe(queue)
 	wipe(queued)
 	Stop()

@@ -16,6 +16,7 @@ local Ads = ns.Ads
 local Store = ns.Store
 local Verify = ns.Verify
 local Filters = ns.Filters
+local Presence = ns.Presence
 
 local WIDTH, HEIGHT = 720, 470
 local PAD = 20
@@ -197,7 +198,21 @@ local function Create()
 		end
 	end)
 	dialog.contact:SetPoint("BOTTOMLEFT", PAD, 16)
-	W.Tooltip(dialog.contact, L.CONTACT, L.CONTACT_TIP)
+	dialog.contact:SetMotionScriptsWhileDisabled(true)
+	dialog.contact:SetScript("OnEnter", function(self)
+		local ad = current and Store.Get(current.id)
+		GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+		GameTooltip:SetText(L.CONTACT, 1, 1, 1)
+		local text = L.CONTACT_TIP
+		if ad and not self:IsEnabled() then
+			text = L.CONTACT_OFFLINE_TIP:format(Ads.OwnerName(ad.o))
+		end
+		GameTooltip:AddLine(text, nil, nil, nil, true)
+		GameTooltip:Show()
+	end)
+	dialog.contact:SetScript("OnLeave", function()
+		GameTooltip:Hide()
+	end)
 	local hide = W.Button(dialog, L.HIDE, 110, function()
 		if current then
 			Store.SetHidden(current.id, true)
@@ -427,8 +442,19 @@ local function Update()
 	if dialog.grid then
 		dialog.grid:SetMask(ad.t, Filters.Profile(Ads.KIND_GUILD).times)
 	end
-	dialog.contact:SetText(L.CONTACT_NAME:format(poster))
+	-- Whisper only the poster; disabled once known offline, the dot shows
+	-- the status while it is known.
+	local online = Presence.IsOnline(ad.o)
+	local label = L.CONTACT_NAME:format(poster)
+	if online ~= nil then
+		label = ("|T%s:16|t%s"):format(online and W.STATUS_ONLINE or W.STATUS_OFFLINE, label)
+	end
+	dialog.contact:SetText(label)
 	dialog.contact:SetWidth(math.max(150, dialog.contact:GetFontString():GetStringWidth() + 30))
+	dialog.contact:SetEnabled(online ~= false)
+	if GameTooltip:IsOwned(dialog.contact) then
+		dialog.contact:GetScript("OnEnter")(dialog.contact)
+	end
 	-- No contacting, hiding or blocking your own guild.
 	for _, button in ipairs({ dialog.contact, dialog.hide, dialog.block, dialog.unfit }) do
 		button:SetShown(not current.own)
@@ -455,6 +481,11 @@ end
 
 ns.RegisterCallback(GuildDialog, "GFF_ADS_CHANGED", function(_, id)
 	if current and overlay:IsShown() and (id == nil or id == current.id) then
+		Update()
+	end
+end)
+ns.RegisterCallback(GuildDialog, "GFF_PRESENCE_CHANGED", function()
+	if current and overlay:IsShown() then
 		Update()
 	end
 end)
