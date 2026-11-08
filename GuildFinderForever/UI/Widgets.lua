@@ -343,21 +343,29 @@ function W.GoalTags(parent)
 	for i = 1, #C.GOALS do
 		holder.tags[i] = W.Tag(holder)
 	end
-	function holder:SetGoals(mask)
-		local shown = {}
+	-- With maxWidth, tags wrap into further rows and the holder grows
+	-- downwards; returns the widest row.
+	function holder:SetGoals(mask, maxWidth)
+		local x, y, width = 0, 0, 0
 		for i, goal in ipairs(C.GOALS) do
 			local tag = self.tags[i]
 			if C.HasBit(mask or 0, goal.bit) then
 				tag:SetLabel(W.GoalIconMarkup(goal, 12) .. " " .. goal.label)
 				tag:SetColor(goal.color)
 				tag:Show()
-				shown[#shown + 1] = tag
+				local w = tag:GetWidth()
+				if maxWidth and x > 0 and x + w > maxWidth then
+					x, y = 0, y - 22
+				end
+				tag:ClearAllPoints()
+				tag:SetPoint("TOPLEFT", self, "TOPLEFT", x, y)
+				x = x + w + 4
+				width = math.max(width, x - 4)
 			else
 				tag:Hide()
 			end
 		end
-		local width = W.FlowChips(shown, self, 0, 0, 4) - 4
-		self:SetWidth(math.max(1, width))
+		self:SetSize(math.max(1, width), 18 - y)
 		return width
 	end
 	return holder

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- My ad: texts and goal tags no longer run out of the preview and publish boxes or overlap each other; long goal lists wrap into a second row.
+
 ## v1.3.0 (2026-11-08)
 
 - Minimap button: now a standard LibDBIcon button, so minimap addons (SexyMap, Leatrix Plus, button collectors …) hide it until you hover the minimap, like other addons' buttons. Position and the show/hide setting are kept.
