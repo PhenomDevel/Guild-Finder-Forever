@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- My ad: the Language dropdown now lines up with the goal buttons and no longer overlaps them when goal names are longer in your language.
+
 ## v1.3.3 (2026-11-10)
 
 - Fixed a Lua error ("attempt to compare … a secret string value") when someone joined the Guild Finder channel while names were hidden by the game, e.g. during combat restrictions.
