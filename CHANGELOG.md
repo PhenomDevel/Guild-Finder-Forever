@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.3.3 (2026-11-10)
+
 - Fixed a Lua error ("attempt to compare … a secret string value") when someone joined the Guild Finder channel while names were hidden by the game, e.g. during combat restrictions.
 
 ## v1.3.2 (2026-11-08)
