@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v1.4.0 (2026-11-10)
 
 - New "About" tab in the window: who made the addon (Phenom), version, and links to Discord, CurseForge, Wago, GitHub and bug reports, ready to copy.
 - Druid was missing from all class lists in Forever (My ad wanted classes, Find players class filter) and Druid ads did not match class filters. Fixed.
