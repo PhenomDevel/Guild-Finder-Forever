@@ -86,6 +86,7 @@ ns:RegisterEvent("WHO_LIST_UPDATE", function()
 		local fullName = info and info.fullName
 		if type(fullName) == "string" and not (issecretvalue and issecretvalue(fullName)) then
 			if fullName == ad.o or Ads.OwnerName(fullName) == wanted then
+				ns.Presence.SetGuild(fullName, info.fullGuildName)
 				local verified = Evaluate(info, ad)
 				Store.SetCheck(ad.i, verified)
 				Finish(verified and "verified" or "suspicious")
@@ -157,6 +158,8 @@ Comm.RegisterHandler(function(text, sender, distribution)
 		local _, classFile = UnitClass("player")
 		Comm.SendWhisper(sender, Serializer.Serialize({ y = "Q", n = message.n, g = GetGuildInfo("player"), c = classFile }))
 	elseif message.y == "Q" then
+		-- Also the answers to ns.Presence's pings.
+		ns.Presence.SetGuild(sender, message.g)
 		local name = Ads.OwnerName(sender)
 		for owner, entry in pairs(pings) do
 			if entry.nonce == message.n and Ads.OwnerName(owner) == name then
