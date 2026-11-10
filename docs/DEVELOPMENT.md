@@ -10,7 +10,7 @@ GuildFinderForever/          addon folder (the only thing that gets installed)
   Media/                     Logo.tga (addon icon, 64x64, 32-bit TGA from docs/logo/logo.svg)
   Core/                      setup (Init.lua), events, DB, channel, comm, slash commands,
                              serializer, ad model, cache, sync, search, /who check
-  UI/                        window, tabs, widgets, minimap button, settings
+  UI/                        window, tabs (incl. About), widgets, minimap button, settings
   Dev/                       dev flag (ns.DEV), test ads (/gff testdata); not packaged
   Probe/                     transport test tools (/gff probe); not packaged
 docs/                        developer docs, architecture, feasibility test guide, release

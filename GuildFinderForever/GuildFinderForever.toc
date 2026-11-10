@@ -72,6 +72,7 @@ UI\PlayersTab.lua
 UI\MyAdTab.lua
 UI\MinimapButton.lua
 UI\Settings.lua
+UI\About.lua
 UI\Commands.lua
 UI\Welcome.lua
 
