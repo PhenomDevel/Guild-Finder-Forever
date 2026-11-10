@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Druid was missing from all class lists in Forever (My ad wanted classes, Find players class filter) and Druid ads did not match class filters. Fixed.
+
 ## v1.3.3 (2026-11-10)
 
 - Fixed a Lua error ("attempt to compare … a secret string value") when someone joined the Guild Finder channel while names were hidden by the game, e.g. during combat restrictions.
