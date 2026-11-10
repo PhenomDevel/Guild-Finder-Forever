@@ -31,7 +31,7 @@ local watcher -- who called Watch last
 -- Forever names have no realm part, retail ones are matched without it
 -- (like the /who check).
 local function Key(name)
-	if type(name) ~= "string" or name == "" or (issecretvalue and issecretvalue(name)) then
+	if (issecretvalue and issecretvalue(name)) or type(name) ~= "string" or name == "" then
 		return nil
 	end
 	return Ads.OwnerName(name):lower()

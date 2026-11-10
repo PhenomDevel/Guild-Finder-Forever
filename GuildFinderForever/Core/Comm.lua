@@ -169,10 +169,10 @@ local function IsSelf(sender)
 end
 
 function Comm:OnCommReceived(_, data, distribution, sender)
-	if distribution ~= "CHANNEL" and distribution ~= "WHISPER" then
+	if issecretvalue and (issecretvalue(data) or issecretvalue(distribution) or issecretvalue(sender)) then
 		return
 	end
-	if issecretvalue and (issecretvalue(data) or issecretvalue(sender)) then
+	if distribution ~= "CHANNEL" and distribution ~= "WHISPER" then
 		return
 	end
 	if type(data) ~= "string" or type(sender) ~= "string" then
