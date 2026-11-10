@@ -187,8 +187,11 @@ local function Build(content)
 		x = x + chip:GetWidth() + 6
 		controls.goals[i] = chip
 	end
+	-- Language column right of the goal chips; pushed further right when
+	-- localized chip labels are wider (e.g. frFR "Montée en niveau").
+	local langX = math.max(332, x + 12)
 	local langHeader = W.Header(secGoals, L.FILTER_LANGUAGE, "GameFontNormalLarge")
-	langHeader:SetPoint("TOPLEFT", 332, -2)
+	langHeader:SetPoint("TOPLEFT", langX, -2)
 	-- Several languages: the first ticked (in list order) becomes the main
 	-- one (l), the others go to la. At least one stays ticked.
 	local function SetLanguages(draft, ticked)
@@ -208,7 +211,7 @@ local function Build(content)
 		end
 		return ticked
 	end
-	controls.lang = W.Menu(secGoals, 150, function(root)
+	controls.lang = W.Menu(secGoals, math.min(150, CONTENT_WIDTH - langX), function(root)
 		if root.SetScrollMode then
 			root:SetScrollMode(20 * 20)
 		end
@@ -239,7 +242,8 @@ local function Build(content)
 			self:OverrideText(Filters.LanguagesText({ l = draft.lang, la = draft.moreLangs }))
 		end
 	end
-	controls.lang:SetPoint("TOPLEFT", 332, -28)
+	controls.lang:SetHeight(26)
+	controls.lang:SetPoint("TOPLEFT", langX, -32)
 	secGoals:SetHeight(62)
 
 	-- Play times with presets
