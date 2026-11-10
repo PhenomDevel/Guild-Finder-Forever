@@ -192,7 +192,7 @@ end)
 -- channel (Forever since launch); ns.Comm switches to whispers.
 ns:RegisterEvent("CHAT_MSG_CHANNEL_NOTICE", function(_, notice, ...)
 	local channelName, baseName = select(3, ...), select(8, ...)
-	if not IsOurs(channelName, baseName) then
+	if (issecretvalue and issecretvalue(notice)) or not IsOurs(channelName, baseName) then
 		return
 	end
 	if notice == "YOU_JOINED" or notice == "YOU_CHANGED" then
@@ -285,7 +285,8 @@ end
 
 -- Returns true if name was not a member yet.
 function Channel.AddPeer(name)
-	if type(name) ~= "string" or name == "" or (issecretvalue and issecretvalue(name)) then
+	-- The secret check comes first: even == on a secret value errors.
+	if (issecretvalue and issecretvalue(name)) or type(name) ~= "string" or name == "" then
 		return false
 	end
 	name = PeerKey(name)
@@ -304,7 +305,7 @@ function Channel.AddPeer(name)
 end
 
 function Channel.RemovePeer(name)
-	if type(name) ~= "string" or (issecretvalue and issecretvalue(name)) then
+	if (issecretvalue and issecretvalue(name)) or type(name) ~= "string" then
 		return
 	end
 	name = PeerKey(name)
@@ -380,7 +381,7 @@ end)
 ns:RegisterEvent("CHAT_MSG_CHANNEL_JOIN", function(_, _, name, _, channelName, ...)
 	if IsOurs(channelName, select(5, ...)) then
 		Channel.AddPeer(name)
-		if type(name) == "string" and not (issecretvalue and issecretvalue(name)) and not IsSelf(PeerKey(name)) then
+		if not (issecretvalue and issecretvalue(name)) and type(name) == "string" and not IsSelf(PeerKey(name)) then
 			ns:Fire("GFF_PEER_JOINED", PeerKey(name))
 		end
 	end

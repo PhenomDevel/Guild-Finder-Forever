@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fixed a Lua error ("attempt to compare … a secret string value") when someone joined the Guild Finder channel while names were hidden by the game, e.g. during combat restrictions.
+
 ## v1.3.2 (2026-11-08)
 
 - Debug output (`/gff debug`): dropped messages now say why they were unreadable (damaged in transit, unknown format or message type, too large) and which addon version the sender runs; failed sends are reported too.
