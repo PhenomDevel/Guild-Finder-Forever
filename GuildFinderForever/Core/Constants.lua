@@ -234,6 +234,12 @@ function C.ClassRoles(classFile)
 	return CLASS_ROLES[classFile] or 7
 end
 
+-- Forever only has the original classes, even if the client knows later ones.
+local FOREVER_CLASSES = {
+	WARRIOR = true, PALADIN = true, HUNTER = true, ROGUE = true, PRIEST = true,
+	SHAMAN = true, MAGE = true, WARLOCK = true, DRUID = true,
+}
+
 -- Classes available in this client, from the game data.
 local classes
 function C.GetClasses()
@@ -241,10 +247,13 @@ function C.GetClasses()
 		return classes
 	end
 	classes = {}
-	local count = GetNumClasses and GetNumClasses() or 0
+	-- GetNumClasses() is the number of classes, not the highest ID: with gaps
+	-- (no Death Knight = 6 in Forever) it would cut off Druid (11).
+	local count = math.max(GetNumClasses and GetNumClasses() or 0, C.MAX_CLASS_ID)
+	local forever = ns.Ads.IsForever()
 	for classID = 1, count do
 		local name, classFile = GetClassInfo(classID)
-		if name and classFile then
+		if name and classFile and (not forever or FOREVER_CLASSES[classFile]) then
 			classes[#classes + 1] = { key = classFile, label = name, id = classID }
 		end
 	end
