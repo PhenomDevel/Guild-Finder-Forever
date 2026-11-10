@@ -7,18 +7,25 @@ local _, ns = ...
 -- * Presence.Watch: pings the posters shown in a list (the ping of
 --   ns.Verify, answered by every addon version since 1.0) one after another;
 --   an answer means online, a bounce offline, silence leaves it unknown.
+-- Also the guild posters are in (saved): from ping answers and /who.
 local Presence = {}
 ns.Presence = Presence
 
 local Ads = ns.Ads
 local Comm = ns.Comm
 local Serializer = ns.Serializer
+local C = ns.Constants
 
 local ONLINE_TTL = 600 -- seconds a sign of life counts
 local OFFLINE_TTL = 300 -- seconds until an offline poster is asked again
 local PING_INTERVAL = 0.5
 local PING_TIMEOUT = 5
 local CHANGED_DELAY = 0.3
+local MAX_GUILD = 64
+
+-- [lowercase name without realm] = { g = guild name, at = server time },
+-- only posters seen in a guild; good as long as an ad lives.
+ns.dbDefaults.posterGuilds = {}
 
 -- [lowercase name without realm] = { online = bool, at = GetTime() }
 local states = {}
@@ -76,6 +83,53 @@ function Presence.IsOnline(owner)
 	end
 	return state.online
 end
+
+-- guild nil: seen without a guild. Anything but a short string without
+-- escape sequences is ignored (the name is shown in the list).
+function Presence.SetGuild(name, guild)
+	local key = Key(name)
+	if not key or not ns.db or key == Key(ns:GetPlayerFullName()) then
+		return
+	end
+	if guild == "" then
+		guild = nil
+	elseif guild ~= nil and (type(guild) ~= "string" or (issecretvalue and issecretvalue(guild))
+		or #guild > MAX_GUILD or guild:find("|", 1, true)) then
+		return
+	end
+	local guilds = ns.db.posterGuilds
+	local entry = guilds[key]
+	if entry and entry.g == guild then
+		entry.at = GetServerTime()
+		return
+	end
+	if not entry and not guild then
+		return
+	end
+	guilds[key] = guild and { g = guild, at = GetServerTime() } or nil
+	Changed()
+end
+
+-- Guild the poster was last seen in; nil without one or when unknown.
+function Presence.GetGuild(owner)
+	local key = Key(owner)
+	local entry = key and ns.db and ns.db.posterGuilds[key]
+	if not entry or GetServerTime() - entry.at > C.AD_LIFETIME then
+		return nil
+	end
+	return entry.g
+end
+
+ns.RegisterCallback(Presence, "GFF_DB_READY", function()
+	local now = GetServerTime()
+	local guilds = ns.db.posterGuilds
+	for key, entry in pairs(guilds) do
+		if type(key) ~= "string" or type(entry) ~= "table" or type(entry.g) ~= "string"
+			or type(entry.at) ~= "number" or now - entry.at > C.AD_LIFETIME then
+			guilds[key] = nil
+		end
+	end
+end)
 
 local function Stop()
 	if ticker then

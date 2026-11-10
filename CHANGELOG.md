@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Find players: players who are in a guild by now show the guild name after their name, also in the opened entry ("In guild <Name>"). The addon learns it from the same background check as the online dot (or from "Whisper"'s /who) and remembers it while the ad lasts.
+
 ## v1.3.3 (2026-11-10)
 
 - Fixed a Lua error ("attempt to compare … a secret string value") when someone joined the Guild Finder channel while names were hidden by the game, e.g. during combat restrictions.
