@@ -3,6 +3,7 @@
 ## Unreleased
 
 - My ad: the Language dropdown now lines up with the goal buttons and no longer overlaps them when goal names are longer in your language.
+- Find players: players who are in a guild by now show the guild name after their name, also in the opened entry ("In guild <Name>"). The addon learns it from the same background check as the online dot (or from "Whisper"'s /who) and remembers it while the ad lasts.
 
 ## v1.3.3 (2026-11-10)
 

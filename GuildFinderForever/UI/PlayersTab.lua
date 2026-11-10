@@ -297,7 +297,11 @@ local function FillRow(tab, row, result)
 
 	row.icon:SetClass(ad.c)
 	UpdatePresence(row)
-	row.name:SetText("|c" .. W.ClassColorHex(ad.c) .. Ads.OwnerName(ad.o) .. "|r")
+	-- Players seen in a guild (maybe joined since posting) keep their ad
+	-- until it expires; the guild goes after the name.
+	local guild = not result.own and Presence.GetGuild(ad.o)
+	row.name:SetText("|c" .. W.ClassColorHex(ad.c) .. Ads.OwnerName(ad.o) .. "|r"
+		.. (guild and (" |cff9d9d9d<" .. guild .. ">|r") or ""))
 	row.class:SetText(C.ClassName(ad.c))
 	row.level:SetText(ad.lv)
 	row.roles:SetRoles(ad.r)
@@ -337,6 +341,9 @@ local function FillRow(tab, row, result)
 		local note = L.UPDATED_AGO:format(W.Duration(GetServerTime() - ad.v))
 		if (ad.r or 0) > 0 then
 			note = RolesText(ad.r) .. " · " .. note
+		end
+		if guild then
+			note = "|cffff9933" .. L.IN_GUILD:format(guild) .. "|r · " .. note
 		end
 		local presence = not result.own and PresenceText(ad)
 		if presence then
