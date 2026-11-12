@@ -338,12 +338,14 @@ end
 --------------------------------------------------------------------------------
 -- Outdated ads (local view)
 --------------------------------------------------------------------------------
--- Posters renew their ads once a day when they log in, so an ad that has not
--- been updated for days most likely belongs to someone who stopped playing.
--- Such ads of others are marked after the "stale" days and left out of all
--- lists after the "remove" days. The cache itself keeps them until
--- AD_LIFETIME: dropping them earlier would make the sync fetch them again
--- from every client that still holds them.
+-- An ad counts from its poster's last sign of life: the ad's version (posters
+-- renew once a day on login) or the last time the poster was seen online via
+-- the addon (any addon message, ping answer, channel join; see Presence).
+-- Ads of others without one for the "stale" days are outdated: hidden unless
+-- the search filter shows them, then dimmed and marked. After the "remove"
+-- days they leave all lists. The cache itself keeps them until AD_LIFETIME:
+-- dropping them earlier would make the sync fetch them again from every
+-- client that still holds them.
 
 local function SettingDays(key, default, low, high)
 	local settings = ns.db and ns.db.settings
@@ -366,12 +368,18 @@ local function IsMine(ad)
 	return ad.o ~= nil and ad.o == ns:GetPlayerFullName()
 end
 
+-- Server time of the poster's last sign of life.
+function Ads.LastSign(ad)
+	local seen = ns.Presence and ns.Presence.LastSeen(ad.o)
+	return math.max(ad.v or 0, seen or 0)
+end
+
 function Ads.IsStale(ad, now)
-	return not IsMine(ad) and (ad.v or 0) + Ads.GetStaleDays() * C.DAY < (now or GetServerTime())
+	return not IsMine(ad) and Ads.LastSign(ad) + Ads.GetStaleDays() * C.DAY < (now or GetServerTime())
 end
 
 function Ads.IsRemoved(ad, now)
-	return not IsMine(ad) and (ad.v or 0) + Ads.GetRemoveDays() * C.DAY < (now or GetServerTime())
+	return not IsMine(ad) and Ads.LastSign(ad) + Ads.GetRemoveDays() * C.DAY < (now or GetServerTime())
 end
 
 -- Seconds until the ad leaves the lists (own ads: until it expires).
@@ -379,5 +387,5 @@ function Ads.RemovedIn(ad)
 	if IsMine(ad) then
 		return Ads.ExpiresIn(ad)
 	end
-	return math.min((ad.v or 0) + Ads.GetRemoveDays() * C.DAY, (ad.v or 0) + C.AD_LIFETIME) - GetServerTime()
+	return math.min(Ads.LastSign(ad) + Ads.GetRemoveDays() * C.DAY, (ad.v or 0) + C.AD_LIFETIME) - GetServerTime()
 end

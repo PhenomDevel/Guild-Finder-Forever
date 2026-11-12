@@ -421,6 +421,10 @@ local function BuildGrid(tab, panel)
 				owners[#owners + 1] = result.ad.o
 			end
 		end
+		-- Then the posters of hidden outdated ads: an answer brings them back.
+		for _, ad in ipairs(self.results and self.results.stale or {}) do
+			owners[#owners + 1] = ad.o
+		end
 		Presence.Watch(owners, tab)
 	end
 

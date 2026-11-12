@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Outdated ads: guild and player ads that haven't been updated for 3 days (the poster hasn't logged in with the addon since) are dimmed and marked "Outdated", with a note on when they go away. After 7 days they no longer show up in the lists, counts or chat notices. Both are adjustable in the settings (*Options → AddOns → Guild Finder Forever*). Your own ads are never affected.
+- Outdated ads: guild and player ads whose poster hasn't been seen online with the addon for 3 days (no ad update, no sync, no answer to the online check) are hidden. Turn on *Show outdated* in the filter menu to see them, dimmed and marked "Outdated". After 7 days they no longer show up at all, also not in counts or chat notices. Both are adjustable in the settings (*Options → AddOns → Guild Finder Forever*). Your own ads are never affected.
 - Find guilds: tidier guild cards. Raid style, schedule and wanted roles share one line (class names and whether your class fits are in the tooltip), so the guild description and the info line under the guild name are shown in full. Empty "no details given" lines are gone, and the match score sits at the bottom right (also in the tooltip).
 
 ## v1.4.0 (2026-11-10)
