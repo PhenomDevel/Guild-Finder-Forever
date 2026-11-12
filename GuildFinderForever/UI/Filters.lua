@@ -238,6 +238,12 @@ local function BuildFilterMenu(root, kind, changed)
 			changed()
 		end)
 	end
+	root:CreateCheckbox(L.FILTER_SHOW_STALE, function()
+		return filter.showStale
+	end, function()
+		filter.showStale = not filter.showStale
+		changed()
+	end)
 	-- Rulesets exist only on Forever.
 	if Ads.IsForever() then
 		root:CreateCheckbox(L.FILTER_SAME_MODE, function()
@@ -325,6 +331,11 @@ function Filters.ChipBar(parent, kind, changed)
 		if filter.myClass then
 			items[#items + 1] = { L.CHIP_MY_CLASS, function()
 				filter.myClass = false
+			end }
+		end
+		if filter.showStale then
+			items[#items + 1] = { L.CHIP_SHOW_STALE, function()
+				filter.showStale = false
 			end }
 		end
 		local shown = {}

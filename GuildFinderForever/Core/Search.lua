@@ -3,7 +3,7 @@ local _, ns = ...
 -- Filtering and match score for the search tabs.
 --   filter = { kind, text, factions = { A = bool, H = bool }, lang, goals,
 --              roles, class, minLevel, maxLevel, myTimes, sameMode,
---              style, myClass }
+--              style, myClass, showStale }
 --   profile = { goals, times, roles, lang, classes, classRoles, classId }: what the
 --              searcher wants (own draft), the base of the match score.
 -- sameMode only applies on Forever: retail has no rulesets to compare.
@@ -139,6 +139,9 @@ function Search.Accepts(ad, filter, profile)
 	if ad.d or ad.k ~= filter.kind or Store.IsFiltered(ad) or Ads.IsExpired(ad) then
 		return false
 	end
+	if not filter.showStale and Ads.IsStale(ad) then
+		return false
+	end
 	return Matches(ad, filter, profile, Search.MyMode())
 end
 
@@ -155,16 +158,22 @@ end
 -- Returns the matching ads, best score first, each as
 -- { ad = ad, score = n|nil, own = true|nil }. Own ads (player ad, own
 -- guild's ad) bypass the filters and carry no score, so the poster can
--- check how the ad looks to others.
+-- check how the ad looks to others. results.stale lists the matching ads
+-- left out only for being outdated (their posters are worth a ping).
 function Search.Run(filter, profile)
-	local results = {}
+	local results = { stale = {} }
 	local myMode = Search.MyMode()
+	local now = GetServerTime()
 	local own = { [Ads.GetOwnPlayerAdId() or ""] = true, [Ads.GetOwnGuildAdId() or ""] = true }
 	for id, ad in Store.Each(filter.kind) do
 		if own[id] then
 			results[#results + 1] = { ad = ad, own = true }
 		elseif not Store.IsFiltered(ad) and Matches(ad, filter, profile, myMode) then
-			results[#results + 1] = { ad = ad, score = Search.Score(ad, filter, profile) }
+			if not filter.showStale and Ads.IsStale(ad, now) then
+				results.stale[#results.stale + 1] = ad
+			else
+				results[#results + 1] = { ad = ad, score = Search.Score(ad, filter, profile) }
+			end
 		end
 	end
 	table.sort(results, Search.OwnFirst(function(a, b)

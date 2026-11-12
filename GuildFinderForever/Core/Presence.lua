@@ -7,7 +7,8 @@ local _, ns = ...
 -- * Presence.Watch: pings the posters shown in a list (the ping of
 --   ns.Verify, answered by every addon version since 1.0) one after another;
 --   an answer means online, a bounce offline, silence leaves it unknown.
--- Also the guild posters are in (saved): from ping answers and /who.
+-- Also the guild posters are in (saved): from ping answers and /who, and
+-- when each poster was last seen online (saved).
 local Presence = {}
 ns.Presence = Presence
 
@@ -26,6 +27,10 @@ local MAX_GUILD = 64
 -- [lowercase name without realm] = { g = guild name, at = server time },
 -- only posters seen in a guild; good as long as an ad lives.
 ns.dbDefaults.posterGuilds = {}
+
+-- [lowercase name without realm] = server time last seen online: the sign
+-- of life that keeps a poster's ads from counting as outdated (Ads.IsStale).
+ns.dbDefaults.posterSeen = {}
 
 -- [lowercase name without realm] = { online = bool, at = GetTime() }
 local states = {}
@@ -58,6 +63,16 @@ local function Set(name, online)
 	local key = Key(name)
 	if not key or key == Key(ns:GetPlayerFullName()) then
 		return
+	end
+	if online and ns.db then
+		local now = GetServerTime()
+		local seen = ns.db.posterSeen
+		local last = seen[key]
+		seen[key] = now
+		-- Their ads may have counted as outdated until now: lists refresh.
+		if not last or now - last > Ads.GetStaleDays() * C.DAY then
+			ns:Fire("GFF_ADS_CHANGED", nil)
+		end
 	end
 	local state = states[key]
 	if state and state.online == online then
@@ -110,6 +125,12 @@ function Presence.SetGuild(name, guild)
 	Changed()
 end
 
+-- Server time the poster was last seen online, or nil.
+function Presence.LastSeen(owner)
+	local key = Key(owner)
+	return key and ns.db and ns.db.posterSeen[key]
+end
+
 -- Guild the poster was last seen in; nil without one or when unknown.
 function Presence.GetGuild(owner)
 	local key = Key(owner)
@@ -127,6 +148,12 @@ ns.RegisterCallback(Presence, "GFF_DB_READY", function()
 		if type(key) ~= "string" or type(entry) ~= "table" or type(entry.g) ~= "string"
 			or type(entry.at) ~= "number" or now - entry.at > C.AD_LIFETIME then
 			guilds[key] = nil
+		end
+	end
+	local seen = ns.db.posterSeen
+	for key, at in pairs(seen) do
+		if type(key) ~= "string" or type(at) ~= "number" or now - at > C.AD_LIFETIME then
+			seen[key] = nil
 		end
 	end
 end)
