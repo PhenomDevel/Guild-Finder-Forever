@@ -334,3 +334,50 @@ end
 function Ads.ExpiresIn(ad)
 	return (ad.v or 0) + C.AD_LIFETIME - GetServerTime()
 end
+
+--------------------------------------------------------------------------------
+-- Outdated ads (local view)
+--------------------------------------------------------------------------------
+-- Posters renew their ads once a day when they log in, so an ad that has not
+-- been updated for days most likely belongs to someone who stopped playing.
+-- Such ads of others are marked after the "stale" days and left out of all
+-- lists after the "remove" days. The cache itself keeps them until
+-- AD_LIFETIME: dropping them earlier would make the sync fetch them again
+-- from every client that still holds them.
+
+local function SettingDays(key, default, low, high)
+	local settings = ns.db and ns.db.settings
+	local days = settings and tonumber(settings[key]) or default
+	return math.max(low, math.min(high, math.floor(days)))
+end
+
+local MAX_DAYS = C.AD_LIFETIME / C.DAY
+
+function Ads.GetStaleDays()
+	return SettingDays("staleDays", C.STALE_DAYS, 1, MAX_DAYS - 1)
+end
+
+function Ads.GetRemoveDays()
+	return SettingDays("removeDays", C.REMOVE_DAYS, 2, MAX_DAYS)
+end
+
+-- Own ads (posted by this character) are never outdated: they are renewed.
+local function IsMine(ad)
+	return ad.o ~= nil and ad.o == ns:GetPlayerFullName()
+end
+
+function Ads.IsStale(ad, now)
+	return not IsMine(ad) and (ad.v or 0) + Ads.GetStaleDays() * C.DAY < (now or GetServerTime())
+end
+
+function Ads.IsRemoved(ad, now)
+	return not IsMine(ad) and (ad.v or 0) + Ads.GetRemoveDays() * C.DAY < (now or GetServerTime())
+end
+
+-- Seconds until the ad leaves the lists (own ads: until it expires).
+function Ads.RemovedIn(ad)
+	if IsMine(ad) then
+		return Ads.ExpiresIn(ad)
+	end
+	return math.min((ad.v or 0) + Ads.GetRemoveDays() * C.DAY, (ad.v or 0) + C.AD_LIFETIME) - GetServerTime()
+end

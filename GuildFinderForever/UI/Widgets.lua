@@ -21,6 +21,9 @@ W.MUTED = { 0.62, 0.62, 0.62 }
 W.GREEN = { 0.12, 1, 0 }
 W.SOFT_GREEN = { 0.56, 0.94, 0.54 }
 W.TAG = { 0.84, 0.75, 0.54 }
+-- Outdated ads: hex for inline markup, alpha for the dimmed entry.
+W.STALE_HEX = "ffff9933"
+W.STALE_ALPHA = 0.55
 
 local WHITE8 = "Interface\\Buttons\\WHITE8x8"
 local BACKDROP = { bgFile = WHITE8, edgeFile = WHITE8, edgeSize = 1 }
@@ -816,4 +819,10 @@ function W.Duration(seconds)
 	end
 	local days = math.floor(seconds / 86400)
 	return (days == 1 and L.DURATION_DAY or L.DURATION_DAYS):format(days)
+end
+
+-- "Outdated: not updated for 4 d · removed in 3 d" in the stale color.
+function W.StaleText(ad)
+	return "|c" .. W.STALE_HEX .. ns.L.STALE_META:format(W.Duration(GetServerTime() - ad.v),
+		W.Duration(ns.Ads.RemovedIn(ad))) .. "|r"
 end

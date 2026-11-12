@@ -78,14 +78,29 @@ end
 local NEED_Y = -30 -- second line of the raid box
 local GROUP_GAP = 12
 
--- Card tooltip of raid guilds: the wanted classes per role, own class marked.
+-- Card tooltip: outdated notice, and for raid guilds the wanted classes per
+-- role, own class marked.
 local function ShowCardTooltip(card)
-	local ad = card.result and card.result.ad
-	if not (ad and C.HasBit(ad.g or 0, C.GOAL_RAID) and (ad.cl or 0) > 0) then
+	local result = card.result
+	local ad = result and result.ad
+	if not ad then
+		return
+	end
+	local stale = not result.own and Ads.IsStale(ad)
+	local raid = C.HasBit(ad.g or 0, C.GOAL_RAID) and (ad.cl or 0) > 0
+	if not (stale or raid) then
 		return
 	end
 	GameTooltip:SetOwner(card, "ANCHOR_RIGHT")
 	GameTooltip:SetText(ad.n, W.GOLD[1], W.GOLD[2], W.GOLD[3])
+	if stale then
+		GameTooltip:AddLine(W.StaleText(ad))
+		GameTooltip:AddLine(L.STALE_TIP, 1, 1, 1, true)
+	end
+	if not raid then
+		GameTooltip:Show()
+		return
+	end
 	local _, myClass = UnitClass("player")
 	local needs = C.NeedsByRole(ad)
 	GameTooltip:AddLine(L.RAID_NEEDS, 1, 1, 1)
@@ -241,8 +256,15 @@ local function BuildCard(tab, row)
 		if ad.gm then
 			meta[#meta + 1] = L.MEMBERS:format(ad.gm)
 		end
-		meta[#meta + 1] = L.AGO:format(W.Duration(GetServerTime() - ad.v))
+		local age = L.AGO:format(W.Duration(GetServerTime() - ad.v))
+		local stale = not result.own and Ads.IsStale(ad)
+		if stale then
+			age = "|c" .. W.STALE_HEX .. L.STALE .. " · " .. age .. "|r"
+		end
+		-- Outdated first: the meta line may be cut off on the right.
+		table.insert(meta, stale and 1 or #meta + 1, age)
 		self.meta:SetText(table.concat(meta, " · "))
+		self:SetAlpha(stale and W.STALE_ALPHA or 1)
 
 		if result.own then
 			self.score:SetText(L.OWN_GUILD)

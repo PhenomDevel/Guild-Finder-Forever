@@ -424,7 +424,8 @@ ns.RegisterCallback(Filters, "GFF_AD_RECEIVED", function(_, ad, isNew)
 	else
 		looking = MyAds.GetGuildAd()
 	end
-	if not looking or not Search.Accepts(ad, Filters.Get(ad.k), Filters.Profile(ad.k)) then
+	-- Outdated ads arriving late are not news.
+	if not looking or Ads.IsStale(ad) or not Search.Accepts(ad, Filters.Get(ad.k), Filters.Profile(ad.k)) then
 		return
 	end
 	Filters.newMatches = Filters.newMatches + 1

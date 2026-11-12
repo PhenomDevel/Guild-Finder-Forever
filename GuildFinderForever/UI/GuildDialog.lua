@@ -328,7 +328,11 @@ local function Update()
 		dialog.pill:SetBackdropBorderColor(0.3, 0.3, 0.3, 1)
 	end
 	dialog.pill:SetWidth(dialog.pillText:GetStringWidth() + 16)
-	dialog.age:SetText(L.AD_META:format(W.Duration(GetServerTime() - ad.v), W.Duration(Ads.ExpiresIn(ad))))
+	if not current.own and Ads.IsStale(ad) then
+		dialog.age:SetText(W.StaleText(ad))
+	else
+		dialog.age:SetText(L.AD_META:format(W.Duration(GetServerTime() - ad.v), W.Duration(Ads.RemovedIn(ad))))
+	end
 
 	local score = current.score
 	if current.own then
