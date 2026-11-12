@@ -8,7 +8,13 @@ local L = ns.L
 local C = {}
 ns.Constants = C
 
-C.AD_LIFETIME = 14 * 24 * 3600
+C.DAY = 24 * 3600
+-- Network-wide lifetime: every client keeps and syncs an ad this long.
+C.AD_LIFETIME = 14 * C.DAY
+-- Local defaults (settings): days without an update until an ad of someone
+-- else is marked as outdated, and until it disappears from the lists.
+C.STALE_DAYS = 3
+C.REMOVE_DAYS = 7
 C.MAX_TEXT = 200
 
 C.FACTIONS = { "Alliance", "Horde" }

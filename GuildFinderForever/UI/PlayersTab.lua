@@ -193,6 +193,7 @@ local function BuildRow(tab, row)
 	row.line:SetColorTexture(1, 1, 1, 0.05)
 
 	local hit = CreateFrame("Button", nil, row)
+	row.hit = hit
 	hit:SetPoint("TOPLEFT")
 	hit:SetPoint("TOPRIGHT")
 	hit:SetHeight(ROW_HEIGHT)
@@ -295,6 +296,8 @@ local function FillRow(tab, row, result)
 	row.selectedBg:SetShown(selected)
 	row.selectedTop:SetShown(selected)
 
+	local stale = not result.own and Ads.IsStale(ad)
+	row.hit:SetAlpha(stale and W.STALE_ALPHA or 1)
 	row.icon:SetClass(ad.c)
 	UpdatePresence(row)
 	-- Players seen in a guild (maybe joined since posting) keep their ad
@@ -338,7 +341,7 @@ local function FillRow(tab, row, result)
 		row.note:SetPoint("LEFT", row.tags, "LEFT", math.max(0, width) + 10, 0)
 		row.note:SetPoint("RIGHT", row.text, "RIGHT", 0, 0)
 		row.langs:SetText(L.FILTER_LANGUAGE .. ": |cffffffff" .. Filters.LanguagesText(ad) .. "|r")
-		local note = L.UPDATED_AGO:format(W.Duration(GetServerTime() - ad.v))
+		local note = stale and W.StaleText(ad) or L.UPDATED_AGO:format(W.Duration(GetServerTime() - ad.v))
 		if (ad.r or 0) > 0 then
 			note = RolesText(ad.r) .. " · " .. note
 		end

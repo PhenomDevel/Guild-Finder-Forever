@@ -51,7 +51,8 @@ function Store.Get(id)
 	return ads and ads[id] or testAds[id]
 end
 
--- Iterates over live (not deleted, not expired) ads, test ads last.
+-- Iterates over live (not deleted, not expired, not outdated) ads, test ads
+-- last.
 function Store.Each(kind)
 	local now = GetServerTime()
 	local source, id, ad = ads, nil, nil
@@ -62,7 +63,8 @@ function Store.Each(kind)
 				source = testAds
 				id, ad = next(source, nil)
 			end
-			if id == nil or (not ad.d and (not kind or ad.k == kind) and not Ads.IsExpired(ad, now)) then
+			if id == nil or (not ad.d and (not kind or ad.k == kind) and not Ads.IsExpired(ad, now)
+				and not Ads.IsRemoved(ad, now)) then
 				return id, ad
 			end
 		end
@@ -289,9 +291,10 @@ function Store.SetCheck(id, verified)
 	Changed(id)
 end
 
--- Hidden, blocked or found suspicious by /who: left out of search results.
+-- Hidden, blocked, outdated or found suspicious by /who: left out of search
+-- results.
 function Store.IsFiltered(ad)
-	if Store.IsHidden(ad.i) or Store.IsBlocked(ad) then
+	if Store.IsHidden(ad.i) or Store.IsBlocked(ad) or Ads.IsRemoved(ad) then
 		return true
 	end
 	local check = checks[ad.i]

@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Outdated ads: guild and player ads that haven't been updated for 3 days (the poster hasn't logged in with the addon since) are dimmed and marked "Outdated", with a note on when they go away. After 7 days they no longer show up in the lists, counts or chat notices. Both are adjustable in the settings (*Options → AddOns → Guild Finder Forever*). Your own ads are never affected.
+
 ## v1.4.0 (2026-11-10)
 
 - New "About" tab in the window: who made the addon (Phenom), version, and links to Discord, CurseForge, Wago, GitHub and bug reports, ready to copy.
