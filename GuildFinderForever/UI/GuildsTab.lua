@@ -16,7 +16,7 @@ local Presence = ns.Presence
 
 local KIND = Ads.KIND_GUILD
 local BANNER_HEIGHT = 30
-local CARD_HEIGHT = 132
+local CARD_HEIGHT = 144
 local CARD_GAP = 6
 local REWATCH_INTERVAL = 60
 
@@ -74,21 +74,44 @@ end
 --------------------------------------------------------------------------------
 
 -- Card layout, top to bottom: header (emblem, name, meta line over the full
--- width), raid plan row (style + schedule, only when given), wanted row,
--- description filling the remaining lines, footer (goal tags left, score
--- right).
+-- width, wraps to a second line when needed), one info row (raid style and
+-- schedule left, wanted roles and own fit right; only when there is
+-- something to show), the description in the remaining lines, footer (goal
+-- tags left, score right).
 local PAD = 10
-local BODY_Y = -44
-local PLAN_HEIGHT = 18
-local NEEDS_HEIGHT = 16
-local ROW_GAP = 4
+local META_Y = -27
+local META_MAX_LINES = 2
+local INFO_HEIGHT = 18
+local ROW_GAP = 5
 local FOOTER_HEIGHT = 18
 local TEXT_SPACING = 2
 local TEXT_MAX_LINES = 4
-local GROUP_GAP = 12
+local ICON_GAP = 6
+local NOT_FIT = "|TInterface\\RaidFrame\\ReadyCheck-NotReady:0|t"
 
--- Card tooltip: match score, outdated notice, and for raid guilds the wanted
--- classes per role, own class marked.
+-- Own class fit for raid ads: "✓ Class · Roles", "not your class", or nil.
+local function FitText(ad)
+	local fit, roles = Filters.ClassFit(ad)
+	if fit == "fit" then
+		local _, classFile = UnitClass("player")
+		local label = C.ClassName(classFile)
+		if roles ~= C.ClassRoles(classFile) then
+			label = label .. " · " .. C.RoleNames(roles)
+		end
+		return W.CHECK .. " |cff1eff00" .. label .. "|r", fit
+	elseif fit == "no" then
+		return "|cff9d9d9d" .. L.FIT_NO_SHORT .. "|r", fit
+	end
+end
+
+local function SomeRoles(ad)
+	local roles = ad.r or 0
+	return roles > 0 and roles ~= C.ALL_ROLES
+end
+
+-- Card tooltip: everything the compact card only hints at – match score,
+-- outdated notice, own fit, and the wanted classes per role (own class
+-- marked) or roles.
 local function ShowCardTooltip(card)
 	local result = card.result
 	local ad = result and result.ad
@@ -105,7 +128,8 @@ local function ShowCardTooltip(card)
 		GameTooltip:AddLine(W.StaleText(ad))
 		GameTooltip:AddLine(L.STALE_TIP, 1, 1, 1, true)
 	end
-	if C.HasBit(ad.g or 0, C.GOAL_RAID) and (ad.cl or 0) > 0 then
+	local raid = C.HasBit(ad.g or 0, C.GOAL_RAID)
+	if raid and (ad.cl or 0) > 0 then
 		local _, myClass = UnitClass("player")
 		local needs = C.NeedsByRole(ad)
 		GameTooltip:AddLine(" ")
@@ -121,6 +145,14 @@ local function ShowCardTooltip(card)
 				GameTooltip:AddLine(table.concat(names, ", "), 1, 1, 1, true)
 			end
 		end
+	elseif raid or SomeRoles(ad) then
+		GameTooltip:AddLine(" ")
+		local wanted = SomeRoles(ad) and (L.ANY_CLASS_AS .. " " .. C.RoleNames(ad.r)) or L.ANY_CLASS
+		GameTooltip:AddLine(L.NEEDS_LABEL .. " |cffffffff" .. wanted .. "|r", W.GOLD[1], W.GOLD[2], W.GOLD[3], true)
+	end
+	local fit = raid and FitText(ad)
+	if fit then
+		GameTooltip:AddLine(fit)
 	end
 	GameTooltip:Show()
 end
@@ -148,34 +180,28 @@ local function BuildCard(tab, row)
 	card.name:SetPoint("RIGHT", -PAD, 0)
 	card.name:SetWordWrap(false)
 	card.meta = W.Text(card, "GameFontDisableSmall")
-	card.meta:SetPoint("TOPLEFT", card.name, "BOTTOMLEFT", 0, -3)
+	card.meta:SetPoint("TOPLEFT", card.emblem, "TOPRIGHT", 8, META_Y + 8)
 	card.meta:SetPoint("RIGHT", -PAD, 0)
-	card.meta:SetWordWrap(false)
+	card.meta:SetJustifyV("TOP")
+	card.meta:SetMaxLines(META_MAX_LINES)
 
-	-- Raid plan row: style tag and schedule.
-	card.plan = CreateFrame("Frame", nil, card)
-	card.plan:SetHeight(PLAN_HEIGHT)
-	card.style = W.Tag(card.plan)
-	card.style:SetPoint("LEFT")
-	card.schedule = W.Text(card.plan, "GameFontHighlightSmall", W.TEXT)
-	card.schedule:SetPoint("RIGHT")
-	card.schedule:SetJustifyH("LEFT")
-	card.schedule:SetWordWrap(false)
-
-	-- Wanted row: number of wanted classes per role (names in the tooltip),
-	-- or the wanted roles, and whether your class fits.
-	card.needs = CreateFrame("Frame", nil, card)
-	card.needs:SetHeight(NEEDS_HEIGHT)
-	card.needsLabel = W.Text(card.needs, "GameFontDisableSmall")
-	card.needsLabel:SetPoint("LEFT")
+	-- Info row. Right: wanted class count per role (or the wanted roles)
+	-- and a check for the own class; left: style tag and schedule, cut off
+	-- before the right part.
+	card.info = CreateFrame("Frame", nil, card)
+	card.info:SetHeight(INFO_HEIGHT)
+	card.fit = W.Text(card.info, "GameFontHighlightSmall")
+	card.fit:SetPoint("RIGHT")
 	card.roleIcons, card.roleCounts = {}, {}
 	for i, role in ipairs(C.ROLES) do
-		card.roleIcons[i] = W.RoleIcon(card.needs, 16, role.bit)
-		card.roleCounts[i] = W.Text(card.needs, "GameFontHighlightSmall")
+		card.roleIcons[i] = W.RoleIcon(card.info, 16, role.bit)
+		card.roleCounts[i] = W.Text(card.info, "GameFontHighlightSmall")
 	end
-	card.fit = W.Text(card.needs, "GameFontHighlightSmall")
-	card.fit:SetPoint("RIGHT")
-	card.fit:SetWordWrap(false)
+	card.style = W.Tag(card.info)
+	card.style:SetPoint("LEFT")
+	card.schedule = W.Text(card.info, "GameFontHighlightSmall", W.TEXT)
+	card.schedule:SetJustifyH("LEFT")
+	card.schedule:SetWordWrap(false)
 
 	card.text = W.Text(card, "GameFontHighlightSmall", W.TEXT)
 	card.text:SetJustifyV("TOP")
@@ -199,46 +225,65 @@ local function BuildCard(tab, row)
 		GameTooltip:Hide()
 	end)
 
-	-- Role icon and class count per role, or "any class" when the guild
-	-- names none. Without a class list: "any class as" plus the wanted
-	-- roles' icons, or only "all classes welcome" when every role is wanted.
-	function card:LayoutNeeds(ad)
+	-- Right part of the info row, laid out from the right edge: fit check,
+	-- then per role the icon with the class count, or only the icons of the
+	-- wanted roles when the guild names no classes. Returns its width.
+	function card:LayoutNeeds(ad, raid)
+		local fit = raid and select(2, FitText(ad))
+		self.fit:SetText(fit == "fit" and W.CHECK or fit == "no" and NOT_FIT or "")
+		self.fit:SetShown(fit ~= nil)
+		local right = fit and (self.fit:GetStringWidth() + ICON_GAP) or 0
 		local needs = (ad.cl or 0) > 0 and C.NeedsByRole(ad)
-		local roles = not needs and ad.r or 0
-		local someRoles = roles > 0 and roles ~= C.ALL_ROLES
-		local label = L.NEEDS_LABEL
-		if not needs then
-			label = label .. " |cff9d9d9d" .. (someRoles and L.ANY_CLASS_AS or L.ANY_CLASS) .. "|r"
-		end
-		self.needsLabel:SetText(label)
-		local x = self.needsLabel:GetStringWidth() + 6
-		for i, role in ipairs(C.ROLES) do
+		local someRoles = not needs and SomeRoles(ad)
+		for i = #C.ROLES, 1, -1 do
+			local role = C.ROLES[i]
 			local count = needs and #needs[role.bit] or 0
-			local shown = count > 0 or (someRoles and C.HasBit(roles, role.bit))
+			local shown = count > 0 or (someRoles and C.HasBit(ad.r, role.bit))
 			local icon, text = self.roleIcons[i], self.roleCounts[i]
 			icon:SetShown(shown)
 			text:SetShown(count > 0)
+			if count > 0 then
+				text:SetText(count)
+				text:ClearAllPoints()
+				text:SetPoint("RIGHT", -right, 0)
+				right = right + text:GetStringWidth() + 3
+			end
 			if shown then
 				icon:ClearAllPoints()
-				icon:SetPoint("LEFT", x, 0)
-				x = x + 16 + GROUP_GAP / 2
-			end
-			if count > 0 then
-				text:ClearAllPoints()
-				text:SetPoint("LEFT", icon, "RIGHT", 3, 0)
-				text:SetText(count)
-				x = x + 3 + text:GetStringWidth() + GROUP_GAP / 2
+				icon:SetPoint("RIGHT", -right, 0)
+				right = right + 16 + ICON_GAP
 			end
 		end
+		return right
 	end
 
-	-- Places a body row below the previous one; returns the next free y.
-	function card:PlaceRow(frame, y, height)
-		frame:ClearAllPoints()
-		frame:SetPoint("TOPLEFT", PAD + 2, y)
-		frame:SetPoint("RIGHT", -PAD, 0)
-		frame:Show()
-		return y - height - ROW_GAP
+	-- Left part: raid style and schedule; false when the ad gives neither.
+	function card:SetPlan(ad, raid, right)
+		local style = raid and C.StyleName(ad.ps)
+		self.style:SetShown(style ~= nil and style ~= false)
+		if style then
+			self.style:SetLabel(style)
+		end
+		local schedule = {}
+		if raid and (ad.rd or 0) > 0 then
+			schedule[#schedule + 1] = "|cffffffff" .. C.DaysText(ad.rd) .. "|r"
+		end
+		local time = raid and C.RaidTimeText(ad)
+		if time and time ~= "" then
+			schedule[#schedule + 1] = time
+		end
+		if raid and ad.rn then
+			schedule[#schedule + 1] = "|cff9d9d9d" .. L.PER_WEEK:format(ad.rn) .. "|r"
+		end
+		self.schedule:SetText(table.concat(schedule, "  "))
+		self.schedule:ClearAllPoints()
+		if style then
+			self.schedule:SetPoint("LEFT", self.style, "RIGHT", 8, 0)
+		else
+			self.schedule:SetPoint("LEFT")
+		end
+		self.schedule:SetPoint("RIGHT", -(right + 4), 0)
+		return style or #schedule > 0
 	end
 
 	function card:UpdatePresence()
@@ -248,44 +293,6 @@ local function BuildCard(tab, row)
 			online = Presence.IsOnline(result.ad.o)
 		end
 		self.status:SetOnline(online)
-	end
-
-	-- Raid style and schedule; false when the ad gives neither.
-	function card:SetPlan(ad)
-		local style = C.StyleName(ad.ps)
-		self.style:SetShown(style ~= nil)
-		if style then
-			self.style:SetLabel(style)
-		end
-		local schedule = {}
-		if (ad.rd or 0) > 0 then
-			schedule[#schedule + 1] = "|cffffffff" .. C.DaysText(ad.rd) .. "|r"
-		end
-		local time = C.RaidTimeText(ad)
-		if time and time ~= "" then
-			schedule[#schedule + 1] = time
-		end
-		if ad.rn then
-			schedule[#schedule + 1] = "|cff9d9d9d" .. L.PER_WEEK:format(ad.rn) .. "|r"
-		end
-		self.schedule:SetText(table.concat(schedule, "   "))
-		self.schedule:SetPoint("LEFT", style and self.style or self.plan, style and "RIGHT" or "LEFT", style and 8 or 0, 0)
-		return style ~= nil or #schedule > 0
-	end
-
-	function card:SetFit(ad)
-		local fit, roles = Filters.ClassFit(ad)
-		if fit == "fit" then
-			local _, classFile = UnitClass("player")
-			local label = C.ClassName(classFile)
-			if roles ~= C.ClassRoles(classFile) then
-				label = label .. " · " .. C.RoleNames(roles)
-			end
-			self.fit:SetText(W.CHECK .. " |cff1eff00" .. label .. "|r")
-		elseif fit == "no" then
-			self.fit:SetText("|cff9d9d9d" .. L.FIT_NO_SHORT .. "|r")
-		end
-		self.fit:SetShown(fit ~= nil)
 	end
 
 	function card:SetResult(result)
@@ -313,34 +320,33 @@ local function BuildCard(tab, row)
 		if stale then
 			age = "|c" .. W.STALE_HEX .. L.STALE .. " · " .. age .. "|r"
 		end
-		-- Outdated first: the meta line may be cut off on the right.
+		-- Outdated first: it must never be cut off.
 		table.insert(meta, stale and 1 or #meta + 1, age)
 		self.meta:SetText(table.concat(meta, " · "))
 		self:SetAlpha(stale and W.STALE_ALPHA or 1)
 
-		-- Body rows: empty ones are left out and the description moves up.
-		local y = BODY_Y
-		local raid = C.HasBit(ad.g or 0, C.GOAL_RAID)
-		self.plan:Hide()
-		if raid and self:SetPlan(ad) then
-			y = self:PlaceRow(self.plan, y, PLAN_HEIGHT)
-		end
-		-- Outside raids only worth a row when the guild limits the roles.
-		local roles = ad.r or 0
-		self.needs:Hide()
-		if raid or (roles > 0 and roles ~= C.ALL_ROLES) then
-			self:LayoutNeeds(ad)
-			self:SetFit(ad)
-			y = self:PlaceRow(self.needs, y, NEEDS_HEIGHT)
-		end
-
-		local textTop = y + ROW_GAP - 2
-		local textBottom = -(CARD_HEIGHT - 8 - FOOTER_HEIGHT - ROW_GAP)
 		local _, fontHeight = self.text:GetFont()
 		local lineHeight = math.floor((fontHeight or 10) + 0.5) + TEXT_SPACING
-		local lines = math.min(TEXT_MAX_LINES, math.floor((textTop - textBottom + TEXT_SPACING) / lineHeight))
+		local _, metaFont = self.meta:GetFont()
+		local metaLines = math.max(1, math.min(META_MAX_LINES, self.meta:GetNumLines()))
+		local y = META_Y - metaLines * (math.floor((metaFont or 10) + 0.5) + 2) - ROW_GAP
+
+		-- Info row, left out when it would be empty.
+		local raid = C.HasBit(ad.g or 0, C.GOAL_RAID)
+		local right = self:LayoutNeeds(ad, raid)
+		local plan = self:SetPlan(ad, raid, right)
+		self.info:SetShown(plan or right > 0)
+		if self.info:IsShown() then
+			self.info:ClearAllPoints()
+			self.info:SetPoint("TOPLEFT", PAD + 2, y)
+			self.info:SetPoint("RIGHT", -PAD, 0)
+			y = y - INFO_HEIGHT - ROW_GAP
+		end
+
+		local textBottom = -(CARD_HEIGHT - 8 - FOOTER_HEIGHT - ROW_GAP)
+		local lines = math.min(TEXT_MAX_LINES, math.floor((y - textBottom + TEXT_SPACING) / lineHeight))
 		self.text:ClearAllPoints()
-		self.text:SetPoint("TOPLEFT", PAD + 2, textTop)
+		self.text:SetPoint("TOPLEFT", PAD + 2, y + 1)
 		self.text:SetPoint("RIGHT", -PAD, 0)
 		self.text:SetMaxLines(math.max(1, lines))
 		self.text:SetText(ad.x or "")
