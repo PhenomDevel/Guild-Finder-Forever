@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Find guilds: the guild description is always shown in full; cards grow as tall as their text needs. Raid style, schedule and wanted classes moved into the card's tooltip, and the match score is smaller.
+- Outdated ads are now shown (dimmed and marked) by default in Find guilds and Find players; turn off *Show outdated* in the filter menu to hide them.
 
 ## v1.5.0 (2026-11-13)
 
