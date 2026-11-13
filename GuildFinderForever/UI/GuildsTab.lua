@@ -16,7 +16,7 @@ local Presence = ns.Presence
 
 local KIND = Ads.KIND_GUILD
 local BANNER_HEIGHT = 30
-local CARD_HEIGHT = 144
+local MIN_CARD_HEIGHT = 100
 local CARD_GAP = 6
 local REWATCH_INTERVAL = 60
 
@@ -74,20 +74,17 @@ end
 --------------------------------------------------------------------------------
 
 -- Card layout, top to bottom: header (emblem, name, meta line over the full
--- width, wraps to a second line when needed), one info row (raid style and
--- schedule left, wanted roles and own fit right; only when there is
--- something to show), the description in the remaining lines, footer (goal
--- tags left, score right).
+-- width, wraps to a second line when needed), the full description, footer
+-- (goal tags left, score right). Raid details live in the tooltip. Each grid
+-- row is as tall as its taller card needs.
 local PAD = 10
 local META_Y = -27
 local META_MAX_LINES = 2
-local INFO_HEIGHT = 18
 local ROW_GAP = 5
 local FOOTER_HEIGHT = 18
+local BOTTOM_PAD = 8
 local TEXT_SPACING = 2
-local TEXT_MAX_LINES = 4
-local ICON_GAP = 6
-local NOT_FIT = "|TInterface\\RaidFrame\\ReadyCheck-NotReady:0|t"
+local META_LEFT = PAD + 2 + 32 + 8
 
 -- Own class fit for raid ads: "✓ Class · Roles", "not your class", or nil.
 local function FitText(ad)
@@ -109,9 +106,40 @@ local function SomeRoles(ad)
 	return roles > 0 and roles ~= C.ALL_ROLES
 end
 
--- Card tooltip: everything the compact card only hints at – match score,
--- outdated notice, own fit, and the wanted classes per role (own class
--- marked) or roles.
+-- Meta line: faction, languages, members, age; outdated first so it is
+-- never cut off.
+local function MetaText(result)
+	local ad = result.ad
+	local meta = { W.FactionText(ad.f, Filters.FactionName(ad.f)), Filters.LanguagesText(ad) }
+	if ad.gm then
+		meta[#meta + 1] = L.MEMBERS:format(ad.gm)
+	end
+	local age = L.AGO:format(W.Duration(GetServerTime() - ad.v))
+	local stale = not result.own and Ads.IsStale(ad)
+	if stale then
+		age = "|c" .. W.STALE_HEX .. L.STALE .. " · " .. age .. "|r"
+	end
+	table.insert(meta, stale and 1 or #meta + 1, age)
+	return table.concat(meta, " · "), stale
+end
+
+local function RaidSchedule(ad)
+	local schedule = {}
+	if (ad.rd or 0) > 0 then
+		schedule[#schedule + 1] = C.DaysText(ad.rd)
+	end
+	local time = C.RaidTimeText(ad)
+	if time and time ~= "" then
+		schedule[#schedule + 1] = time
+	end
+	if ad.rn then
+		schedule[#schedule + 1] = L.PER_WEEK:format(ad.rn)
+	end
+	return #schedule > 0 and table.concat(schedule, " · ") or nil
+end
+
+-- Card tooltip: match score, outdated notice, raid style and schedule, the
+-- wanted classes per role (own class marked) or roles, and the own fit.
 local function ShowCardTooltip(card)
 	local result = card.result
 	local ad = result and result.ad
@@ -129,6 +157,17 @@ local function ShowCardTooltip(card)
 		GameTooltip:AddLine(L.STALE_TIP, 1, 1, 1, true)
 	end
 	local raid = C.HasBit(ad.g or 0, C.GOAL_RAID)
+	local style = raid and C.StyleName(ad.ps)
+	local schedule = raid and RaidSchedule(ad)
+	if style or schedule then
+		GameTooltip:AddLine(" ")
+		if style then
+			GameTooltip:AddDoubleLine(L.FILTER_STYLE, style, W.GOLD[1], W.GOLD[2], W.GOLD[3], 1, 1, 1)
+		end
+		if schedule then
+			GameTooltip:AddDoubleLine(L.RAID_SCHEDULE, schedule, W.GOLD[1], W.GOLD[2], W.GOLD[3], 1, 1, 1)
+		end
+	end
 	if raid and (ad.cl or 0) > 0 then
 		local _, myClass = UnitClass("player")
 		local needs = C.NeedsByRole(ad)
@@ -185,34 +224,16 @@ local function BuildCard(tab, row)
 	card.meta:SetJustifyV("TOP")
 	card.meta:SetMaxLines(META_MAX_LINES)
 
-	-- Info row. Right: wanted class count per role (or the wanted roles)
-	-- and a check for the own class; left: style tag and schedule, cut off
-	-- before the right part.
-	card.info = CreateFrame("Frame", nil, card)
-	card.info:SetHeight(INFO_HEIGHT)
-	card.fit = W.Text(card.info, "GameFontHighlightSmall")
-	card.fit:SetPoint("RIGHT")
-	card.roleIcons, card.roleCounts = {}, {}
-	for i, role in ipairs(C.ROLES) do
-		card.roleIcons[i] = W.RoleIcon(card.info, 16, role.bit)
-		card.roleCounts[i] = W.Text(card.info, "GameFontHighlightSmall")
-	end
-	card.style = W.Tag(card.info)
-	card.style:SetPoint("LEFT")
-	card.schedule = W.Text(card.info, "GameFontHighlightSmall", W.TEXT)
-	card.schedule:SetJustifyH("LEFT")
-	card.schedule:SetWordWrap(false)
-
 	card.text = W.Text(card, "GameFontHighlightSmall", W.TEXT)
 	card.text:SetJustifyV("TOP")
 	card.text:SetSpacing(TEXT_SPACING)
 
 	card.tags = W.GoalTags(card)
 	card.tags:SetPoint("BOTTOMLEFT", PAD + 2, 8)
-	card.score = W.Text(card, "GameFontNormalLarge")
-	card.score:SetPoint("BOTTOMRIGHT", -PAD, 8)
+	card.score = W.Text(card, "GameFontNormal")
+	card.score:SetPoint("BOTTOMRIGHT", -PAD, 10)
 	card.scoreLabel = W.Text(card, "GameFontDisableSmall")
-	card.scoreLabel:SetPoint("BOTTOMRIGHT", card.score, "BOTTOMLEFT", -4, 1)
+	card.scoreLabel:SetPoint("BOTTOMRIGHT", card.score, "BOTTOMLEFT", -4, 0)
 	card.scoreLabel:SetText(L.FITS_YOU)
 
 	card:SetScript("OnClick", function(self)
@@ -224,67 +245,6 @@ local function BuildCard(tab, row)
 	card:SetScript("OnLeave", function()
 		GameTooltip:Hide()
 	end)
-
-	-- Right part of the info row, laid out from the right edge: fit check,
-	-- then per role the icon with the class count, or only the icons of the
-	-- wanted roles when the guild names no classes. Returns its width.
-	function card:LayoutNeeds(ad, raid)
-		local fit = raid and select(2, FitText(ad))
-		self.fit:SetText(fit == "fit" and W.CHECK or fit == "no" and NOT_FIT or "")
-		self.fit:SetShown(fit ~= nil)
-		local right = fit and (self.fit:GetStringWidth() + ICON_GAP) or 0
-		local needs = (ad.cl or 0) > 0 and C.NeedsByRole(ad)
-		local someRoles = not needs and SomeRoles(ad)
-		for i = #C.ROLES, 1, -1 do
-			local role = C.ROLES[i]
-			local count = needs and #needs[role.bit] or 0
-			local shown = count > 0 or (someRoles and C.HasBit(ad.r, role.bit))
-			local icon, text = self.roleIcons[i], self.roleCounts[i]
-			icon:SetShown(shown)
-			text:SetShown(count > 0)
-			if count > 0 then
-				text:SetText(count)
-				text:ClearAllPoints()
-				text:SetPoint("RIGHT", -right, 0)
-				right = right + text:GetStringWidth() + 3
-			end
-			if shown then
-				icon:ClearAllPoints()
-				icon:SetPoint("RIGHT", -right, 0)
-				right = right + 16 + ICON_GAP
-			end
-		end
-		return right
-	end
-
-	-- Left part: raid style and schedule; false when the ad gives neither.
-	function card:SetPlan(ad, raid, right)
-		local style = raid and C.StyleName(ad.ps)
-		self.style:SetShown(style ~= nil and style ~= false)
-		if style then
-			self.style:SetLabel(style)
-		end
-		local schedule = {}
-		if raid and (ad.rd or 0) > 0 then
-			schedule[#schedule + 1] = "|cffffffff" .. C.DaysText(ad.rd) .. "|r"
-		end
-		local time = raid and C.RaidTimeText(ad)
-		if time and time ~= "" then
-			schedule[#schedule + 1] = time
-		end
-		if raid and ad.rn then
-			schedule[#schedule + 1] = "|cff9d9d9d" .. L.PER_WEEK:format(ad.rn) .. "|r"
-		end
-		self.schedule:SetText(table.concat(schedule, "  "))
-		self.schedule:ClearAllPoints()
-		if style then
-			self.schedule:SetPoint("LEFT", self.style, "RIGHT", 8, 0)
-		else
-			self.schedule:SetPoint("LEFT")
-		end
-		self.schedule:SetPoint("RIGHT", -(right + 4), 0)
-		return style or #schedule > 0
-	end
 
 	function card:UpdatePresence()
 		local result = self.result
@@ -311,46 +271,18 @@ local function BuildCard(tab, row)
 			self.stripe:SetColorTexture(faction.color[1], faction.color[2], faction.color[3], 1)
 		end
 		self.name:SetText(ad.n)
-		local meta = { W.FactionText(ad.f, Filters.FactionName(ad.f)), Filters.LanguagesText(ad) }
-		if ad.gm then
-			meta[#meta + 1] = L.MEMBERS:format(ad.gm)
-		end
-		local age = L.AGO:format(W.Duration(GetServerTime() - ad.v))
-		local stale = not result.own and Ads.IsStale(ad)
-		if stale then
-			age = "|c" .. W.STALE_HEX .. L.STALE .. " · " .. age .. "|r"
-		end
-		-- Outdated first: it must never be cut off.
-		table.insert(meta, stale and 1 or #meta + 1, age)
-		self.meta:SetText(table.concat(meta, " · "))
+		local meta, stale = MetaText(result)
+		self.meta:SetText(meta)
 		self:SetAlpha(stale and W.STALE_ALPHA or 1)
 
-		local _, fontHeight = self.text:GetFont()
-		local lineHeight = math.floor((fontHeight or 10) + 0.5) + TEXT_SPACING
 		local _, metaFont = self.meta:GetFont()
 		local metaLines = math.max(1, math.min(META_MAX_LINES, self.meta:GetNumLines()))
 		local y = META_Y - metaLines * (math.floor((metaFont or 10) + 0.5) + 2) - ROW_GAP
-
-		-- Info row, left out when it would be empty.
-		local raid = C.HasBit(ad.g or 0, C.GOAL_RAID)
-		local right = self:LayoutNeeds(ad, raid)
-		local plan = self:SetPlan(ad, raid, right)
-		self.info:SetShown(plan or right > 0)
-		if self.info:IsShown() then
-			self.info:ClearAllPoints()
-			self.info:SetPoint("TOPLEFT", PAD + 2, y)
-			self.info:SetPoint("RIGHT", -PAD, 0)
-			y = y - INFO_HEIGHT - ROW_GAP
-		end
-
-		local textBottom = -(CARD_HEIGHT - 8 - FOOTER_HEIGHT - ROW_GAP)
-		local lines = math.min(TEXT_MAX_LINES, math.floor((y - textBottom + TEXT_SPACING) / lineHeight))
 		self.text:ClearAllPoints()
 		self.text:SetPoint("TOPLEFT", PAD + 2, y + 1)
 		self.text:SetPoint("RIGHT", -PAD, 0)
-		self.text:SetMaxLines(math.max(1, lines))
 		self.text:SetText(ad.x or "")
-		self.text:SetShown(lines > 0 and (ad.x or "") ~= "")
+		self.text:SetShown((ad.x or "") ~= "")
 
 		local tagsRight = self.tags:SetGoals(ad.g)
 		if result.own then
@@ -384,8 +316,46 @@ local function BuildGrid(tab, panel)
 	scrollBar:SetPoint("TOPLEFT", scrollBox, "TOPRIGHT", 6, 0)
 	scrollBar:SetPoint("BOTTOMLEFT", scrollBox, "BOTTOMRIGHT", 6, 0)
 
+	-- Invisible copies of the card's meta and description text, used to
+	-- measure how tall a card must be to show both in full.
+	local measure = CreateFrame("Frame", nil, panel)
+	measure:SetSize(1, 1)
+	measure:SetPoint("TOPLEFT")
+	measure:SetAlpha(0)
+	local measureMeta = W.Text(measure, "GameFontDisableSmall")
+	measureMeta:SetPoint("TOPLEFT")
+	local measureText = W.Text(measure, "GameFontHighlightSmall")
+	measureText:SetPoint("TOPLEFT")
+	measureText:SetSpacing(TEXT_SPACING)
+
+	local function CardHeight(result, width)
+		if not result then
+			return 0
+		end
+		measureMeta:SetWidth(width - META_LEFT - PAD)
+		measureMeta:SetText(MetaText(result))
+		local _, metaFont = measureMeta:GetFont()
+		local metaLines = math.max(1, math.min(META_MAX_LINES, measureMeta:GetNumLines()))
+		local height = -META_Y + metaLines * (math.floor((metaFont or 10) + 0.5) + 2) + ROW_GAP
+		local text = result.ad.x or ""
+		if text ~= "" then
+			measureText:SetWidth(width - 2 * PAD - 2)
+			measureText:SetText(text)
+			height = height + math.ceil(measureText:GetStringHeight()) + ROW_GAP
+		end
+		return height + FOOTER_HEIGHT + BOTTOM_PAD
+	end
+
 	local view = CreateScrollBoxListLinearView()
-	view:SetElementExtent(CARD_HEIGHT + CARD_GAP)
+	view:SetElementExtentCalculator(function(_, pair)
+		-- Card width as anchored in the row below.
+		local width = scrollBox:GetWidth() / 2 - CARD_GAP / 2
+		if width <= 0 then
+			return MIN_CARD_HEIGHT + CARD_GAP
+		end
+		local height = math.max(MIN_CARD_HEIGHT, CardHeight(pair[1], width), CardHeight(pair[2], width))
+		return math.ceil(height) + CARD_GAP
+	end)
 	view:SetElementInitializer("Frame", function(row, pair)
 		if not row.cards then
 			row.cards = { BuildCard(tab, row), BuildCard(tab, row) }
