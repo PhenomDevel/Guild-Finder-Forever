@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Find guilds: the guild description is always shown in full; cards grow as tall as their text needs. Raid style, schedule and wanted classes moved into the card's tooltip, and the match score is smaller.
+
 ## v1.5.0 (2026-11-13)
 
 - Outdated ads: guild and player ads whose poster hasn't been seen online with the addon for 3 days (no ad update, no sync, no answer to the online check) are hidden. Turn on *Show outdated* in the filter menu to see them, dimmed and marked "Outdated". After 7 days they no longer show up at all, also not in counts or chat notices. Both are adjustable in the settings (*Options → AddOns → Guild Finder Forever*). Your own ads are never affected.
