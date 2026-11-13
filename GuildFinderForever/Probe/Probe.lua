@@ -84,6 +84,12 @@ local function LogQuiet(text, ...)
 	Record(true, text, ...)
 end
 
+-- Printed only with /gff debug on; always kept in the saved log.
+local function LogDebug(text, ...)
+	local settings = ns.db and ns.db.settings
+	Record(not (settings and settings.debug), text, ...)
+end
+
 local function ReverseLookup(enum, value)
 	for name, enumValue in pairs(enum or {}) do
 		if enumValue == value then
@@ -538,7 +544,7 @@ ns:RegisterEvent("CHAT_MSG_SYSTEM", function(_, text)
 end)
 
 ns.RegisterCallback(Probe, "GFF_CHANNEL_READY", function(_, number)
-	Log(L.PROBE_CHANNEL_READY, ns.Channel.NAME, tostring(number))
+	LogDebug(L.PROBE_CHANNEL_READY, ns.Channel.NAME, tostring(number))
 end)
 
 ns.RegisterCallback(Probe, "GFF_CHANNEL_FAILED", function()
@@ -546,7 +552,7 @@ ns.RegisterCallback(Probe, "GFF_CHANNEL_FAILED", function()
 end)
 
 ns.RegisterCallback(Probe, "GFF_CHANNEL_NOTICE", function(_, notice)
-	Log(L.PROBE_CHANNEL_NOTICE, SafeString(notice))
+	LogDebug(L.PROBE_CHANNEL_NOTICE, SafeString(notice))
 end)
 
 ns.RegisterCallback(Probe, "GFF_COMM_HELD", function(_, length)
