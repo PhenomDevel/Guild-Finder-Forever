@@ -56,8 +56,9 @@ What changed: [CHANGELOG.md](https://github.com/PhenomDevel/Guild-Finder-Forever
   whether they are online and in that guild. *Hide* and *Block* remove ads
   from your results.
 - **Outdated ads:** ads whose poster hasn't been seen online with the addon
-  for 3 days are hidden; the *Show outdated* filter shows them dimmed. After
-  7 days they are gone for good (both adjustable in the settings).
+  for 3 days are dimmed and marked; turn off the *Show outdated* filter to
+  hide them. After 7 days they are gone for good (both adjustable in the
+  settings).
 - **Notifications:** optional chat notice when a new matching ad arrives.
 - **7 languages:** English, Deutsch, Français, Español, Italiano, Русский,
   Português.

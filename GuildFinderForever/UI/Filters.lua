@@ -37,6 +37,8 @@ function Filters.Default(kind)
 		goals = 0,
 		myTimes = false,
 		sameMode = true,
+		-- Outdated ads are shown dimmed until the player turns it off.
+		showStale = true,
 		sort = "match",
 	}
 	if kind == Ads.KIND_PLAYER then
@@ -55,6 +57,10 @@ function Filters.Get(kind)
 	end
 	saved.kind = kind
 	saved.sort = saved.sort or "match"
+	-- Filters saved before v1.5.1 lack the key; false is an explicit choice.
+	if saved.showStale == nil then
+		saved.showStale = true
+	end
 	-- The player search always looks at the own faction (the guild's).
 	if kind == Ads.KIND_PLAYER then
 		local faction = Ads.GetFactionCode()
