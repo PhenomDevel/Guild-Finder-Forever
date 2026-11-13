@@ -3,7 +3,6 @@ local addonName, ns = ...
 
 ns.name = addonName
 ns.title = "Guild Finder Forever"
-ns.shortTitle = "GFF"
 ns.color = "e6b43a"
 
 local getMetadata = (C_AddOns and C_AddOns.GetAddOnMetadata) or GetAddOnMetadata
@@ -78,7 +77,7 @@ function ns:Print(text, ...)
 	if select("#", ...) > 0 then
 		text = text:format(...)
 	end
-	DEFAULT_CHAT_FRAME:AddMessage(("|cff%s%s|r: %s"):format(self.color, self.shortTitle, text))
+	DEFAULT_CHAT_FRAME:AddMessage(("|cff%s%s|r: %s"):format(self.color, self.title, text))
 end
 
 --------------------------------------------------------------------------------
