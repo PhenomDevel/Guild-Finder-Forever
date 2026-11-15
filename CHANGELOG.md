@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v1.6.0 (2026-11-15)
 
 - Chat messages of the addon now start with "Guild Finder Forever" instead of "GFF".
 - Find guilds: the guild description is always shown in full; cards grow as tall as their text needs. Raid style, schedule and wanted classes moved into the card's tooltip, and the match score is smaller.
