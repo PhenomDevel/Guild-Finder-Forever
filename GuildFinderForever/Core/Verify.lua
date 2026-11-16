@@ -1,4 +1,4 @@
--- luacheck: read globals C_FriendList ChatFrameUtil ChatFrame_SendTell ChatFrame_AddMessageEventFilter ERR_CHAT_PLAYER_NOT_FOUND_S GetGuildInfo UnitClass
+-- luacheck: read globals C_FriendList ChatFrameUtil ChatFrame_SendTell ChatEdit_GetActiveWindow ChatFrame_AddMessageEventFilter ERR_CHAT_PLAYER_NOT_FOUND_S GetGuildInfo UnitClass
 local _, ns = ...
 
 -- Checks that an ad's poster exists and matches the ad: a guild ad needs
@@ -8,7 +8,8 @@ local _, ns = ...
 -- * Ping (in the background, when details open): an addon whisper the
 --   poster's client answers with its guild and class. Proves the character
 --   exists, is online and runs the addon; guild and class are self-reported.
--- * "Contact": opens a whisper and runs a /who on the poster (needs a click).
+-- * "Contact": opens a whisper with a prefilled greeting and runs a /who on
+--   the poster (needs a click).
 local Verify = {}
 ns.Verify = Verify
 
@@ -25,11 +26,37 @@ local PONG_INTERVAL = 2 -- per asker
 -- { ad, sent }
 local current
 
-local function OpenWhisper(name)
+-- Friendly opener for the whisper to an ad's poster, in the client language.
+local function Greeting(ad)
+	local L = ns.L
+	if ad.k == Ads.KIND_GUILD then
+		return ad.n and L.WHISPER_GUILD:format(ad.n) or nil
+	end
+	local guild = Ads.GetGuild()
+	return guild and L.WHISPER_PLAYER_GUILD:format(guild) or L.WHISPER_PLAYER
+end
+
+-- text: prefilled message, only put into an otherwise empty edit box (a
+-- draft to the same player stays).
+local function OpenWhisper(name, text)
 	if ChatFrameUtil and ChatFrameUtil.SendTell then
 		ChatFrameUtil.SendTell(name)
 	elseif ChatFrame_SendTell then
 		ChatFrame_SendTell(name)
+	else
+		return
+	end
+	local getActive = ChatFrameUtil and ChatFrameUtil.GetActiveWindow or ChatEdit_GetActiveWindow
+	local editBox = text and getActive and getActive()
+	if not editBox then
+		return
+	end
+	-- Empty once the client parsed "/w name " into the tell target; else the
+	-- command is still there and the message goes after it.
+	local typed = editBox:GetText() or ""
+	if typed == "" or typed:sub(-#name - 1) == name .. " " then
+		editBox:SetCursorPosition(#typed)
+		editBox:Insert(text)
 	end
 end
 
@@ -43,7 +70,7 @@ end
 
 -- Must run from a click: /who needs a hardware event.
 function Verify.Contact(ad)
-	OpenWhisper(ns:WhisperTarget(ad.o))
+	OpenWhisper(ns:WhisperTarget(ad.o), Greeting(ad))
 	if not (C_FriendList and C_FriendList.SendWho) then
 		return
 	end
