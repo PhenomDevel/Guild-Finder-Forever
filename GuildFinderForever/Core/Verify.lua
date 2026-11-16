@@ -48,15 +48,30 @@ local function OpenWhisper(name, text)
 	end
 	local getActive = ChatFrameUtil and ChatFrameUtil.GetActiveWindow or ChatEdit_GetActiveWindow
 	local editBox = text and getActive and getActive()
-	if not editBox then
+	if not (editBox and editBox.SetTellTarget and editBox.SetChatType) then
 		return
 	end
-	-- Empty once the client parsed "/w name " into the tell target; else the
-	-- command is still there and the message goes after it.
-	local typed = editBox:GetText() or ""
-	if typed == "" or typed:sub(-#name - 1) == name .. " " then
-		editBox:SetCursorPosition(#typed)
-		editBox:Insert(text)
+	-- A box SendTell just opened gets its "/w name " in its next OnUpdate
+	-- (editBox.text, flagged by setText), which would replace anything set
+	-- here; an already open one has it parsed by now.
+	local pending = editBox.setText == 1
+	if not pending then
+		local typed = editBox:GetText() or ""
+		if typed ~= "" and typed:sub(-#name - 1) ~= name .. " " then
+			return
+		end
+	end
+	-- Target set directly instead of "/w name text": the client's parser
+	-- cuts a name with spaces after its first word once text follows.
+	editBox:SetTellTarget(name)
+	editBox:SetChatType("WHISPER")
+	if pending then
+		editBox.text = text
+	else
+		editBox:SetText(text)
+	end
+	if editBox.UpdateHeader then
+		editBox:UpdateHeader()
 	end
 end
 
