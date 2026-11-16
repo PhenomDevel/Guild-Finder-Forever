@@ -48,8 +48,21 @@ local TEXTS = {
 	},
 }
 
--- Opener for a whisper to ad's poster; nil for a guild ad without a name.
+-- Longest whisper the server takes.
+Greetings.MAX_LENGTH = 255
+
+-- Opener for a whisper to ad's poster. Nil with prefilling off (the
+-- default) and for a guild ad without a name. An own message from the
+-- settings replaces the built-in ones for every ad.
 function Greetings.For(ad)
+	local saved = ns.db and ns.db.settings
+	if not (saved and saved.whisperPrefill) then
+		return nil
+	end
+	local own = saved.whisperText
+	if type(own) == "string" and own:find("%S") then
+		return own
+	end
 	local texts = TEXTS[ad.l] or TEXTS.en
 	if ad.k == Ads.KIND_GUILD then
 		return ad.n and texts.guild:format(ad.n) or nil
