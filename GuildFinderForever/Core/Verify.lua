@@ -26,16 +26,6 @@ local PONG_INTERVAL = 2 -- per asker
 -- { ad, sent }
 local current
 
--- Friendly opener for the whisper to an ad's poster, in the client language.
-local function Greeting(ad)
-	local L = ns.L
-	if ad.k == Ads.KIND_GUILD then
-		return ad.n and L.WHISPER_GUILD:format(ad.n) or nil
-	end
-	local guild = Ads.GetGuild()
-	return guild and L.WHISPER_PLAYER_GUILD:format(guild) or L.WHISPER_PLAYER
-end
-
 -- text: prefilled message, only put into an otherwise empty edit box (a
 -- draft to the same player stays).
 local function OpenWhisper(name, text)
@@ -85,7 +75,7 @@ end
 
 -- Must run from a click: /who needs a hardware event.
 function Verify.Contact(ad)
-	OpenWhisper(ns:WhisperTarget(ad.o), Greeting(ad))
+	OpenWhisper(ns:WhisperTarget(ad.o), ns.Greetings.For(ad))
 	if not (C_FriendList and C_FriendList.SendWho) then
 		return
 	end

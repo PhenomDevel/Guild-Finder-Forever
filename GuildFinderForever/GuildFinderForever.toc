@@ -55,6 +55,7 @@ Core\Comm.lua
 Core\Serializer.lua
 Core\Constants.lua
 Core\Ads.lua
+Core\Greetings.lua
 Core\Store.lua
 Core\Sync.lua
 Core\MyAds.lua

@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Whisper (Find players and guild details) now opens the chat with a friendly greeting already typed in your language: it mentions the ad and, when you contact a player, your guild. Edit it or just press Enter.
+- Whisper (Find players and guild details) now opens the chat with a friendly message already typed, in the language of the ad you answer (English when the addon has no text for it). To a player: your guild is still looking for people, you saw their ad, would they like to join. To a guild: you saw their ad and are interested. Edit it or just press Enter.
 
 ## v1.6.0 (2026-11-15)
 
