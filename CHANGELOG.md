@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Whisper (Find players and guild details) now opens the chat with a friendly greeting already typed in your language: it mentions the ad and, when you contact a player, your guild. Edit it or just press Enter.
+
 ## v1.6.0 (2026-11-15)
 
 - Chat messages of the addon now start with "Guild Finder Forever" instead of "GFF".
