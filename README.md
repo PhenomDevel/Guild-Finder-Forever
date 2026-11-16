@@ -53,7 +53,7 @@ What changed: [CHANGELOG.md](https://github.com/PhenomDevel/Guild-Finder-Forever
   who may invite), done in under a minute with a live preview. Ads are
   renewed on login and expire after 14 days without one.
 - **One-click contact:** whisper the poster with a friendly greeting already
-  typed in your language; the addon checks via `/who` whether they are online
+  typed in the language of their ad; the addon checks via `/who` whether they are online
   and in that guild. *Hide* and *Block* remove ads
   from your results.
 - **Outdated ads:** ads whose poster hasn't been seen online with the addon
