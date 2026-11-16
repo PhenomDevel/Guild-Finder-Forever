@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Whisper (Find players and guild details) now opens the chat with a friendly message already typed, in the language of the ad you answer (English when the addon has no text for it). To a player: your guild is still looking for people, you saw their ad, would they like to join. To a guild: you saw their ad and are interested. Edit it or just press Enter.
+- New option *Prefill a message when whispering* (off by default, *Options → AddOns → Guild Finder Forever*): Whisper in Find players and the guild details opens the chat with a message already typed, so you only press Enter. Write your own under *Whisper message*, or leave it empty and the addon writes a friendly one in the language of the ad you answer (English when it has no text for that language): to a player that your guild is still looking for people, to a guild that you are interested.
 
 ## v1.6.0 (2026-11-15)
 

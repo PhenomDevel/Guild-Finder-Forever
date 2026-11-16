@@ -1,4 +1,4 @@
--- luacheck: read globals Settings MinimalSliderWithSteppersMixin
+-- luacheck: read globals Settings MinimalSliderWithSteppersMixin SettingsPanel CreateSettingsButtonInitializer UIParent UISpecialFrames SAVE CANCEL
 local _, ns = ...
 
 -- Options → AddOns → Guild Finder Forever.
@@ -7,6 +7,8 @@ local L = ns.L
 ns.dbDefaults.settings.notifyNew = true
 ns.dbDefaults.settings.staleDays = ns.Constants.STALE_DAYS
 ns.dbDefaults.settings.removeDays = ns.Constants.REMOVE_DAYS
+ns.dbDefaults.settings.whisperPrefill = false
+ns.dbDefaults.settings.whisperText = ""
 
 -- "Outdated after" must stay below "removed after"; moving one slider past
 -- the other pushes the other along.
@@ -49,11 +51,73 @@ local function AddAgeSliders(category, saved)
 	Settings.CreateSlider(category, removeSetting, Options(2, maxDays), L.SETTING_REMOVE_TIP:format(maxDays))
 end
 
+-- The settings panel has no text input, so the own whisper message is
+-- edited in a small dialog on top of it.
+local messageDialog
+
+local function OpenMessageDialog(saved)
+	local W = ns.Widgets
+	if not messageDialog then
+		local dialog = W.Panel(UIParent, { 0.06, 0.06, 0.06, 0.98 }, { 0.3, 0.3, 0.3, 1 })
+		dialog:SetSize(440, 220)
+		dialog:SetPoint("CENTER")
+		dialog:SetFrameStrata("FULLSCREEN_DIALOG")
+		dialog:EnableMouse(true)
+		_G.GuildFinderForeverWhisperText = dialog
+		table.insert(UISpecialFrames, "GuildFinderForeverWhisperText")
+
+		local title = W.Header(dialog, L.SETTING_WHISPER_TEXT)
+		title:SetPoint("TOPLEFT", 16, -14)
+		local hint = W.Text(dialog, "GameFontHighlightSmall", W.MUTED)
+		hint:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -6)
+		hint:SetWidth(408)
+		hint:SetText(L.SETTING_WHISPER_TEXT_HINT)
+
+		dialog.area = W.TextArea(dialog, 408, 80, ns.Greetings.MAX_LENGTH)
+		dialog.area:SetPoint("TOPLEFT", hint, "BOTTOMLEFT", 0, -10)
+		-- The whisper limit counts bytes, not letters.
+		dialog.area.editBox:SetMaxBytes(ns.Greetings.MAX_LENGTH + 1)
+
+		local cancel = W.Button(dialog, CANCEL, 100, function()
+			dialog:Hide()
+		end)
+		cancel:SetPoint("BOTTOMRIGHT", -16, 14)
+		local save = W.Button(dialog, SAVE, 100, function()
+			-- One line: a line break would end the whisper early.
+			local text = dialog.area:GetText():gsub("%s+", " "):gsub("^ ", ""):gsub(" $", "")
+			dialog.saved.whisperText = text
+			dialog:Hide()
+		end)
+		save:SetPoint("RIGHT", cancel, "LEFT", -8, 0)
+		messageDialog = dialog
+	end
+	messageDialog.saved = saved
+	messageDialog.area:SetText(saved.whisperText)
+	messageDialog:Show()
+	messageDialog.area.editBox:SetFocus()
+end
+
+local function AddWhisperSettings(category, layout, saved)
+	local prefill = Settings.RegisterProxySetting(category, "GFF_WHISPER_PREFILL", Settings.VarType.Boolean, L.SETTING_WHISPER, false, function()
+		return saved.whisperPrefill
+	end, function(value)
+		saved.whisperPrefill = value
+	end)
+	Settings.CreateCheckbox(category, prefill, L.SETTING_WHISPER_TIP)
+
+	layout = layout or SettingsPanel and SettingsPanel.GetLayout and SettingsPanel:GetLayout(category)
+	if layout and layout.AddInitializer and CreateSettingsButtonInitializer then
+		layout:AddInitializer(CreateSettingsButtonInitializer(L.SETTING_WHISPER_TEXT, L.SETTING_WHISPER_TEXT_EDIT, function()
+			OpenMessageDialog(saved)
+		end, L.SETTING_WHISPER_TEXT_TIP, true))
+	end
+end
+
 local function Register()
 	if not (Settings and Settings.RegisterVerticalLayoutCategory) then
 		return
 	end
-	local category = Settings.RegisterVerticalLayoutCategory(ns.title)
+	local category, layout = Settings.RegisterVerticalLayoutCategory(ns.title)
 	local saved = ns.db.settings
 
 	local showMinimap = Settings.RegisterProxySetting(category, "GFF_SHOW_MINIMAP", Settings.VarType.Boolean, L.SETTING_MINIMAP, true, function()
@@ -72,6 +136,7 @@ local function Register()
 	Settings.CreateCheckbox(category, notify, L.SETTING_NOTIFY_TIP)
 
 	AddAgeSliders(category, saved)
+	AddWhisperSettings(category, layout, saved)
 
 	Settings.RegisterAddOnCategory(category)
 	ns.settingsCategory = category
