@@ -61,7 +61,8 @@ function Greetings.For(ad)
 	end
 	local own = saved.whisperText
 	if type(own) == "string" and own:find("%S") then
-		return own
+		-- One line: a line break would end the whisper early.
+		return (own:gsub("%s+", " "):gsub("^ ", ""):gsub(" $", ""))
 	end
 	local texts = TEXTS[ad.l] or TEXTS.en
 	if ad.k == Ads.KIND_GUILD then

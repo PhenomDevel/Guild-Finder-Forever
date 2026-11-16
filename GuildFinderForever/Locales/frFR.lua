@@ -17,6 +17,7 @@ L.NO = "non"
 L.TAB_FIND_GUILDS = "Trouver une guilde"
 L.TAB_FIND_PLAYERS = "Trouver des joueurs"
 L.TAB_MY_AD = "Mon annonce"
+L.TAB_SETTINGS = "Options"
 
 -- Enumerations
 L.FACTION_ALLIANCE = "Alliance"
@@ -293,6 +294,10 @@ L.STATUS_SYNC = "Dernière synchro il y a %s"
 L.STATUS_NO_SYNC = "Pas encore de synchro"
 
 -- Settings, minimap
+L.SETTINGS_GENERAL = "Général"
+L.SETTINGS_OUTDATED = "Annonces obsolètes"
+L.SETTINGS_WHISPER = "Chuchotement"
+L.SETTINGS_MOVED_TIP = "Les options sont un onglet de la fenêtre de l'addon."
 L.SETTING_MINIMAP = "Bouton de la minicarte"
 L.SETTING_MINIMAP_TIP = "Affiche le bouton de la minicarte. La fenêtre est aussi accessible via /gff et le compartiment d'addons."
 L.SETTING_NOTIFY = "Message dans le chat pour les nouvelles annonces correspondantes"
@@ -305,8 +310,6 @@ L.SETTING_DAYS = "%d jours"
 L.SETTING_WHISPER = "Préremplir un message en chuchotant"
 L.SETTING_WHISPER_TIP = "« Chuchoter » ouvre le chat avec un message déjà saisi, il ne reste qu'à appuyer sur Entrée. Sans message personnel ci-dessous, l'addon en écrit un sympathique dans la langue de l'annonce."
 L.SETTING_WHISPER_TEXT = "Message de chuchotement"
-L.SETTING_WHISPER_TEXT_EDIT = "Modifier"
-L.SETTING_WHISPER_TEXT_TIP = "Votre propre message pour « Chuchoter », utilisé pour chaque annonce. Laissez vide pour le message de l'addon dans la langue de l'annonce."
 L.SETTING_WHISPER_TEXT_HINT = "Envoyé tel quel à chaque auteur que vous contactez. Laissez vide pour utiliser le message de l'addon dans la langue de l'annonce."
 
 -- Commands

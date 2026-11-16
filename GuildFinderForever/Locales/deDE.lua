@@ -17,6 +17,7 @@ L.NO = "nein"
 L.TAB_FIND_GUILDS = "Gilden finden"
 L.TAB_FIND_PLAYERS = "Spieler finden"
 L.TAB_MY_AD = "Meine Anzeige"
+L.TAB_SETTINGS = "Einstellungen"
 
 -- Enumerations
 L.FACTION_ALLIANCE = "Allianz"
@@ -293,6 +294,10 @@ L.STATUS_SYNC = "Zuletzt synchronisiert vor %s"
 L.STATUS_NO_SYNC = "Noch kein Sync"
 
 -- Settings, minimap
+L.SETTINGS_GENERAL = "Allgemein"
+L.SETTINGS_OUTDATED = "Veraltete Anzeigen"
+L.SETTINGS_WHISPER = "Anflüstern"
+L.SETTINGS_MOVED_TIP = "Die Einstellungen sind ein Tab im Addon-Fenster."
 L.SETTING_MINIMAP = "Minimap-Button"
 L.SETTING_MINIMAP_TIP = "Zeigt den Minimap-Button. Das Fenster öffnet sich auch über /gff und das Addon-Fach."
 L.SETTING_NOTIFY = "Chathinweis bei neuen passenden Anzeigen"
@@ -305,8 +310,6 @@ L.SETTING_DAYS = "%d Tage"
 L.SETTING_WHISPER = "Nachricht beim Anflüstern vorausfüllen"
 L.SETTING_WHISPER_TIP = "„Anflüstern“ öffnet den Chat mit einer fertig getippten Nachricht, du drückst nur noch Enter. Ohne eigene Nachricht unten schreibt das Addon eine freundliche in der Sprache der Anzeige."
 L.SETTING_WHISPER_TEXT = "Flüsternachricht"
-L.SETTING_WHISPER_TEXT_EDIT = "Bearbeiten"
-L.SETTING_WHISPER_TEXT_TIP = "Deine eigene Nachricht für „Anflüstern“, sie gilt für jede Anzeige. Leer lassen für die Nachricht des Addons in der Sprache der Anzeige."
 L.SETTING_WHISPER_TEXT_HINT = "Wird unverändert an jeden Verfasser geschickt, den du anflüsterst. Leer lassen für die Nachricht des Addons in der Sprache der Anzeige."
 
 -- Commands

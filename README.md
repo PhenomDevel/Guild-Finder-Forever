@@ -53,14 +53,14 @@ What changed: [CHANGELOG.md](https://github.com/PhenomDevel/Guild-Finder-Forever
   who may invite), done in under a minute with a live preview. Ads are
   renewed on login and expire after 14 days without one.
 - **One-click contact:** whisper the poster; the addon checks via `/who`
-  whether they are online and in that guild. Optionally (settings) the chat
+  whether they are online and in that guild. Optionally (*Settings* tab) the chat
   opens with a message already typed: your own, or a friendly one in the
   language of their ad. *Hide* and *Block* remove ads
   from your results.
 - **Outdated ads:** ads whose poster hasn't been seen online with the addon
   for 3 days are dimmed and marked; turn off the *Show outdated* filter to
   hide them. After 7 days they are gone for good (both adjustable in the
-  settings).
+  *Settings* tab).
 - **Notifications:** optional chat notice when a new matching ad arrives.
 - **7 languages:** English, Deutsch, Français, Español, Italiano, Русский,
   Português.
@@ -72,7 +72,7 @@ What changed: [CHANGELOG.md](https://github.com/PhenomDevel/Guild-Finder-Forever
 |---------|-|
 | `/gff` | Open/close the window |
 | `/gff ad` | Open "My ad" |
-| `/gff settings` | Settings (minimap button, chat notice for new matching ads, when ads count as outdated, prefilled whisper message) |
+| `/gff settings` | Settings tab (minimap button, chat notice for new matching ads, when ads count as outdated, prefilled whisper message) |
 | `/gff sync` | Ask other players for missing ads |
 | `/gff status` | Cache and network status |
 | `/gff blocked`, `/gff unblock <name>` | List / unblock blocked characters and guilds |
