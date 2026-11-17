@@ -131,6 +131,12 @@ function Presence.LastSeen(owner)
 	return key and ns.db and ns.db.posterSeen[key]
 end
 
+-- Session state for the dev data inspector: states, pending pings, ping
+-- queue. Read only.
+function Presence.GetDebugState()
+	return states, pending, queue
+end
+
 -- Guild the poster was last seen in; nil without one or when unknown.
 function Presence.GetGuild(owner)
 	local key = Key(owner)

@@ -473,3 +473,14 @@ L.ABOUT_ADDON_ASKAZEROTH = "Ask questions in game, experienced players answer in
 L.ABOUT_ADDON_BLIZZHUDTWEAKS = "Fade and tweak the default Blizzard HUD, without replacing it."
 L.ABOUT_ADDON_PHENOMRAIDTOOLS = "Plan per boss which player sees which message when."
 L.ABOUT_ADDON_QOL = "Many small quality-of-life improvements, each switchable on its own."
+
+-- Data inspector tab (development checkouts only; enUS + deDE)
+L.DEV_TAB = "Data (dev)"
+L.DEV_ADS = "Ads"
+L.DEV_POSTERS = "Posters"
+L.DEV_PEERS = "Peers"
+L.DEV_SYNC = "Sync & comm"
+L.DEV_SAVED = "Saved data"
+L.DEV_REFRESH = "Refresh"
+L.DEV_FILTER = "Filter"
+L.DEV_SUMMARY = "%d of %d entries · local time · as of %s"

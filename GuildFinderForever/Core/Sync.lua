@@ -54,6 +54,9 @@ local peerVersions = {}
 
 Sync.lastSync = nil
 Sync.stats = { received = 0, sent = 0, dropped = 0 }
+-- Dev hook (Dev/Inspector.lua), nil in release builds:
+-- OnAdTrace(ad, sender, state), state "new", "updated" or "known".
+Sync.OnAdTrace = nil
 
 -- Chat trace of the sync traffic, switched with /gff debug.
 local function Debugging()
@@ -377,6 +380,9 @@ local function OnAds(message, sender)
 			-- data is per machine); it is taken over and shows in "My ad".
 			local previous = Store.Get(ad.i)
 			local stored = Store.Put(ad)
+			if Sync.OnAdTrace then
+				Sync.OnAdTrace(ad, sender, not stored and "known" or previous and "updated" or "new")
+			end
 			if Debugging() then
 				local state = not stored and "known" or previous and "updated" or "new"
 				totals[state] = totals[state] + 1
@@ -513,6 +519,12 @@ end)
 function Sync.Publish(ad)
 	Store.Put(ad)
 	SendAds({ ad })
+end
+
+-- Session state for the dev data inspector: addon versions per sender,
+-- open hellos by nonce. Read only.
+function Sync.GetDebugState()
+	return peerVersions, pending
 end
 
 -- Whisper mode: the first hello waits for the first known member.

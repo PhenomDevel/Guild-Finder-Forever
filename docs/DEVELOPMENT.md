@@ -11,7 +11,8 @@ GuildFinderForever/          addon folder (the only thing that gets installed)
   Core/                      setup (Init.lua), events, DB, channel, comm, slash commands,
                              serializer, ad model, cache, sync, search, /who check
   UI/                        window, tabs (incl. Settings, About), widgets, minimap button
-  Dev/                       dev flag (ns.DEV), test ads (/gff testdata); not packaged
+  Dev/                       dev flag (ns.DEV), test ads (/gff testdata), data inspector
+                             tab; not packaged
   Probe/                     transport test tools (/gff probe); not packaged
 docs/                        developer docs, architecture, feasibility test guide, release
                              process, logo/ (logo.svg, README logo, 400x400 for CurseForge/Wago)
@@ -65,6 +66,26 @@ ln -s "$PWD/GuildFinderForever" "/Applications/World of Warcraft/_classic_beta_/
 ```
 
 New files or `.toc` changes require a client restart instead of `/reload`.
+
+## Data inspector
+
+Development checkouts add a *Data (dev)* tab to the addon window
+(`Dev/Inspector.lua`, not packaged). It shows everything the addon holds,
+each timestamp as local date/time plus the distance to now:
+
+* **Ads**: every cache entry (tombstones, expired and test ads included),
+  newest first, with flags (own, test, deleted, expired, outdated, removed,
+  hidden, blocked, /who check), version, expiry, last sign of life, when it
+  turns outdated/removed, poster presence and guild, sync bucket, the raw
+  fields and – this session – when and from whom the sync last received it.
+* **Posters**: `posterSeen`, `posterGuilds`, live online states, pending pings.
+* **Peers**: channel state, current members, remembered members per realm.
+* **Sync & comm**: client, last sync, message counters, open hellos, bucket
+  summaries, whisper mode/lockdown/queue, addon versions of other senders.
+* **Saved data**: the rest of both SavedVariables as a tree.
+
+The filter field keeps the entries (an ad, a poster …) with a matching line.
+The tab refreshes on cache changes and keeps the scroll position.
 
 ## Checks
 

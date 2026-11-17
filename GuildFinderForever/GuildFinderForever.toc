@@ -77,10 +77,12 @@ UI\About.lua
 UI\Commands.lua
 UI\Welcome.lua
 
-# Development checkouts only: dev flag, test ads (/gff testdata)
+# Development checkouts only: dev flag, test ads (/gff testdata), data
+# inspector tab
 #@do-not-package@
 Dev\Dev.lua
 Dev\TestData.lua
+Dev\Inspector.lua
 #@end-do-not-package@
 
 # Transport test tools (/gff probe); development checkouts only (enables

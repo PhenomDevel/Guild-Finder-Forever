@@ -469,3 +469,14 @@ L.ABOUT_ADDON_ASKAZEROTH = "Fragen im Spiel stellen, erfahrene Spieler antworten
 L.ABOUT_ADDON_BLIZZHUDTWEAKS = "Blendet das Standard-HUD von Blizzard je nach Situation aus und verfeinert es, ohne es zu ersetzen."
 L.ABOUT_ADDON_PHENOMRAIDTOOLS = "Plane pro Boss, welcher Spieler wann welche Nachricht sieht."
 L.ABOUT_ADDON_QOL = "Viele kleine Komfortverbesserungen, jede einzeln schaltbar."
+
+-- Daten-Inspektor (nur Entwicklungsstand; enUS + deDE)
+L.DEV_TAB = "Daten (Dev)"
+L.DEV_ADS = "Anzeigen"
+L.DEV_POSTERS = "Inserenten"
+L.DEV_PEERS = "Peers"
+L.DEV_SYNC = "Sync & Comm"
+L.DEV_SAVED = "Gespeicherte Daten"
+L.DEV_REFRESH = "Aktualisieren"
+L.DEV_FILTER = "Filtern"
+L.DEV_SUMMARY = "%d von %d Einträgen · Ortszeit · Stand %s"

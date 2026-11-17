@@ -346,6 +346,11 @@ function Channel.GetNumPeers()
 	return numPeers
 end
 
+-- Current members (dev data inspector). Read only.
+function Channel.GetPeers()
+	return peers
+end
+
 -- Up to count random members, without the given name.
 function Channel.PickPeers(count, except)
 	except = type(except) == "string" and PeerKey(except) or nil
