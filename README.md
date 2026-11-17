@@ -57,10 +57,13 @@ What changed: [CHANGELOG.md](https://github.com/PhenomDevel/Guild-Finder-Forever
   opens with a message already typed: your own, or a friendly one in the
   language of their ad. *Hide* and *Block* remove ads
   from your results.
-- **Outdated ads:** ads whose poster hasn't been seen online with the addon
-  for 3 days are dimmed and marked; turn off the *Show outdated* filter to
-  hide them. After 7 days they are gone for good (both adjustable in the
+- **Last active:** every ad shows when its poster was last online with the
+  addon. Ads whose poster hasn't been seen for 3 days are dimmed; turn off
+  the *Show outdated* filter to hide them. After 7 days they are gone for good (both adjustable in the
   *Settings* tab).
+- **Clear counts:** the minimap tooltip and the status bar count the same ads
+  as the lists ("12 of 59 match your filters"); below a list you see how many
+  ads your filters hide, with *Show all* to clear them.
 - **Notifications:** optional chat notice when a new matching ad arrives.
 - **7 languages:** English, Deutsch, Français, Español, Italiano, Русский,
   Português.
