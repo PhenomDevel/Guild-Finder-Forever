@@ -9,7 +9,6 @@ ns.UI = UI
 
 local L = ns.L
 local W = ns.Widgets
-local Store = ns.Store
 local Sync = ns.Sync
 
 local FRAME_NAME = "GuildFinderForeverFrame"
@@ -73,7 +72,6 @@ function UI.UpdateStatus()
 	if faction then
 		parts[#parts + 1] = L.STATUS_FACTION_ONLY:format(W.FactionText(faction, ns.Filters.FactionName(faction)))
 	end
-	parts[#parts + 1] = L.STATUS_CACHED:format(Store.CountByKind())
 	if status.matchText then
 		parts[#parts + 1] = "|cffffffff" .. status.matchText .. "|r"
 	end

@@ -106,20 +106,20 @@ local function SomeRoles(ad)
 	return roles > 0 and roles ~= C.ALL_ROLES
 end
 
--- Meta line: faction, languages, members, age; outdated first so it is
--- never cut off.
+-- Meta line: faction, languages, members, last activity; outdated first so
+-- it is never cut off.
 local function MetaText(result)
 	local ad = result.ad
 	local meta = { W.FactionText(ad.f, Filters.FactionName(ad.f)), Filters.LanguagesText(ad) }
 	if ad.gm then
 		meta[#meta + 1] = L.MEMBERS:format(ad.gm)
 	end
-	local age = L.AGO:format(W.Duration(GetServerTime() - ad.v))
+	local active = W.LastActiveText(ad)
 	local stale = not result.own and Ads.IsStale(ad)
 	if stale then
-		age = "|c" .. W.STALE_HEX .. L.STALE .. " · " .. age .. "|r"
+		active = "|c" .. W.STALE_HEX .. active .. "|r"
 	end
-	table.insert(meta, stale and 1 or #meta + 1, age)
+	table.insert(meta, stale and 1 or #meta + 1, active)
 	return table.concat(meta, " · "), stale
 end
 
@@ -152,9 +152,14 @@ local function ShowCardTooltip(card)
 		local color = W.ScoreColor(result.score)
 		GameTooltip:AddLine(result.score .. " % " .. L.FITS_YOU, color[1], color[2], color[3])
 	end
-	if not result.own and Ads.IsStale(ad) then
-		GameTooltip:AddLine(W.StaleText(ad))
-		GameTooltip:AddLine(L.STALE_TIP, 1, 1, 1, true)
+	if not result.own then
+		if Ads.IsStale(ad) then
+			GameTooltip:AddLine(W.StaleText(ad))
+			GameTooltip:AddLine(L.STALE_TIP, 1, 1, 1, true)
+		else
+			GameTooltip:AddLine(W.LastActiveText(ad), 1, 1, 1)
+		end
+		GameTooltip:AddLine(L.LAST_ACTIVE_TIP, 0.62, 0.62, 0.62, true)
 	end
 	local raid = C.HasBit(ad.g or 0, C.GOAL_RAID)
 	local style = raid and C.StyleName(ad.ps)
@@ -312,6 +317,11 @@ local function BuildGrid(tab, panel)
 	local scrollBox = CreateFrame("Frame", nil, panel, "WowScrollBoxList")
 	scrollBox:SetPoint("TOPLEFT", 8, -8)
 	scrollBox:SetPoint("BOTTOMRIGHT", -22, 8)
+	local hiddenBar = Filters.HiddenBar(panel, KIND, function()
+		tab:Refresh()
+	end)
+	hiddenBar:SetPoint("BOTTOMLEFT", 8, 6)
+	hiddenBar:SetPoint("BOTTOMRIGHT", -8, 6)
 	local scrollBar = CreateFrame("EventFrame", nil, panel, "MinimalScrollBar")
 	scrollBar:SetPoint("TOPLEFT", scrollBox, "TOPRIGHT", 6, 0)
 	scrollBar:SetPoint("BOTTOMLEFT", scrollBox, "BOTTOMRIGHT", 6, 0)
@@ -431,6 +441,8 @@ local function BuildGrid(tab, panel)
 		end
 		scrollBox:SetDataProvider(CreateDataProvider(rows), true)
 		self:WatchPresence()
+		local filtered = hiddenBar:Update(results)
+		scrollBox:SetPoint("BOTTOMRIGHT", -22, filtered and 8 + hiddenBar:GetHeight() + 4 or 8)
 		empty:SetShown(#results == 0)
 		empty:SetText(GuildCount() == 0 and L.NO_ADS_YET or L.NO_RESULTS)
 	end
@@ -592,12 +604,13 @@ local function Build(content)
 		end
 		local results = Filters.Run(KIND)
 		self.count = #results
+		self.total = #results + Filters.FilteredCount(results)
 		self:SetResults(results)
 		UI.SetMatchCount(self:GetStatusText())
 	end
 
 	function tab:GetStatusText()
-		return self.count and L.STATUS_MATCHES_GUILDS:format(self.count)
+		return self.count and L.STATUS_SHOWN_GUILDS:format(self.count, self.total)
 	end
 
 	return tab

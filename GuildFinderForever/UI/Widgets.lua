@@ -823,7 +823,12 @@ function W.Duration(seconds)
 end
 
 -- "Outdated: not updated for 4 d · removed in 3 d" in the stale color.
+-- "active 3 d ago": the poster's last sign of life with the addon.
+function W.LastActiveText(ad)
+	return ns.L.LAST_ACTIVE:format(W.Duration(math.max(0, GetServerTime() - ns.Ads.LastSign(ad))))
+end
+
 function W.StaleText(ad)
-	return "|c" .. W.STALE_HEX .. ns.L.STALE_META:format(W.Duration(GetServerTime() - ad.v),
+	return "|c" .. W.STALE_HEX .. ns.L.LAST_ACTIVE_META:format(W.LastActiveText(ad),
 		W.Duration(ns.Ads.RemovedIn(ad))) .. "|r"
 end

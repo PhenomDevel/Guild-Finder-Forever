@@ -159,17 +159,25 @@ end
 -- { ad = ad, score = n|nil, own = true|nil }. Own ads (player ad, own
 -- guild's ad) bypass the filters and carry no score, so the poster can
 -- check how the ad looks to others. results.stale lists the matching ads
--- left out only for being outdated (their posters are worth a ping).
+-- left out only for being outdated (their posters are worth a ping);
+-- results.filtered counts the ads the search filters leave out.
 function Search.Run(filter, profile)
-	local results = { stale = {} }
+	local results = { stale = {}, filtered = 0 }
 	local myMode = Search.MyMode()
 	local now = GetServerTime()
 	local own = { [Ads.GetOwnPlayerAdId() or ""] = true, [Ads.GetOwnGuildAdId() or ""] = true }
 	for id, ad in Store.Each(filter.kind) do
+		-- Hidden/blocked by the player, or another faction's player ad (the
+		-- player search is fixed to the own faction): not a filter choice,
+		-- so not counted as filtered either.
+		local excluded = Store.IsFiltered(ad)
+			or (ad.k == Ads.KIND_PLAYER and filter.factions and not filter.factions[ad.f])
 		if own[id] then
 			results[#results + 1] = { ad = ad, own = true }
-		elseif not Store.IsFiltered(ad) and Matches(ad, filter, profile, myMode) then
-			if not filter.showStale and Ads.IsStale(ad, now) then
+		elseif not excluded then
+			if not Matches(ad, filter, profile, myMode) then
+				results.filtered = results.filtered + 1
+			elseif not filter.showStale and Ads.IsStale(ad, now) then
 				results.stale[#results.stale + 1] = ad
 			else
 				results[#results + 1] = { ad = ad, score = Search.Score(ad, filter, profile) }

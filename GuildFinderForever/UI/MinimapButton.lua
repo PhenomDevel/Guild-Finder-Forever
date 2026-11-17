@@ -34,7 +34,10 @@ local function ShowTooltip(owner)
 	else
 		GameTooltip:AddLine(L.MINIMAP_AD_NONE, 0.62, 0.62, 0.62)
 	end
-	GameTooltip:AddLine(L.STATUS_CACHED:format(ns.Store.CountByKind()), 0.62, 0.62, 0.62)
+	-- Same counts as the search tabs, so the numbers match the lists.
+	local Filters, Ads = ns.Filters, ns.Ads
+	GameTooltip:AddLine(L.STATUS_SHOWN_GUILDS:format(Filters.Count(Ads.KIND_GUILD)), 0.62, 0.62, 0.62)
+	GameTooltip:AddLine(L.STATUS_SHOWN_PLAYERS:format(Filters.Count(Ads.KIND_PLAYER)), 0.62, 0.62, 0.62)
 	GameTooltip:AddLine(" ")
 	GameTooltip:AddLine(L.MINIMAP_LEFT, 0.12, 1, 0)
 	GameTooltip:AddLine(L.MINIMAP_RIGHT, 0.12, 1, 0)

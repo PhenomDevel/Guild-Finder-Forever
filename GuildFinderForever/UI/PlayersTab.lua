@@ -341,7 +341,9 @@ local function FillRow(tab, row, result)
 		row.note:SetPoint("LEFT", row.tags, "LEFT", math.max(0, width) + 10, 0)
 		row.note:SetPoint("RIGHT", row.text, "RIGHT", 0, 0)
 		row.langs:SetText(L.FILTER_LANGUAGE .. ": |cffffffff" .. Filters.LanguagesText(ad) .. "|r")
-		local note = stale and W.StaleText(ad) or L.UPDATED_AGO:format(W.Duration(GetServerTime() - ad.v))
+		local note = stale and W.StaleText(ad)
+			or result.own and L.UPDATED_AGO:format(W.Duration(GetServerTime() - ad.v))
+			or W.LastActiveText(ad)
 		if (ad.r or 0) > 0 then
 			note = RolesText(ad.r) .. " · " .. note
 		end
@@ -428,6 +430,11 @@ local function BuildList(tab, panel)
 	local scrollBox = CreateFrame("Frame", nil, panel, "WowScrollBoxList")
 	scrollBox:SetPoint("TOPLEFT", header, "BOTTOMLEFT")
 	scrollBox:SetPoint("BOTTOMRIGHT", -18, 1)
+	local hiddenBar = Filters.HiddenBar(panel, KIND, function()
+		tab:Refresh()
+	end)
+	hiddenBar:SetPoint("BOTTOMLEFT", 8, 4)
+	hiddenBar:SetPoint("BOTTOMRIGHT", -8, 4)
 	local scrollBar = CreateFrame("EventFrame", nil, panel, "MinimalScrollBar")
 	scrollBar:SetPoint("TOPLEFT", scrollBox, "TOPRIGHT", 4, -2)
 	scrollBar:SetPoint("BOTTOMLEFT", scrollBox, "BOTTOMRIGHT", 4, 2)
@@ -509,6 +516,8 @@ local function BuildList(tab, panel)
 		self.results = results
 		scrollBox:SetDataProvider(CreateDataProvider(results), true)
 		self:WatchPresence()
+		local filtered = hiddenBar:Update(results)
+		scrollBox:SetPoint("BOTTOMRIGHT", -18, filtered and hiddenBar:GetHeight() + 8 or 1)
 		empty:SetShown(#results == 0)
 		empty:SetText(count == 0 and L.NO_PLAYER_ADS_YET or L.NO_RESULTS)
 	end
@@ -554,6 +563,7 @@ local function Build(content)
 			self.selectedId = nil
 		end
 		self.count = #results
+		self.total = #results + Filters.FilteredCount(results)
 		self:SetResults(results)
 		UI.SetMatchCount(self:GetStatusText())
 	end
@@ -563,7 +573,7 @@ local function Build(content)
 			return nil
 		end
 		local faction = Filters.FactionName(Ads.GetFactionCode())
-		return L.STATUS_MATCHES_PLAYERS:format(self.count) .. "    |cff9d9d9d"
+		return L.STATUS_SHOWN_PLAYERS:format(self.count, self.total) .. "    |cff9d9d9d"
 			.. (Ads.GetGuild() and L.STATUS_FACTION_GUILD or L.STATUS_FACTION):format(faction) .. "|r"
 	end
 

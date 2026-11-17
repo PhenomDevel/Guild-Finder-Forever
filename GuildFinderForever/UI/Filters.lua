@@ -108,6 +108,57 @@ function Filters.Run(kind)
 	return results
 end
 
+-- Clears every search filter so all listed ads show (sort stays).
+function Filters.ShowAll(kind)
+	local filter = Filters.Get(kind)
+	local all = Filters.Default(kind)
+	all.factions = { A = true, H = true }
+	all.lang = nil
+	all.sameMode = false
+	all.sort = filter.sort
+	ns.db.filters[kind] = all
+	return Filters.Get(kind)
+end
+
+-- Ads the filters leave out (outdated ones included while hidden).
+function Filters.FilteredCount(results)
+	return (results.filtered or 0) + #(results.stale or {})
+end
+
+-- Shown and total ads of a kind, e.g. for "12 of 59 match your filters".
+-- Hidden/blocked ads count in neither.
+function Filters.Count(kind)
+	local results = Search.Run(Filters.Get(kind), Filters.Profile(kind))
+	return #results, #results + Filters.FilteredCount(results)
+end
+
+-- "N more hidden by filters" bar with a "Show all" button below a result
+-- list. :Update(results) shows it only when the filters hide something;
+-- changed() runs after the filters were cleared.
+function Filters.HiddenBar(parent, kind, changed)
+	local bar = CreateFrame("Frame", nil, parent)
+	bar:SetHeight(26)
+	local button = W.Button(bar, L.FILTER_SHOW_ALL, nil, function()
+		Filters.ShowAll(kind)
+		changed()
+	end)
+	button:SetPoint("RIGHT")
+	local text = W.Text(bar, "GameFontHighlightSmall", W.MUTED)
+	text:SetPoint("RIGHT", button, "LEFT", -10, 0)
+	text:SetPoint("LEFT")
+	text:SetJustifyH("RIGHT")
+
+	function bar:Update(results)
+		local hidden = Filters.FilteredCount(results)
+		text:SetText(L.HIDDEN_BY_FILTERS:format(hidden))
+		self:SetShown(hidden > 0)
+		return hidden > 0
+	end
+
+	bar:Hide()
+	return bar
+end
+
 -- Whether a raid guild ad wants the own class in a role the own player ad
 -- names (all roles of the class if it names none). Returns nil (no raid
 -- ad), "fit" plus roles mask, or "no".
