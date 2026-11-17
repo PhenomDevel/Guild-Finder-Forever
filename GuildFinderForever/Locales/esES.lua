@@ -18,6 +18,7 @@ L.NO = "no"
 L.TAB_FIND_GUILDS = "Buscar hermandad"
 L.TAB_FIND_PLAYERS = "Buscar jugadores"
 L.TAB_MY_AD = "Mi anuncio"
+L.TAB_SETTINGS = "Ajustes"
 
 -- Enumerations
 L.FACTION_ALLIANCE = "Alianza"
@@ -294,6 +295,10 @@ L.STATUS_SYNC = "Última sincronización hace %s"
 L.STATUS_NO_SYNC = "Sin sincronizar aún"
 
 -- Settings, minimap
+L.SETTINGS_GENERAL = "General"
+L.SETTINGS_OUTDATED = "Anuncios obsoletos"
+L.SETTINGS_WHISPER = "Susurros"
+L.SETTINGS_MOVED_TIP = "Los ajustes son una pestaña de la ventana del addon."
 L.SETTING_MINIMAP = "Botón del minimapa"
 L.SETTING_MINIMAP_TIP = "Muestra el botón del minimapa. La ventana también se abre con /gff y desde el compartimento de accesorios."
 L.SETTING_NOTIFY = "Aviso en el chat de nuevos anuncios que encajan"
@@ -306,8 +311,6 @@ L.SETTING_DAYS = "%d días"
 L.SETTING_WHISPER = "Rellenar un mensaje al susurrar"
 L.SETTING_WHISPER_TIP = "«Susurrar» abre el chat con un mensaje ya escrito, solo tienes que pulsar Intro. Sin un mensaje propio abajo, el addon escribe uno amable en el idioma del anuncio."
 L.SETTING_WHISPER_TEXT = "Mensaje de susurro"
-L.SETTING_WHISPER_TEXT_EDIT = "Editar"
-L.SETTING_WHISPER_TEXT_TIP = "Tu propio mensaje para «Susurrar», se usa en todos los anuncios. Déjalo vacío para el mensaje del addon en el idioma del anuncio."
 L.SETTING_WHISPER_TEXT_HINT = "Se envía tal cual a cada autor al que susurras. Déjalo vacío para usar el mensaje del addon en el idioma del anuncio."
 
 -- Commands

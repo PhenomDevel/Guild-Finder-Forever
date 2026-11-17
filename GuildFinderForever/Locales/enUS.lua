@@ -21,6 +21,7 @@ L.NO = "no"
 L.TAB_FIND_GUILDS = "Find guilds"
 L.TAB_FIND_PLAYERS = "Find players"
 L.TAB_MY_AD = "My ad"
+L.TAB_SETTINGS = "Settings"
 
 -- Enumerations
 L.FACTION_ALLIANCE = "Alliance"
@@ -297,6 +298,10 @@ L.STATUS_SYNC = "Last synced %s ago"
 L.STATUS_NO_SYNC = "No sync yet"
 
 -- Settings, minimap
+L.SETTINGS_GENERAL = "General"
+L.SETTINGS_OUTDATED = "Outdated ads"
+L.SETTINGS_WHISPER = "Whispering"
+L.SETTINGS_MOVED_TIP = "The settings are a tab of the addon window."
 L.SETTING_MINIMAP = "Minimap button"
 L.SETTING_MINIMAP_TIP = "Shows the minimap button. The window is also available via /gff and the addon compartment."
 L.SETTING_NOTIFY = "Chat notice for new matching ads"
@@ -309,8 +314,6 @@ L.SETTING_DAYS = "%d days"
 L.SETTING_WHISPER = "Prefill a message when whispering"
 L.SETTING_WHISPER_TIP = "\"Whisper\" opens the chat with a message already typed, so you only press Enter. Without an own message below, the addon writes a friendly one in the language of the ad."
 L.SETTING_WHISPER_TEXT = "Whisper message"
-L.SETTING_WHISPER_TEXT_EDIT = "Edit"
-L.SETTING_WHISPER_TEXT_TIP = "Your own message for \"Whisper\", used for every ad. Leave it empty for the addon's message in the language of the ad."
 L.SETTING_WHISPER_TEXT_HINT = "Sent as it is to every poster you whisper. Leave it empty to use the addon's message in the language of the ad."
 
 -- Commands

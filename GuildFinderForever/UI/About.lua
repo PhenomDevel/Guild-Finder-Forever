@@ -155,4 +155,4 @@ local function Build(content)
 	return page
 end
 
-UI.RegisterTab(4, L.ABOUT, Build)
+UI.RegisterTab(5, L.ABOUT, Build)

@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-- New option *Prefill a message when whispering* (off by default, *Options → AddOns → Guild Finder Forever*): Whisper in Find players and the guild details opens the chat with a message already typed, so you only press Enter. Write your own under *Whisper message*, or leave it empty and the addon writes a friendly one in the language of the ad you answer (English when it has no text for that language): to a player that your guild is still looking for people, to a guild that you are interested.
+- The settings are now a *Settings* tab in the addon window (also via `/gff settings`). The game's *Options → AddOns → Guild Finder Forever* page only has a button that opens it.
+- New setting *Prefill a message when whispering* (off by default): Whisper in Find players and the guild details opens the chat with a message already typed, so you only press Enter. Write your own under *Whisper message*, or leave it empty and the addon writes a friendly one in the language of the ad you answer (English when it has no text for that language): to a player that your guild is still looking for people, to a guild that you are interested.
 
 ## v1.6.0 (2026-11-15)
 

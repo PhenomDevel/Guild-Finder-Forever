@@ -198,10 +198,11 @@ function W.Dropdown(parent, width, options, get, set)
 end
 
 -- [−] value [+] for a whole number min..max or nil ("–"); − below min
--- clears it. get() returns the value, set(value) stores it.
-function W.Stepper(parent, min, max, get, set)
+-- clears it. get() returns the value, set(value) stores it. format (optional)
+-- is the pattern the value is shown with, width the frame's width.
+function W.Stepper(parent, min, max, get, set, format, width)
 	local frame = W.Panel(parent, { 0.08, 0.08, 0.08, 1 }, { 0.3, 0.3, 0.3, 1 })
-	frame:SetSize(74, 24)
+	frame:SetSize(width or 74, 24)
 	local value = W.Text(frame, "GameFontHighlight")
 	value:SetPoint("CENTER")
 	value:SetJustifyH("CENTER")
@@ -235,7 +236,7 @@ function W.Stepper(parent, min, max, get, set)
 	Button("+", 1, 1)
 	function frame:Refresh()
 		local current = get()
-		value:SetText(current and tostring(current) or "–")
+		value:SetText(current and (format and format:format(current) or tostring(current)) or "–")
 	end
 	frame:Refresh()
 	return frame
