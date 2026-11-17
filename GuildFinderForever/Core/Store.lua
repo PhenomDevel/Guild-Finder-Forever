@@ -90,6 +90,12 @@ function Store.IsTestAd(id)
 	return testAds[id] ~= nil
 end
 
+-- Cache and test ads as stored, expired and tombstones included (dev data
+-- inspector). Read only.
+function Store.GetRaw()
+	return ads or {}, testAds
+end
+
 function Store.Count()
 	local live, total = 0, 0
 	for _, ad in pairs(ads or {}) do
