@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v1.7.0 (2026-11-20)
 
 - The minimap tooltip and the status bar now count the same ads as the lists: "12 of 59 guild ads match your filters" instead of every ad the addon knows about.
 - Find guilds and Find players show below the list how many ads your filters hide, with a *Show all* button that clears them.
