@@ -1,6 +1,6 @@
 # Changelog
 
-## v1.7.0 (2026-11-20)
+## v1.7.0 (2026-11-21)
 
 - Fixed publishing an ad failing with "Please pick a language" (and a Lua error) although a language was picked: the addon could not read your character's realm. It now falls back to the realm name, and the error says what is actually missing.
 - The minimap tooltip and the status bar now count the same ads as the lists: "12 of 59 guild ads match your filters" instead of every ad the addon knows about.
