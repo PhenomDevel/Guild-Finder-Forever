@@ -1,13 +1,13 @@
 # Changelog
 
-## Unreleased
+## v1.7.0 (2026-11-21)
 
-- Fixed publishing an ad failing with "Please pick a language" (and a Lua error) although a language was picked: the addon could not read your character's realm. It now falls back to the realm name, and the error says what is actually missing.
 - The minimap tooltip and the status bar now count the same ads as the lists: "12 of 59 guild ads match your filters" instead of every ad the addon knows about.
 - Find guilds and Find players show below the list how many ads your filters hide, with a *Show all* button that clears them.
 - Ads now show when their poster was last active with the addon ("Last active 2 d ago") instead of "Outdated"; the card tooltip explains what counts.
 - The settings are now a *Settings* tab in the addon window (also via `/gff settings`). The game's *Options → AddOns → Guild Finder Forever* page only has a button that opens it.
 - New setting *Prefill a message when whispering* (off by default): Whisper in Find players and the guild details opens the chat with a message already typed, so you only press Enter. Write your own under *Whisper message*, or leave it empty and the addon writes a friendly one in the language of the ad you answer (English when it has no text for that language): to a player that your guild is still looking for people, to a guild that you are interested.
+- Fixed publishing an ad failing with "Please pick a language" (and a Lua error) although a language was picked: the addon could not read your character's realm. It now falls back to the realm name, and the error says what is actually missing.
 
 ## v1.6.0 (2026-11-15)
 
