@@ -1,4 +1,4 @@
--- luacheck: read globals GetNormalizedRealmName
+-- luacheck: read globals GetNormalizedRealmName GetRealmName UnitName
 local addonName, ns = ...
 
 ns.name = addonName
@@ -84,10 +84,26 @@ end
 -- Player
 --------------------------------------------------------------------------------
 
--- Own realm, normalized ("CAMWOWEU4Realm1PvE" on Forever).
+-- Own realm, normalized ("CAMWOWEU4Realm1PvE" on Forever). Falls back to
+-- GetRealmName() without spaces and dashes (what the normalized name is)
+-- when GetNormalizedRealmName() has nothing, and caches the first result.
+local ownRealm
+
+local function IsSecret(value)
+	return issecretvalue ~= nil and issecretvalue(value)
+end
+
 local function OwnRealm()
+	if ownRealm then
+		return ownRealm
+	end
 	local realm = GetNormalizedRealmName()
-	if type(realm) == "string" and realm ~= "" then
+	if IsSecret(realm) or type(realm) ~= "string" or realm == "" then
+		realm = GetRealmName()
+		realm = not IsSecret(realm) and type(realm) == "string" and realm:gsub("[%s%-]", "") or nil
+	end
+	if realm and realm ~= "" then
+		ownRealm = realm
 		return realm
 	end
 end
@@ -98,8 +114,14 @@ end
 -- Also returns the surname, if any.
 function ns:GetPlayerName()
 	local name, second = UnitFullName("player")
-	if type(name) ~= "string" or name == "" then
+	if IsSecret(name) or type(name) ~= "string" or name == "" then
+		name, second = UnitName("player")
+	end
+	if IsSecret(name) or type(name) ~= "string" or name == "" then
 		return nil
+	end
+	if IsSecret(second) then
+		second = nil
 	end
 	local realm = OwnRealm()
 	if type(second) == "string" and second ~= "" and realm and second ~= realm then
