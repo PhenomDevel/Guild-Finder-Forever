@@ -78,7 +78,20 @@ function MyAds.GetGuildAd()
 end
 
 -- Returns the published ad, or nil plus an error text.
+local function CheckDraft(draft)
+	if not ns:GetPlayerFullName() then
+		return ns.L.ERROR_NO_PLAYER_NAME
+	end
+	if not draft.lang then
+		return ns.L.ERROR_NO_LANGUAGE
+	end
+end
+
 function MyAds.PublishPlayer(draft)
+	local problem = CheckDraft(draft)
+	if problem then
+		return nil, problem
+	end
 	local ad = Ads.BuildPlayerAd(draft)
 	if not ad then
 		return nil, ns.L.ERROR_AD_INVALID
@@ -93,6 +106,10 @@ function MyAds.PublishGuild(draft)
 	end
 	if not Ads.CanInvite() then
 		return nil, ns.L.ERROR_NO_INVITE_RIGHTS
+	end
+	local problem = CheckDraft(draft)
+	if problem then
+		return nil, problem
 	end
 	local ad = Ads.BuildGuildAd(draft)
 	if not ad then
