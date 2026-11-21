@@ -99,11 +99,13 @@ function Ads.CanInvite()
 end
 
 function Ads.PlayerAdId(owner)
-	return "P:" .. owner
+	return type(owner) == "string" and "P:" .. owner or nil
 end
 
 function Ads.GuildAdId(guild, realm)
-	return "G:" .. guild .. "-" .. realm
+	if type(guild) == "string" and type(realm) == "string" then
+		return "G:" .. guild .. "-" .. realm
+	end
 end
 
 function Ads.GetOwnPlayerAdId()
