@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v1.7.1 (2026-11-22)
 
 - Forever: publishing an ad no longer fails with "Your character name or realm is not known yet". The Forever client reports no realm name, so the addon now uses one shared name for it.
 
