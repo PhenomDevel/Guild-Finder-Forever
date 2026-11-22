@@ -84,9 +84,11 @@ end
 -- Player
 --------------------------------------------------------------------------------
 
--- Own realm, normalized ("CAMWOWEU4Realm1PvE" on Forever). Falls back to
--- GetRealmName() without spaces and dashes (what the normalized name is)
--- when GetNormalizedRealmName() has nothing, and caches the first result.
+-- Own realm, normalized. Falls back to GetRealmName() without spaces and
+-- dashes (what the normalized name is) and caches the first result.
+-- Forever's client returns "" for both, for every player, so all Forever
+-- clients use the same stand-in and owners still match whisper senders.
+local FOREVER_REALM = "Forever"
 local ownRealm
 
 local function IsSecret(value)
@@ -106,6 +108,13 @@ local function OwnRealm()
 		ownRealm = realm
 		return realm
 	end
+	if ns.Ads and ns.Ads.IsForever() then
+		return FOREVER_REALM
+	end
+end
+
+function ns:GetRealm()
+	return OwnRealm()
 end
 
 -- Character name as the server writes it in chat and addon messages.

@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Forever: publishing an ad no longer fails with "Your character name or realm is not known yet". The Forever client reports no realm name, so the addon now uses one shared name for it.
+
 ## v1.7.0 (2026-11-21)
 
 - The minimap tooltip and the status bar now count the same ads as the lists: "12 of 59 guild ads match your filters" instead of every ad the addon knows about.
