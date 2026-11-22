@@ -127,6 +127,16 @@ function Ads.OwnerName(owner)
 	return owner and owner:match("^([^%-]+)") or owner
 end
 
+-- One key per character. Forever has no realms (names are unique and the
+-- realm part is a stand-in that changed between versions), so only the name
+-- counts there.
+function Ads.CharacterKey(owner)
+	if type(owner) ~= "string" then
+		return nil
+	end
+	return (Ads.IsForever() and Ads.OwnerName(owner) or owner):lower()
+end
+
 --------------------------------------------------------------------------------
 -- Building own ads
 --------------------------------------------------------------------------------
