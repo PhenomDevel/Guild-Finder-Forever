@@ -1,4 +1,4 @@
--- luacheck: read globals JoinTemporaryChannel JoinChannelByName LeaveChannelByName GetChannelName GetChannelList UnitName GetNormalizedRealmName ERR_CHAT_PLAYER_NOT_FOUND_S ChatFrameUtil ChatFrame_AddMessageEventFilter ChatFrame_AddChannel ChatFrame_RemoveChannel Constants NUM_CHAT_WINDOWS
+-- luacheck: read globals JoinTemporaryChannel JoinChannelByName LeaveChannelByName GetChannelName GetChannelList UnitName ERR_CHAT_PLAYER_NOT_FOUND_S ChatFrameUtil ChatFrame_AddMessageEventFilter ChatFrame_AddChannel ChatFrame_RemoveChannel Constants NUM_CHAT_WINDOWS
 local _, ns = ...
 
 -- The hidden chat channel all ads travel through. It is joined after login,
@@ -233,7 +233,7 @@ end
 -- Peers are keyed by whisper target: same-realm names without the realm,
 -- as the member list shows them.
 local function PeerKey(name)
-	local realm = GetNormalizedRealmName()
+	local realm = ns:GetRealm()
 	if type(realm) == "string" and realm ~= "" and name:sub(-#realm - 1) == "-" .. realm then
 		return name:sub(1, -#realm - 2)
 	end
@@ -241,7 +241,7 @@ local function PeerKey(name)
 end
 
 local function Known()
-	local realm = GetNormalizedRealmName()
+	local realm = ns:GetRealm()
 	local all = ns.db and ns.db.knownPeers
 	if type(all) ~= "table" or type(realm) ~= "string" or realm == "" then
 		return nil

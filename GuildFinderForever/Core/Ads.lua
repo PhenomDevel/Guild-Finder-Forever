@@ -1,4 +1,4 @@
--- luacheck: read globals UnitName UnitLevel UnitClass UnitFactionGroup GetGuildInfo GetNormalizedRealmName IsInGuild CanGuildInvite C_GuildInfo C_GameRules GetNumGuildMembers GetBuildInfo GetRealmName Enum
+-- luacheck: read globals UnitName UnitLevel UnitClass UnitFactionGroup GetGuildInfo IsInGuild CanGuildInvite C_GuildInfo C_GameRules GetNumGuildMembers GetBuildInfo GetRealmName Enum
 local _, ns = ...
 
 -- Ad model: building own ads and validating received ones. Ads are flat
@@ -80,7 +80,7 @@ function Ads.GetScopeText()
 end
 
 function Ads.GetRealm()
-	return GetNormalizedRealmName()
+	return ns:GetRealm()
 end
 
 function Ads.GetGuild()
