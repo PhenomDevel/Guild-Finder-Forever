@@ -9,7 +9,7 @@ local W = ns.Widgets
 
 local ABOUT = {
 	logo = "Interface\\AddOns\\GuildFinderForever\\Media\\Logo",
-	discord = "https://discord.gg/4fSVKCVJWy",
+	discord = "https://discord.gg/AUaUCRwSJU",
 	curseforge = "https://www.curseforge.com/projects/1765174",
 	wago = "https://addons.wago.io/addons/Q6aqwa6W",
 	github = "https://github.com/PhenomDevel/Guild-Finder-Forever",

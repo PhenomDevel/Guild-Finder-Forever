@@ -91,6 +91,7 @@ What changed: [CHANGELOG.md](https://github.com/PhenomDevel/Guild-Finder-Forever
 - Trial accounts can't post ads on Forever (Blizzard blocks their addon
   messages); browsing the ads of others still works.
 - Bugs and ideas: [GitHub issues](https://github.com/PhenomDevel/Guild-Finder-Forever/issues)
+- Questions and chat: [Discord](https://discord.gg/AUaUCRwSJU)
 - If you like the addon, star it on GitHub or leave a tip on
   [Streamlabs](https://streamlabs.com/phenombutbetter/tip).
 
