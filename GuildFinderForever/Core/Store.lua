@@ -25,6 +25,9 @@ local ads, checks
 local testAds = {}
 -- Bucket summaries, rebuilt lazily after changes.
 local buckets, dirty = nil, true
+-- Character key -> id of that character's newest player ad (tombstones
+-- included), rebuilt lazily after changes.
+local latest, latestDirty = nil, true
 
 ns.RegisterCallback(Store, "GFF_DB_READY", function()
 	ads = ns.db.ads
@@ -44,6 +47,7 @@ end)
 
 local function Changed(id)
 	dirty = true
+	latestDirty = true
 	ns:Fire("GFF_ADS_CHANGED", id)
 end
 
@@ -51,10 +55,32 @@ function Store.Get(id)
 	return ads and ads[id] or testAds[id]
 end
 
--- Iterates over live (not deleted, not expired, not outdated) ads, test ads
--- last.
+-- A character can hold several player ads under different ids when the
+-- owner's realm part changed (Forever's realm stand-in, older versions).
+-- Only the newest one counts; the others stay in the cache, so sync
+-- summaries keep matching, until they expire.
+local function LatestPlayerAds(now)
+	if latestDirty or not latest then
+		latest = {}
+		local versions = {}
+		for id, ad in pairs(ads or {}) do
+			if ad.k == Ads.KIND_PLAYER and not Ads.IsExpired(ad, now) then
+				local key = Ads.CharacterKey(ad.o)
+				if key and (not versions[key] or ad.v > versions[key]) then
+					latest[key], versions[key] = id, ad.v
+				end
+			end
+		end
+		latestDirty = false
+	end
+	return latest
+end
+
+-- Iterates over live (not deleted, not expired, not outdated, not
+-- superseded) ads, test ads last.
 function Store.Each(kind)
 	local now = GetServerTime()
+	local newest = LatestPlayerAds(now)
 	local source, id, ad = ads, nil, nil
 	return function()
 		while true do
@@ -64,7 +90,8 @@ function Store.Each(kind)
 				id, ad = next(source, nil)
 			end
 			if id == nil or (not ad.d and (not kind or ad.k == kind) and not Ads.IsExpired(ad, now)
-				and not Ads.IsRemoved(ad, now)) then
+				and not Ads.IsRemoved(ad, now)
+				and (source ~= ads or ad.k ~= Ads.KIND_PLAYER or newest[Ads.CharacterKey(ad.o)] == id)) then
 				return id, ad
 			end
 		end
@@ -197,6 +224,7 @@ function Store.EnforceLimit()
 		end
 	end
 	dirty = true
+	latestDirty = true
 end
 
 --------------------------------------------------------------------------------
