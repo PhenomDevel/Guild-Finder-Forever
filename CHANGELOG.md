@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v1.7.2 (2026-11-22)
 
 - The Discord link in the *About* tab points to the new Discord server.
 - Find players no longer lists a character twice (e.g. with an old and a new level) when an older ad of theirs from a previous version is still around; only their newest ad is shown.
